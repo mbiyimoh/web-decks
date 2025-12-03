@@ -1,0 +1,23 @@
+# Dependencies
+node_modules/
+
+# Next.js
+.next/
+out/
+tsconfig.tsbuildinfo
+
+# Environment files
+.env
+.env.local
+.env*.local
+
+# Simple Task Master - User tasks are git-ignored
+.simple-task-master/tasks/
+.simple-task-master/lock
+
+# Claude local settings
+.claude/settings.local.json
+
+# Misc
+.DS_Store
+*.log
