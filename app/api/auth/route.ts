@@ -1,10 +1,10 @@
 import { cookies } from 'next/headers';
 import { getIronSession } from 'iron-session';
-import { sessionOptions, SessionData, defaultSession } from '@/lib/session';
+import { getSessionOptions, SessionData, defaultSession } from '@/lib/session';
 import { NextResponse } from 'next/server';
 
 export async function POST(request: Request) {
-  const session = await getIronSession<SessionData>(await cookies(), sessionOptions);
+  const session = await getIronSession<SessionData>(await cookies(), getSessionOptions());
 
   try {
     const { password } = await request.json();
@@ -35,13 +35,13 @@ export async function POST(request: Request) {
 }
 
 export async function DELETE() {
-  const session = await getIronSession<SessionData>(await cookies(), sessionOptions);
+  const session = await getIronSession<SessionData>(await cookies(), getSessionOptions());
   session.destroy();
   return NextResponse.json({ success: true });
 }
 
 export async function GET() {
-  const session = await getIronSession<SessionData>(await cookies(), sessionOptions);
+  const session = await getIronSession<SessionData>(await cookies(), getSessionOptions());
   return NextResponse.json({
     isLoggedIn: session.isLoggedIn ?? defaultSession.isLoggedIn,
   });

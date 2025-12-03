@@ -1,7 +1,7 @@
 import { NextResponse } from 'next/server';
 import type { NextRequest } from 'next/server';
 import { getIronSession } from 'iron-session';
-import { sessionOptions, SessionData } from '@/lib/session';
+import { getSessionOptions, SessionData } from '@/lib/session';
 import { cookies } from 'next/headers';
 
 export async function middleware(request: NextRequest) {
@@ -19,7 +19,7 @@ export async function middleware(request: NextRequest) {
   }
 
   // Check session
-  const session = await getIronSession<SessionData>(await cookies(), sessionOptions);
+  const session = await getIronSession<SessionData>(await cookies(), getSessionOptions());
 
   if (!session.isLoggedIn) {
     const loginUrl = new URL('/login', request.url);
