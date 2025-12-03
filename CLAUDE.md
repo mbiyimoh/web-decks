@@ -536,3 +536,89 @@ claudekit status stm
 ```
 
 Expected output: `STM_STATUS: Available and initialized`
+
+---
+
+## Railway Deployment
+
+This project deploys to Railway. The CLI is used for deployment management and debugging.
+
+### Setup
+
+```bash
+# Login (once)
+railway login
+
+# Link project directory
+railway link
+```
+
+### Common Commands
+
+| Command | Purpose |
+|---------|---------|
+| `railway up` | Deploy from local directory |
+| `railway up --detach` | Deploy without following logs |
+| `railway logs` | View deployment logs |
+| `railway logs -b` | View build logs |
+| `railway status` | View project status |
+| `railway variables` | List environment variables |
+| `railway variables --set "KEY=value"` | Set env variable |
+| `railway domain` | Configure/generate domains |
+| `railway shell` | SSH into container |
+| `railway run <cmd>` | Run command with Railway env vars |
+| `railway redeploy` | Redeploy latest version |
+
+### Log Types
+
+1. **Build Logs** (`railway logs -b`)
+   - Docker build output, npm install, compilation
+
+2. **Deploy Logs** (`railway logs -d` or `railway logs`)
+   - Runtime application stdout/stderr
+   - Real-time streaming
+
+3. **HTTP Logs** (Dashboard only)
+   - Request/response data
+   - Filter by: `@httpStatus:<code>`, `@path:<path>`, `@method:<method>`
+
+### Debugging Workflow
+
+```bash
+# Check deployment status
+railway status
+
+# View build logs for errors
+railway logs -b
+
+# View runtime logs
+railway logs
+
+# Check environment variables
+railway variables
+
+# SSH into container for debugging
+railway shell
+```
+
+### Configuration
+
+Railway configuration via `railway.toml`:
+
+```toml
+[build]
+builder = "DOCKERFILE"
+dockerfilePath = "Dockerfile"
+
+[deploy]
+healthcheckPath = "/api/health"
+healthcheckTimeout = 300
+restartPolicyType = "ON_FAILURE"
+restartPolicyMaxRetries = 10
+```
+
+### Environment Variables Required
+
+For this project:
+- `DECK_PASSWORD` - Password for deck access
+- `SESSION_SECRET` - 32-char hex secret (generate with `openssl rand -hex 32`)
