@@ -1,10 +1,9 @@
 import { NextResponse } from 'next/server';
 import type { NextRequest } from 'next/server';
-import { getIronSession } from 'iron-session';
-import { getSessionOptions, SessionData } from '@/lib/session';
-import { cookies } from 'next/headers';
 
-export async function middleware(request: NextRequest) {
+const COOKIE_NAME = 'tradeblock-deck-session';
+
+export function middleware(request: NextRequest) {
   const { pathname } = request.nextUrl;
 
   // Allow public paths
@@ -18,10 +17,10 @@ export async function middleware(request: NextRequest) {
     return NextResponse.next();
   }
 
-  // Check session
-  const session = await getIronSession<SessionData>(await cookies(), getSessionOptions());
+  // Check if session cookie exists (actual validation happens in API/pages)
+  const sessionCookie = request.cookies.get(COOKIE_NAME);
 
-  if (!session.isLoggedIn) {
+  if (!sessionCookie) {
     const loginUrl = new URL('/login', request.url);
     return NextResponse.redirect(loginUrl);
   }

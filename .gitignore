@@ -21,3 +21,6 @@ tsconfig.tsbuildinfo
 # Misc
 .DS_Store
 *.log
+
+# Quick checks (ephemeral tests)
+.quick-checks/
