@@ -484,6 +484,84 @@ Core dependencies (install at root level):
 
 ---
 
+## Authentication Pattern
+
+This project uses iron-session for simple password-based authentication.
+
+### Architecture
+
+```
+Request → Middleware (Edge) → Page/API (Node.js)
+              ↓                    ↓
+         Cookie check         Session validation
+         (lightweight)        (iron-session)
+```
+
+### Key Constraint: Edge Runtime
+
+Next.js middleware runs in Edge Runtime, which has limited Node.js APIs. **iron-session cannot be used directly in middleware.**
+
+**Pattern that works:**
+1. `middleware.ts` - Only checks if session cookie EXISTS (no decryption)
+2. `app/page.tsx` - Server Component validates session with iron-session
+3. `app/api/auth/route.ts` - Handles login/logout with iron-session
+
+### Session Configuration
+
+```typescript
+// lib/session.ts
+export function getSessionOptions(): SessionOptions {
+  const secret = process.env.SESSION_SECRET;
+  if (!secret) throw new Error('SESSION_SECRET required');
+
+  return {
+    password: secret,
+    cookieName: 'tradeblock-deck-session',
+    cookieOptions: {
+      secure: process.env.NODE_ENV === 'production',
+      httpOnly: true,
+      sameSite: 'lax',
+      maxAge: 60 * 60 * 24 * 7, // 7 days
+    },
+  };
+}
+```
+
+### Middleware Pattern (Edge-compatible)
+
+```typescript
+// middleware.ts - Keep minimal, no iron-session
+export function middleware(request: NextRequest) {
+  const sessionCookie = request.cookies.get('tradeblock-deck-session');
+  if (!sessionCookie) {
+    return NextResponse.redirect(new URL('/login', request.url));
+  }
+  return NextResponse.next();
+}
+```
+
+### Session Validation in Pages
+
+```typescript
+// app/page.tsx - Server Component
+import { getIronSession } from 'iron-session';
+import { cookies } from 'next/headers';
+
+export default async function Home() {
+  const session = await getIronSession(await cookies(), getSessionOptions());
+  if (!session.isLoggedIn) redirect('/login');
+  return <TradeblockDeck />;
+}
+```
+
+### Gotchas
+
+- **Never import iron-session in middleware.ts** - causes Edge Runtime errors
+- **Always use `getSessionOptions()` function** - validates env vars at runtime, not build time
+- **Middleware file location must be at root** - not in `app/` directory
+
+---
+
 ## Getting Help
 
 - Check existing decks for patterns and examples
@@ -541,9 +619,20 @@ Expected output: `STM_STATUS: Available and initialized`
 
 ## Railway Deployment
 
-This project deploys to Railway. The CLI is used for deployment management and debugging.
+This project deploys to Railway. Configuration is in `railway.toml`.
 
-### Setup
+### How Railway Routing Works
+
+1. External request hits Railway's edge proxy (`server: railway-edge` header)
+2. Edge proxy routes to your container using the PORT environment variable
+3. App MUST bind to `0.0.0.0` (not localhost) to receive traffic
+
+**Critical Requirements for Next.js:**
+- Start command MUST include `-H 0.0.0.0` flag
+- Start command MUST use `$PORT` environment variable
+- Railway auto-provides PORT (usually 8080, don't hardcode)
+
+### CLI Setup
 
 ```bash
 # Login (once)
@@ -576,49 +665,89 @@ railway link
 
 2. **Deploy Logs** (`railway logs -d` or `railway logs`)
    - Runtime application stdout/stderr
-   - Real-time streaming
 
 3. **HTTP Logs** (Dashboard only)
-   - Request/response data
    - Filter by: `@httpStatus:<code>`, `@path:<path>`, `@method:<method>`
 
-### Debugging Workflow
-
-```bash
-# Check deployment status
-railway status
-
-# View build logs for errors
-railway logs -b
-
-# View runtime logs
-railway logs
-
-# Check environment variables
-railway variables
-
-# SSH into container for debugging
-railway shell
-```
-
-### Configuration
-
-Railway configuration via `railway.toml`:
+### Configuration (railway.toml)
 
 ```toml
 [build]
-builder = "DOCKERFILE"
-dockerfilePath = "Dockerfile"
+builder = "NIXPACKS"
 
 [deploy]
+startCommand = "next start -H 0.0.0.0 -p $PORT"
 healthcheckPath = "/api/health"
-healthcheckTimeout = 300
+healthcheckTimeout = 100
 restartPolicyType = "ON_FAILURE"
 restartPolicyMaxRetries = 10
 ```
 
-### Environment Variables Required
+**Config priority:** railway.toml > Dashboard settings > package.json
 
-For this project:
+### Environment Variables
+
+Required for this project:
 - `DECK_PASSWORD` - Password for deck access
-- `SESSION_SECRET` - 32-char hex secret (generate with `openssl rand -hex 32`)
+- `SESSION_SECRET` - 32-char hex (generate: `openssl rand -hex 32`)
+
+Auto-provided by Railway:
+- `PORT` - Dynamically assigned port (use this, don't hardcode)
+- `RAILWAY_ENVIRONMENT` - Current environment name
+
+### Health Check Requirements
+
+Health checks come from `healthcheck.railway.app`. Endpoint must:
+- Return HTTP 200 (not 204, 301, etc.)
+- Not require authentication
+- Not redirect to HTTPS
+- Be fast (< 100 seconds default timeout)
+
+Example endpoint at `app/api/health/route.ts`:
+```typescript
+export async function GET() {
+  return Response.json({ status: 'ok' }, { status: 200 });
+}
+```
+
+### Debugging 502 Bad Gateway
+
+**Symptom:** App logs show "Ready" but all requests return 502
+
+**Diagnostic checklist:**
+1. Check start command includes `-H 0.0.0.0 -p $PORT`
+2. Check logs show `Network: http://0.0.0.0:PORT` (not localhost)
+3. Check Service Settings → Networking → Target Port matches PORT
+4. Check health check endpoint exists and returns 200
+5. If no request logs appear → traffic never reaches container
+
+**Common causes:**
+- Missing `-H 0.0.0.0` flag (app binds to localhost only)
+- Wrong Target Port in Railway settings
+- Health check failing silently
+- Middleware blocking health check requests
+
+### Next.js Specific Notes
+
+**Middleware Limitations:**
+- Runs in Edge Runtime (limited Node.js APIs)
+- Cannot use iron-session, database adapters, etc.
+- Keep middleware minimal - just cookie checks, redirects
+- Move heavy logic to API routes / Server Components
+
+**Correct middleware location:**
+- `{root}/middleware.ts` (NOT in app/ directory)
+- If using src/: `{root}/src/middleware.ts`
+
+**Start command for Next.js:**
+```bash
+next start -H 0.0.0.0 -p $PORT
+```
+NOT just `next start` (won't bind correctly)
+
+### Useful References
+
+- [Railway Public Networking](https://docs.railway.com/guides/public-networking)
+- [Railway Healthchecks](https://docs.railway.com/guides/healthchecks)
+- [Railway Config as Code](https://docs.railway.com/reference/config-as-code)
+- [Application Failed to Respond](https://docs.railway.com/reference/errors/application-failed-to-respond)

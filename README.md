@@ -2,12 +2,14 @@
 
 Password-protected investor presentation decks built with Next.js 14.
 
+**Live:** https://web-decks-production.up.railway.app
+
 ## Features
 
-- Full-screen scrollable presentations with smooth animations
-- Password protection using iron-session
+- Full-screen scrollable presentations with smooth Framer Motion animations
+- Password protection using iron-session (7-day sessions)
 - Responsive design with Tailwind CSS
-- Railway-ready deployment
+- Deployed on Railway with health checks
 
 ## Local Development
 
@@ -24,7 +26,7 @@ Password-protected investor presentation decks built with Next.js 14.
 3. Edit `.env.local` with your values:
    ```
    DECK_PASSWORD=your_password
-   SESSION_SECRET=your_32_char_secret
+   SESSION_SECRET=your_64_char_hex_secret
    ```
 
    Generate a session secret:
@@ -41,22 +43,36 @@ Password-protected investor presentation decks built with Next.js 14.
 
 ## Deployment to Railway
 
-1. Push to GitHub:
-   ```bash
-   git add .
-   git commit -m "Initial commit"
-   git push origin main
-   ```
+### Initial Setup
 
+1. Push to GitHub
 2. Create new project in [Railway](https://railway.app)
-
 3. Connect your GitHub repository
-
-4. Set environment variables in Railway:
+4. Set environment variables:
    - `DECK_PASSWORD` - Password for deck access
-   - `SESSION_SECRET` - 32-character hex secret
+   - `SESSION_SECRET` - 64-character hex secret
 
-5. Deploy automatically triggers on push
+### Critical Configuration
+
+The project includes `railway.toml` with required Next.js configuration:
+
+```toml
+[deploy]
+startCommand = "next start -H 0.0.0.0 -p $PORT"
+healthcheckPath = "/api/health"
+```
+
+**Why this matters:**
+- `-H 0.0.0.0`: Next.js must bind to all interfaces, not just localhost
+- `-p $PORT`: Railway provides PORT dynamically (usually 8080)
+- Without these flags, Railway returns 502 Bad Gateway
+
+### Troubleshooting 502 Errors
+
+If you see 502 errors but logs show "Ready":
+1. Verify start command includes `-H 0.0.0.0 -p $PORT`
+2. Check Service Settings → Networking → Target Port (should match PORT or be empty)
+3. Verify `/api/health` endpoint returns 200
 
 ## Tech Stack
 
@@ -71,12 +87,27 @@ Password-protected investor presentation decks built with Next.js 14.
 ```
 web-decks/
 ├── app/
-│   ├── api/auth/     # Auth API endpoint
-│   ├── login/        # Login page
-│   ├── layout.tsx    # Root layout
-│   └── page.tsx      # Main deck page
-├── components/       # Deck components
-├── lib/              # Session configuration
-├── styles/           # Global CSS
-└── middleware.ts     # Auth middleware
+│   ├── api/
+│   │   ├── auth/       # Login/logout/session API
+│   │   └── health/     # Railway health check
+│   ├── login/          # Login page
+│   ├── layout.tsx      # Root layout with fonts
+│   └── page.tsx        # Main deck (requires auth)
+├── components/
+│   └── TradeblockDeck.tsx  # Full presentation component
+├── lib/
+│   └── session.ts      # iron-session configuration
+├── styles/
+│   └── globals.css     # Tailwind + global styles
+├── middleware.ts       # Auth check (Edge-compatible)
+└── railway.toml        # Railway deployment config
 ```
+
+## Key Files
+
+| File | Purpose |
+|------|---------|
+| `railway.toml` | Railway deployment configuration |
+| `middleware.ts` | Redirects unauthenticated users (Edge Runtime compatible) |
+| `lib/session.ts` | Session options with env validation |
+| `app/api/health/route.ts` | Health check for Railway |
