@@ -16,14 +16,11 @@ function GeometricAnimation() {
 
   return (
     <div className="absolute inset-0 flex items-center justify-center pointer-events-none overflow-hidden">
-      <svg
-        className="w-[400px] h-[400px] md:w-[600px] md:h-[600px]"
-        viewBox="0 0 400 400"
-      >
+      <div className="w-[400px] h-[400px] md:w-[600px] md:h-[600px] relative">
         {rings.map((ring, ringIndex) => (
-          <motion.g
+          <motion.div
             key={ringIndex}
-            style={{ transformOrigin: '200px 200px' }}
+            className="absolute inset-0"
             animate={{ rotate: 360 * ring.direction }}
             transition={{
               duration: ring.duration,
@@ -31,46 +28,56 @@ function GeometricAnimation() {
               ease: 'linear',
             }}
           >
-            {/* Ring circle */}
-            <circle
-              cx="200"
-              cy="200"
-              r={ring.radius}
-              fill="none"
-              stroke="rgba(255,255,255,0.03)"
-              strokeWidth="1"
-            />
-            {/* Dots on ring */}
-            {Array.from({ length: ring.dots }).map((_, dotIndex) => {
-              const angle = (dotIndex / ring.dots) * Math.PI * 2;
-              const x = 200 + Math.cos(angle) * ring.radius;
-              const y = 200 + Math.sin(angle) * ring.radius;
-              return (
-                <circle
-                  key={dotIndex}
-                  cx={x}
-                  cy={y}
-                  r={dotIndex % 4 === 0 ? 3 : 1.5}
-                  fill={dotIndex % 4 === 0 ? GOLD_GLOW : 'rgba(255,255,255,0.15)'}
-                />
-              );
-            })}
-          </motion.g>
+            <svg
+              className="w-full h-full"
+              viewBox="0 0 400 400"
+            >
+              {/* Ring circle */}
+              <circle
+                cx="200"
+                cy="200"
+                r={ring.radius}
+                fill="none"
+                stroke="rgba(255,255,255,0.03)"
+                strokeWidth="1"
+              />
+              {/* Dots on ring */}
+              {Array.from({ length: ring.dots }).map((_, dotIndex) => {
+                const angle = (dotIndex / ring.dots) * Math.PI * 2;
+                const x = 200 + Math.cos(angle) * ring.radius;
+                const y = 200 + Math.sin(angle) * ring.radius;
+                return (
+                  <circle
+                    key={dotIndex}
+                    cx={x}
+                    cy={y}
+                    r={dotIndex % 4 === 0 ? 3 : 1.5}
+                    fill={dotIndex % 4 === 0 ? GOLD_GLOW : 'rgba(255,255,255,0.15)'}
+                  />
+                );
+              })}
+            </svg>
+          </motion.div>
         ))}
-        {/* Center glow */}
-        <circle
-          cx="200"
-          cy="200"
-          r="40"
-          fill="url(#centerGlow)"
-        />
-        <defs>
-          <radialGradient id="centerGlow" cx="50%" cy="50%" r="50%">
-            <stop offset="0%" stopColor={GOLD_GLOW} />
-            <stop offset="100%" stopColor="rgba(212,165,74,0)" />
-          </radialGradient>
-        </defs>
-      </svg>
+        {/* Center glow - static, not rotating */}
+        <svg
+          className="absolute inset-0 w-full h-full"
+          viewBox="0 0 400 400"
+        >
+          <circle
+            cx="200"
+            cy="200"
+            r="40"
+            fill="url(#centerGlow)"
+          />
+          <defs>
+            <radialGradient id="centerGlow" cx="50%" cy="50%" r="50%">
+              <stop offset="0%" stopColor={GOLD_GLOW} />
+              <stop offset="100%" stopColor="rgba(212,165,74,0)" />
+            </radialGradient>
+          </defs>
+        </svg>
+      </div>
     </div>
   );
 }
