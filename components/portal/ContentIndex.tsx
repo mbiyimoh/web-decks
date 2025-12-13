@@ -2,19 +2,33 @@
 
 import Link from 'next/link';
 import { motion } from 'framer-motion';
-import type { ClientEntry, ContentItem } from '@/lib/clients';
 
-interface ContentIndexProps {
-  client: ClientEntry;
+// Serializable content item (no component reference)
+interface ContentItemData {
+  slug: string;
+  type: 'deck' | 'proposal' | 'document';
+  title: string;
+  description?: string;
 }
 
-const typeLabels: Record<ContentItem['type'], string> = {
+// Serializable client data (can be passed from Server to Client component)
+interface ClientData {
+  id: string;
+  name: string;
+  content: ContentItemData[];
+}
+
+interface ContentIndexProps {
+  client: ClientData;
+}
+
+const typeLabels: Record<ContentItemData['type'], string> = {
   deck: 'Presentation',
   proposal: 'Proposal',
   document: 'Document',
 };
 
-const typeColors: Record<ContentItem['type'], string> = {
+const typeColors: Record<ContentItemData['type'], string> = {
   deck: 'bg-amber-500/10 text-amber-400 border-amber-500/30',
   proposal: 'bg-blue-500/10 text-blue-400 border-blue-500/30',
   document: 'bg-zinc-500/10 text-zinc-400 border-zinc-500/30',

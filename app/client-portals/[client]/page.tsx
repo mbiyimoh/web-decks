@@ -29,7 +29,20 @@ export default async function ClientPortalPage({ params }: Props) {
     return <PasswordGate clientId={clientId} clientName={client.name} />;
   }
 
-  return <ContentIndex client={client} />;
+  // Strip component references before passing to client component
+  // (Functions can't be passed from Server to Client components)
+  const clientData = {
+    id: client.id,
+    name: client.name,
+    content: client.content.map(item => ({
+      slug: item.slug,
+      type: item.type,
+      title: item.title,
+      description: item.description,
+    })),
+  };
+
+  return <ContentIndex client={clientData} />;
 }
 
 export async function generateMetadata({ params }: Props) {
