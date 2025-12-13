@@ -1,31 +1,18 @@
 import { NextResponse } from 'next/server';
 import type { NextRequest } from 'next/server';
 
-const COOKIE_NAME = 'tradeblock-deck-session';
-
+// Middleware adds security headers - auth is handled in page components
+// Note: request param required by Next.js middleware signature
 export function middleware(request: NextRequest) {
-  const { pathname } = request.nextUrl;
+  void request; // Required by Next.js middleware API
+  const response = NextResponse.next();
 
-  // Allow public paths
-  if (
-    pathname.startsWith('/login') ||
-    pathname.startsWith('/api/') ||
-    pathname.startsWith('/_next') ||
-    pathname.startsWith('/favicon') ||
-    pathname.includes('.')
-  ) {
-    return NextResponse.next();
-  }
+  // Security headers
+  response.headers.set('X-Frame-Options', 'DENY');
+  response.headers.set('X-Content-Type-Options', 'nosniff');
+  response.headers.set('Referrer-Policy', 'strict-origin-when-cross-origin');
 
-  // Check if session cookie exists (actual validation happens in API/pages)
-  const sessionCookie = request.cookies.get(COOKIE_NAME);
-
-  if (!sessionCookie) {
-    const loginUrl = new URL('/login', request.url);
-    return NextResponse.redirect(loginUrl);
-  }
-
-  return NextResponse.next();
+  return response;
 }
 
 export const config = {

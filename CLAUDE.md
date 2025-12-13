@@ -688,7 +688,8 @@ restartPolicyMaxRetries = 10
 ### Environment Variables
 
 Required for this project:
-- `DECK_PASSWORD` - Password for deck access
+- `TRADEBLOCK_PASSWORD` - Password for Tradeblock client portal
+- `PLYA_PASSWORD` - Password for PLYA client portal
 - `SESSION_SECRET` - 32-char hex (generate: `openssl rand -hex 32`)
 
 Auto-provided by Railway:

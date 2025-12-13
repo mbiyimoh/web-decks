@@ -1,0 +1,905 @@
+'use client';
+
+import React, { useState } from 'react';
+
+// TypeScript interfaces
+interface DetailItem {
+  type: 'deliverable' | 'meeting';
+  text: string;
+}
+
+interface ServiceItem {
+  id: string;
+  icon: React.FC;
+  title: string;
+  value: number;
+  description: string;
+  details?: DetailItem[];
+}
+
+interface DeliverableItem {
+  id: string;
+  icon: React.FC;
+  title: string;
+  description: string;
+  timeframe: string;
+  basePrice: number;
+}
+
+interface Phase2Options {
+  businessConsulting: boolean;
+  technicalSupport: boolean;
+}
+
+type CompanyStage = 'idea' | 'prototype' | 'revenue' | 'growth';
+
+// Icon components
+const Check = () => (
+  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+    <polyline points="20 6 9 17 4 12"></polyline>
+  </svg>
+);
+
+const FileText = () => (
+  <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+    <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
+    <polyline points="14 2 14 8 20 8"></polyline>
+    <line x1="16" y1="13" x2="8" y2="13"></line>
+    <line x1="16" y1="17" x2="8" y2="17"></line>
+  </svg>
+);
+
+const MessageCircle = () => (
+  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+    <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"></path>
+  </svg>
+);
+
+const Lightbulb = () => (
+  <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+    <path d="M9 18h6"></path>
+    <path d="M10 22h4"></path>
+    <path d="M15.09 14c.18-.98.65-1.74 1.41-2.5A4.65 4.65 0 0 0 18 8 6 6 0 0 0 6 8c0 1 .23 2.23 1.5 3.5A4.61 4.61 0 0 1 8.91 14"></path>
+  </svg>
+);
+
+const TrendingUp = () => (
+  <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+    <polyline points="23 6 13.5 15.5 8.5 10.5 1 18"></polyline>
+    <polyline points="17 6 23 6 23 12"></polyline>
+  </svg>
+);
+
+const Users = () => (
+  <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+    <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path>
+    <circle cx="9" cy="7" r="4"></circle>
+    <path d="M23 21v-2a4 4 0 0 0-3-3.87"></path>
+    <path d="M16 3.13a4 4 0 0 1 0 7.75"></path>
+  </svg>
+);
+
+const Brain = () => (
+  <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+    <path d="M9.5 2A2.5 2.5 0 0 1 12 4.5v15a2.5 2.5 0 0 1-4.96.44 2.5 2.5 0 0 1-2.96-3.08 3 3 0 0 1-.34-5.58 2.5 2.5 0 0 1 1.32-4.24 2.5 2.5 0 0 1 1.98-3A2.5 2.5 0 0 1 9.5 2Z"></path>
+    <path d="M14.5 2A2.5 2.5 0 0 0 12 4.5v15a2.5 2.5 0 0 0 4.96.44 2.5 2.5 0 0 0 2.96-3.08 3 3 0 0 0 .34-5.58 2.5 2.5 0 0 0-1.32-4.24 2.5 2.5 0 0 0-1.98-3A2.5 2.5 0 0 0 14.5 2Z"></path>
+  </svg>
+);
+
+const MousePointer = () => (
+  <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+    <path d="m3 3 7.07 16.97 2.51-7.39 7.39-2.51L3 3z"></path>
+  </svg>
+);
+
+const Rocket = () => (
+  <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+    <path d="M4.5 16.5c-1.5 1.26-2 5-2 5s3.74-.5 5-2c.71-.84.7-2.13-.09-2.91a2.18 2.18 0 0 0-2.91-.09z"></path>
+    <path d="m12 15-3-3a22 22 0 0 1 2-3.95A12.88 12.88 0 0 1 22 2c0 2.72-.78 7.5-6 11a22.35 22.35 0 0 1-4 2z"></path>
+  </svg>
+);
+
+const ShoppingCart = () => (
+  <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+    <circle cx="9" cy="21" r="1"></circle>
+    <circle cx="20" cy="21" r="1"></circle>
+    <path d="M1 1h4l2.68 13.39a2 2 0 0 0 2 1.61h9.72a2 2 0 0 0 2-1.61L23 6H6"></path>
+  </svg>
+);
+
+const ArrowLeft = () => (
+  <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+    <line x1="19" y1="12" x2="5" y2="12"></line>
+    <polyline points="12 19 5 12 12 5"></polyline>
+  </svg>
+);
+
+const Trash = () => (
+  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+    <polyline points="3 6 5 6 21 6"></polyline>
+    <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path>
+  </svg>
+);
+
+const ChevronDown = () => (
+  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+    <polyline points="6 9 12 15 18 9"></polyline>
+  </svg>
+);
+
+const ChevronUp = () => (
+  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+    <polyline points="18 15 12 9 6 15"></polyline>
+  </svg>
+);
+
+const Calendar = () => (
+  <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+    <rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect>
+    <line x1="16" y1="2" x2="16" y2="6"></line>
+    <line x1="8" y1="2" x2="8" y2="6"></line>
+    <line x1="3" y1="10" x2="21" y2="10"></line>
+  </svg>
+);
+
+const Wrench = () => (
+  <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+    <path d="M14.7 6.3a1 1 0 0 0 0 1.4l1.6 1.6a1 1 0 0 0 1.4 0l3.77-3.77a6 6 0 0 1-7.94 7.94l-6.91 6.91a2.12 2.12 0 0 1-3-3l6.91-6.91a6 6 0 0 1 7.94-7.94l-3.76 3.76z"></path>
+  </svg>
+);
+
+// Bullet point component with icon based on type
+const Bullet = ({ children, type = 'meeting' }: { children: React.ReactNode; type?: 'deliverable' | 'meeting' }) => {
+  const Icon = type === 'deliverable' ? FileText : MessageCircle;
+  const iconColor = type === 'deliverable' ? 'text-blue-400' : 'text-emerald-500';
+
+  return (
+    <div className="flex items-start gap-3 text-sm">
+      <div className={`mt-0.5 flex-shrink-0 ${iconColor}`}>
+        <Icon />
+      </div>
+      <span className="text-zinc-300">{children}</span>
+    </div>
+  );
+};
+
+// Service card with add to cart
+interface ServiceCardProps {
+  item: ServiceItem;
+  inCart: boolean;
+  onAdd: (id: string) => void;
+  onRemove: (id: string) => void;
+  phase: number;
+}
+
+const ServiceCard = ({ item, inCart, onAdd, onRemove, phase }: ServiceCardProps) => {
+  const [isOpen, setIsOpen] = useState(false);
+  const Icon = item.icon;
+  const price = item.value;
+
+  return (
+    <div className="border border-zinc-800/60 rounded-2xl overflow-hidden bg-gradient-to-br from-zinc-900/80 to-zinc-950/80">
+      <div className="p-6">
+        <div className="flex items-start gap-4">
+          <div className="w-10 h-10 rounded-xl bg-zinc-800/80 flex items-center justify-center flex-shrink-0">
+            <Icon />
+          </div>
+          <div className="flex-1">
+            <div className="flex items-start justify-between gap-3 mb-2">
+              <h3 className="text-lg font-semibold text-white">{item.title}</h3>
+              <div className="text-right flex-shrink-0">
+                <div className="text-lg font-bold text-white">${price.toLocaleString()}</div>
+                {phase === 1 && <div className="text-xs text-zinc-500">Phase 1</div>}
+              </div>
+            </div>
+            <p className="text-zinc-400 text-sm">{item.description}</p>
+          </div>
+        </div>
+      </div>
+
+      {inCart ? (
+        <button
+          onClick={() => onRemove(item.id)}
+          className="w-full px-6 py-3 flex items-center justify-center gap-2 text-sm font-medium bg-emerald-500/20 text-emerald-400 border-t border-emerald-500/30 hover:bg-emerald-500/30 transition-all"
+        >
+          <Check />
+          <span>Added to cart</span>
+        </button>
+      ) : (
+        <button
+          onClick={() => onAdd(item.id)}
+          className="w-full px-6 py-3 flex items-center justify-center gap-2 text-sm font-medium text-zinc-400 hover:text-white border-t border-zinc-800/40 hover:bg-orange-500/20 hover:border-orange-500/30 transition-all"
+        >
+          <span>Add to cart</span>
+          <span className="text-lg">+</span>
+        </button>
+      )}
+
+      {item.details && (
+        <>
+          <button
+            onClick={() => setIsOpen(!isOpen)}
+            className="w-full px-6 py-3 flex items-center justify-center gap-2 text-xs font-medium text-zinc-500 hover:text-zinc-300 border-t border-zinc-800/40"
+          >
+            {isOpen ? <><span>Less details</span><ChevronUp /></> : <><span>More details</span><ChevronDown /></>}
+          </button>
+          {isOpen && (
+            <div className="px-6 pb-6 pt-2 border-t border-zinc-800/40">
+              <div className="flex items-center gap-2 mb-3 text-xs text-zinc-500">
+                <FileText />
+                <span className="font-medium text-blue-400">Deliverable Products</span>
+                <span className="mx-2">|</span>
+                <MessageCircle />
+                <span className="font-medium text-emerald-400">Meetings & Consulting</span>
+              </div>
+              <div className="space-y-2">
+                {item.details.map((detail, idx) => (
+                  <Bullet key={idx} type={detail.type}>{detail.text}</Bullet>
+                ))}
+              </div>
+            </div>
+          )}
+        </>
+      )}
+    </div>
+  );
+};
+
+// Deliverable option card
+interface DeliverableCardProps {
+  item: DeliverableItem;
+  inCart: boolean;
+  onAdd: (id: string) => void;
+  onRemove: (id: string) => void;
+}
+
+const DeliverableCard = ({ item, inCart, onAdd, onRemove }: DeliverableCardProps) => {
+  const Icon = item.icon;
+
+  return (
+    <div className={`border rounded-xl overflow-hidden transition-all ${
+      inCart
+        ? 'border-emerald-500/50 bg-emerald-500/10'
+        : 'border-zinc-800/60 bg-zinc-900/40 hover:border-zinc-700/80'
+    }`}>
+      <div className="p-5">
+        <div className="flex items-start justify-between mb-3">
+          <div className="w-10 h-10 rounded-lg bg-zinc-800/60 flex items-center justify-center">
+            <Icon />
+          </div>
+          {inCart && (
+            <div className="w-5 h-5 rounded-full bg-emerald-500 flex items-center justify-center">
+              <Check />
+            </div>
+          )}
+        </div>
+        <h4 className="text-base font-semibold text-white mb-2">{item.title}</h4>
+        <p className="text-xs text-zinc-500 mb-3">{item.description}</p>
+        <div className="flex items-center justify-between text-sm pt-3 border-t border-zinc-800/50">
+          <span className="text-zinc-400">{item.timeframe}</span>
+          <span className="text-lg font-bold text-white">${item.basePrice.toLocaleString()}</span>
+        </div>
+      </div>
+
+      {inCart ? (
+        <button
+          onClick={() => onRemove(item.id)}
+          className="w-full px-6 py-3 flex items-center justify-center gap-2 text-sm font-medium bg-emerald-500/20 text-emerald-400 border-t border-emerald-500/30 hover:bg-emerald-500/30"
+        >
+          <Check />
+          <span>Selected</span>
+        </button>
+      ) : (
+        <button
+          onClick={() => onAdd(item.id)}
+          className="w-full px-6 py-3 flex items-center justify-center gap-2 text-sm font-medium text-zinc-400 hover:text-white border-t border-zinc-800/40 hover:bg-orange-500/20 hover:border-orange-500/30"
+        >
+          <span>Select deliverable</span>
+          <span className="text-lg">+</span>
+        </button>
+      )}
+    </div>
+  );
+};
+
+export default function PLYAProposal() {
+  const [cart, setCart] = useState<(ServiceItem | DeliverableItem)[]>([]);
+  const [viewMode, setViewMode] = useState<'shop' | 'cart'>('shop');
+  const [equitySlider, setEquitySlider] = useState(0);
+  const [companyStage, setCompanyStage] = useState<CompanyStage>('idea');
+  const [phase2Options, setPhase2Options] = useState<Phase2Options>({
+    businessConsulting: false,
+    technicalSupport: false
+  });
+
+  const services: ServiceItem[] = [
+    {
+      id: 'thought',
+      icon: Lightbulb,
+      title: 'Developmental Thought Process & Business Development',
+      value: 8000,
+      description: 'Strategic thinking to crystallize your vision into an executable product concept, including comprehensive business development planning.',
+      details: [
+        { type: 'deliverable', text: 'Product vision documentation' },
+        { type: 'deliverable', text: 'User journey maps' },
+        { type: 'deliverable', text: 'Feature prioritization framework' },
+        { type: 'deliverable', text: 'Business development strategy & roadmap' },
+        { type: 'deliverable', text: 'Partnership & revenue model design' },
+        { type: 'deliverable', text: 'Go-to-market strategy document' },
+        { type: 'deliverable', text: 'Business model canvas' },
+        { type: 'meeting', text: 'Product vision workshops' },
+        { type: 'meeting', text: 'Technical feasibility sessions' },
+        { type: 'meeting', text: 'Risk identification & mitigation planning' },
+        { type: 'meeting', text: 'Business development strategy sessions' },
+        { type: 'meeting', text: 'Business model refinement workshops' }
+      ]
+    },
+    {
+      id: 'validation',
+      icon: TrendingUp,
+      title: 'Market Validation',
+      value: 3000,
+      description: 'Competitive analysis, user research, and market positioning to validate product-market fit.',
+      details: [
+        { type: 'deliverable', text: 'Competitive landscape analysis report' },
+        { type: 'deliverable', text: 'Market sizing & opportunity assessment' },
+        { type: 'deliverable', text: 'Pricing strategy recommendations' },
+        { type: 'deliverable', text: 'Early adopter profile & targeting plan' },
+        { type: 'meeting', text: 'Target customer interviews' },
+        { type: 'meeting', text: 'Market research review sessions' },
+        { type: 'meeting', text: 'Competitive positioning workshops' }
+      ]
+    },
+    {
+      id: 'ai',
+      icon: Brain,
+      title: 'AI Expert Guidance',
+      value: 4000,
+      description: 'Technical architecture, AI capability assessment, and implementation strategy.',
+      details: [
+        { type: 'deliverable', text: 'AI capability assessment report' },
+        { type: 'deliverable', text: 'Technical architecture documentation' },
+        { type: 'deliverable', text: 'Model selection & evaluation framework' },
+        { type: 'deliverable', text: 'Data pipeline design specifications' },
+        { type: 'deliverable', text: 'Cost optimization strategy' },
+        { type: 'meeting', text: 'Technical architecture review sessions' },
+        { type: 'meeting', text: 'AI implementation planning' },
+        { type: 'meeting', text: 'Performance & quality optimization consultations' }
+      ]
+    },
+  ];
+
+  const deliverables: DeliverableItem[] = [
+    {
+      id: 'deck',
+      icon: FileText,
+      title: 'Strategy Deck',
+      description: 'Comprehensive presentation with full strategy, market analysis, and roadmap',
+      timeframe: '33 days',
+      basePrice: 2000,
+    },
+    {
+      id: 'prototype',
+      icon: MousePointer,
+      title: 'Clickable Prototype',
+      description: 'Interactive prototype demonstrating core user flows and key features',
+      timeframe: '33 days',
+      basePrice: 3000,
+    },
+    {
+      id: 'mvp',
+      icon: Rocket,
+      title: 'Full MVP',
+      description: 'Production-ready minimum viable product with deployment',
+      timeframe: '45 days',
+      basePrice: 5000,
+    },
+  ];
+
+  const allItems = [...services, ...deliverables];
+
+  const addToCart = (id: string) => {
+    const item = allItems.find(i => i.id === id);
+    if (item && !cart.find(c => c.id === id)) {
+      setCart([...cart, item]);
+    }
+  };
+
+  const removeFromCart = (id: string) => setCart(cart.filter(c => c.id !== id));
+  const isInCart = (id: string) => cart.some(c => c.id === id);
+
+  const calculateTotal = () => {
+    const phase1Total = cart.reduce((sum, item) => sum + ('basePrice' in item ? item.basePrice : item.value), 0);
+    const phase2Monthly = (phase2Options.businessConsulting ? 3000 : 0) + (phase2Options.technicalSupport ? 3000 : 0);
+
+    const equityPct = equitySlider / 100;
+    const cashPayment = phase1Total * (1 - equityPct);
+    const equityPayment = phase1Total * equityPct;
+    const equityPercent = (equityPayment / 10000) * 1;
+
+    return {
+      phase1Total,
+      phase2Monthly,
+      cashPayment,
+      equityPayment,
+      equityPercent: Math.min(equityPercent, 5)
+    };
+  };
+
+  const getRecommendation = () => {
+    const rec: Record<CompanyStage, { max: number; reasoning: string }> = {
+      idea: { max: 3, reasoning: "Pre-product companies should preserve equity for future rounds" },
+      prototype: { max: 2.5, reasoning: "Early-stage companies need flexibility for seed rounds" },
+      revenue: { max: 2, reasoning: "Revenue-generating companies should minimize dilution" },
+      growth: { max: 1.5, reasoning: "Growth-stage companies should prioritize cash" }
+    };
+    return rec[companyStage];
+  };
+
+  const totals = calculateTotal();
+  const recommendation = getRecommendation();
+  const hasPhase2 = phase2Options.businessConsulting || phase2Options.technicalSupport;
+
+  if (viewMode === 'cart') {
+    return (
+      <div className="min-h-screen bg-black text-white">
+        <div className="fixed inset-0 bg-gradient-to-br from-zinc-950 via-black to-zinc-950 pointer-events-none" />
+        <div className="relative max-w-4xl mx-auto px-6 py-12">
+          <button onClick={() => setViewMode('shop')} className="flex items-center gap-2 text-zinc-400 hover:text-white mb-6">
+            <ArrowLeft /><span className="text-sm">Back to proposal</span>
+          </button>
+
+          <header className="mb-8">
+            <h1 className="text-3xl font-bold mb-2">Your Cart</h1>
+            <p className="text-zinc-400">{cart.length} {cart.length === 1 ? 'item' : 'items'} selected</p>
+          </header>
+
+          {cart.length === 0 ? (
+            <div className="text-center py-16 bg-zinc-900/40 rounded-2xl border border-zinc-800/60">
+              <div className="w-16 h-16 bg-zinc-800/60 rounded-full flex items-center justify-center mx-auto mb-4">
+                <ShoppingCart />
+              </div>
+              <p className="text-zinc-400 mb-4">Your cart is empty</p>
+              <button onClick={() => setViewMode('shop')} className="px-6 py-3 bg-orange-500 text-white rounded-xl hover:bg-orange-600">
+                Browse Services
+              </button>
+            </div>
+          ) : (
+            <>
+              {/* Cart items */}
+              <div className="mb-6">
+                <h3 className="text-sm font-medium text-zinc-400 mb-3 uppercase tracking-wide">Phase 1: MVP Development (33 Days)</h3>
+                <div className="space-y-3">
+                  {cart.map(item => {
+                    const Icon = item.icon;
+                    const price = 'basePrice' in item ? item.basePrice : item.value;
+                    return (
+                      <div key={item.id} className="bg-zinc-900/60 rounded-xl p-5 border border-zinc-800/60 flex items-start gap-4">
+                        <div className="w-10 h-10 rounded-lg bg-zinc-800/60 flex items-center justify-center flex-shrink-0">
+                          <Icon />
+                        </div>
+                        <div className="flex-1">
+                          <h3 className="text-base font-semibold text-white mb-1">{item.title}</h3>
+                          <p className="text-xs text-zinc-500">{item.description}</p>
+                          {'timeframe' in item && <p className="text-xs text-zinc-600 mt-1">{item.timeframe}</p>}
+                        </div>
+                        <div className="flex items-center gap-4">
+                          <div className="text-lg font-bold text-white">${price.toLocaleString()}</div>
+                          <button onClick={() => removeFromCart(item.id)} className="text-zinc-500 hover:text-red-400">
+                            <Trash />
+                          </button>
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
+              </div>
+
+              {/* Phase 2 options */}
+              <div className="mb-8">
+                <h3 className="text-sm font-medium text-zinc-400 mb-3 uppercase tracking-wide">Phase 2: Ongoing Support (Post-MVP)</h3>
+
+                <div className="space-y-3">
+                  {/* Business Consulting */}
+                  <div className="bg-zinc-900/60 rounded-xl border border-zinc-800/60 overflow-hidden">
+                    <div className="p-5">
+                      <div className="flex items-start justify-between mb-3">
+                        <div className="flex items-start gap-4 flex-1">
+                          <div className="w-10 h-10 rounded-xl bg-purple-500/20 flex items-center justify-center flex-shrink-0">
+                            <Users />
+                          </div>
+                          <div>
+                            <h4 className="text-lg font-semibold text-white mb-2">Ongoing Business Consulting</h4>
+                            <p className="text-sm text-zinc-400 mb-3">Strategic guidance for growth and market adoption</p>
+                            <div className="space-y-2 text-sm text-zinc-300">
+                              <Bullet type="meeting">User growth strategy & optimization</Bullet>
+                              <Bullet type="meeting">User feedback implementation planning</Bullet>
+                              <Bullet type="meeting">Market adoption & expansion tactics</Bullet>
+                              <Bullet type="meeting">Customer acquisition & retention strategies</Bullet>
+                              <Bullet type="deliverable">Monthly growth reports & recommendations</Bullet>
+                            </div>
+                          </div>
+                        </div>
+                        <div className="text-right flex-shrink-0 ml-4">
+                          <div className="text-xl font-bold text-white mb-1">$3,000</div>
+                          <div className="text-xs text-zinc-500">/month</div>
+                        </div>
+                      </div>
+                    </div>
+                    <button
+                      onClick={() => setPhase2Options({...phase2Options, businessConsulting: !phase2Options.businessConsulting})}
+                      className={`w-full px-6 py-3 flex items-center justify-center gap-2 text-sm font-medium border-t transition-all ${
+                        phase2Options.businessConsulting
+                          ? 'bg-purple-500/20 text-purple-400 border-purple-500/30 hover:bg-purple-500/30'
+                          : 'text-zinc-400 hover:text-white border-zinc-800/40 hover:bg-purple-500/20 hover:border-purple-500/30'
+                      }`}
+                    >
+                      {phase2Options.businessConsulting ? (
+                        <><Check /><span>Added to cart</span></>
+                      ) : (
+                        <><span>Add to cart</span><span className="text-lg">+</span></>
+                      )}
+                    </button>
+                  </div>
+
+                  {/* Technical Support */}
+                  <div className="bg-zinc-900/60 rounded-xl border border-zinc-800/60 overflow-hidden">
+                    <div className="p-5">
+                      <div className="flex items-start justify-between mb-3">
+                        <div className="flex items-start gap-4 flex-1">
+                          <div className="w-10 h-10 rounded-xl bg-blue-500/20 flex items-center justify-center flex-shrink-0">
+                            <Wrench />
+                          </div>
+                          <div>
+                            <h4 className="text-lg font-semibold text-white mb-2">Technical Support & AI Expertise</h4>
+                            <p className="text-sm text-zinc-400 mb-3">Ongoing technical maintenance and AI optimization</p>
+                            <div className="space-y-2 text-sm text-zinc-300">
+                              <Bullet type="meeting">Change management for app iterations</Bullet>
+                              <Bullet type="meeting">Version upgrades & feature enhancements</Bullet>
+                              <Bullet type="meeting">User support & technical troubleshooting</Bullet>
+                              <Bullet type="meeting">AI model optimization & fine-tuning</Bullet>
+                              <Bullet type="deliverable">Monthly technical health reports</Bullet>
+                            </div>
+                          </div>
+                        </div>
+                        <div className="text-right flex-shrink-0 ml-4">
+                          <div className="text-xl font-bold text-white mb-1">$3,000</div>
+                          <div className="text-xs text-zinc-500">/month</div>
+                        </div>
+                      </div>
+                    </div>
+                    <button
+                      onClick={() => setPhase2Options({...phase2Options, technicalSupport: !phase2Options.technicalSupport})}
+                      className={`w-full px-6 py-3 flex items-center justify-center gap-2 text-sm font-medium border-t transition-all ${
+                        phase2Options.technicalSupport
+                          ? 'bg-blue-500/20 text-blue-400 border-blue-500/30 hover:bg-blue-500/30'
+                          : 'text-zinc-400 hover:text-white border-zinc-800/40 hover:bg-blue-500/20 hover:border-blue-500/30'
+                      }`}
+                    >
+                      {phase2Options.technicalSupport ? (
+                        <><Check /><span>Added to cart</span></>
+                      ) : (
+                        <><span>Add to cart</span><span className="text-lg">+</span></>
+                      )}
+                    </button>
+                  </div>
+                </div>
+              </div>
+
+              {/* Company stage selector */}
+              <div className="mb-8 bg-zinc-900/60 rounded-xl p-6 border border-zinc-800/60">
+                <label className="block text-sm font-medium text-white mb-3">Company Stage</label>
+                <div className="grid grid-cols-2 md:grid-cols-4 gap-2">
+                  {([
+                    { id: 'idea' as const, label: 'Idea Stage' },
+                    { id: 'prototype' as const, label: 'Prototype' },
+                    { id: 'revenue' as const, label: 'Has Revenue' },
+                    { id: 'growth' as const, label: 'Growth' }
+                  ]).map(stage => (
+                    <button
+                      key={stage.id}
+                      onClick={() => setCompanyStage(stage.id)}
+                      className={`px-4 py-3 rounded-lg text-sm font-medium ${
+                        companyStage === stage.id ? 'bg-orange-500 text-white' : 'bg-zinc-800/40 text-zinc-400 hover:bg-zinc-800/60'
+                      }`}
+                    >
+                      {stage.label}
+                    </button>
+                  ))}
+                </div>
+              </div>
+
+              {/* Payment structure slider */}
+              <div className="mb-8 bg-zinc-900/60 rounded-xl p-6 border border-zinc-800/60">
+                <div className="flex items-center justify-between mb-4">
+                  <label className="text-sm font-medium text-white">Phase 1 Payment Structure</label>
+                  <div className="text-sm text-zinc-400">
+                    {equitySlider === 0 ? '100% Cash' : equitySlider === 20 ? '20% Equity (Max)' : `${100-equitySlider}% Cash / ${equitySlider}% Equity`}
+                  </div>
+                </div>
+
+                <input
+                  type="range"
+                  min="0"
+                  max="20"
+                  value={equitySlider}
+                  onChange={(e) => setEquitySlider(Number(e.target.value))}
+                  className="w-full h-2 rounded-lg appearance-none cursor-pointer"
+                  style={{
+                    background: `linear-gradient(to right, #ffffff ${(100-equitySlider)*5}%, #f97316 ${(100-equitySlider)*5}%)`
+                  }}
+                />
+
+                <div className="flex justify-between mt-2 text-xs text-zinc-500">
+                  <span>All Cash</span>
+                  <span>20% Equity (Maximum)</span>
+                </div>
+
+                {totals.equityPercent > 0 && (
+                  <div className="mt-4 p-3 bg-orange-500/10 rounded-lg border border-orange-500/20">
+                    <p className="text-xs text-zinc-300">
+                      <span className="font-medium text-orange-400">Equity estimate:</span> ~{totals.equityPercent.toFixed(2)}% for ${Math.round(totals.equityPayment).toLocaleString()} equity payment
+                    </p>
+                    <p className="text-xs text-zinc-500 mt-1">Actual terms negotiated based on valuation</p>
+                  </div>
+                )}
+              </div>
+
+              {/* Equity recommendation */}
+              <div className="mb-8 bg-blue-500/10 rounded-xl p-5 border border-blue-500/20">
+                <div className="flex items-start gap-3">
+                  <div className="w-8 h-8 rounded-lg bg-blue-500/20 flex items-center justify-center flex-shrink-0">
+                    <Lightbulb />
+                  </div>
+                  <div>
+                    <p className="text-sm font-medium text-blue-400 mb-2">Recommendation for {companyStage} stage</p>
+                    <p className="text-xs text-zinc-300 mb-2">
+                      Max <span className="font-semibold text-blue-400">{recommendation.max}% equity</span> for projects of this scope. Maximum equity option is capped at 20%.
+                    </p>
+                    <p className="text-xs text-zinc-500">{recommendation.reasoning}</p>
+                  </div>
+                </div>
+              </div>
+
+              {/* Total breakdown */}
+              <div className="bg-zinc-900/80 rounded-2xl p-6 border border-zinc-800/60 mb-8">
+                <h3 className="text-lg font-semibold mb-4">Investment Summary</h3>
+
+                <div className="space-y-3 mb-4">
+                  <div className="flex justify-between text-sm">
+                    <span className="text-zinc-400">Phase 1 Subtotal</span>
+                    <span className="text-white font-medium">${totals.phase1Total.toLocaleString()}</span>
+                  </div>
+
+                  {equitySlider > 0 && (
+                    <>
+                      <div className="flex justify-between text-sm">
+                        <span className="text-zinc-400">Cash ({100-equitySlider}%)</span>
+                        <span className="text-white font-medium">${Math.round(totals.cashPayment).toLocaleString()}</span>
+                      </div>
+                      <div className="flex justify-between text-sm">
+                        <span className="text-zinc-400">Equity ({equitySlider}%)</span>
+                        <span className="text-orange-400 font-medium">${Math.round(totals.equityPayment).toLocaleString()}</span>
+                      </div>
+                    </>
+                  )}
+
+                  {hasPhase2 && (
+                    <div className="pt-3 border-t border-zinc-800/60">
+                      <div className="text-sm font-medium text-zinc-300 mb-2">Phase 2 Monthly Retainer:</div>
+                      {phase2Options.businessConsulting && (
+                        <div className="flex justify-between text-sm">
+                          <span className="text-zinc-400">Business Consulting</span>
+                          <span className="text-purple-400 font-medium">$3,000/mo</span>
+                        </div>
+                      )}
+                      {phase2Options.technicalSupport && (
+                        <div className="flex justify-between text-sm">
+                          <span className="text-zinc-400">Technical Support</span>
+                          <span className="text-blue-400 font-medium">$3,000/mo</span>
+                        </div>
+                      )}
+                      <div className="flex justify-between text-sm mt-2 pt-2 border-t border-zinc-800/40">
+                        <span className="text-zinc-400 font-medium">Phase 2 Total</span>
+                        <span className="text-white font-bold">${totals.phase2Monthly.toLocaleString()}/mo</span>
+                      </div>
+                    </div>
+                  )}
+                </div>
+
+                <div className="pt-4 border-t border-zinc-800/60">
+                  <div className="flex justify-between mb-1">
+                    <span className="font-semibold text-white">Phase 1 Due at Start</span>
+                    <span className="text-2xl font-bold text-white">
+                      ${Math.round(equitySlider === 0 ? totals.phase1Total : totals.cashPayment).toLocaleString()}
+                    </span>
+                  </div>
+                  {equitySlider > 0 && (
+                    <p className="text-xs text-zinc-500 text-right">
+                      + ~{totals.equityPercent.toFixed(2)}% equity (${Math.round(totals.equityPayment).toLocaleString()} value)
+                    </p>
+                  )}
+                  {hasPhase2 && (
+                    <p className="text-xs text-blue-400 text-right mt-1">
+                      Phase 2: ${totals.phase2Monthly.toLocaleString()}/month starting after MVP delivery
+                    </p>
+                  )}
+                </div>
+              </div>
+
+              {/* CTA */}
+              <div className="flex flex-col sm:flex-row gap-4">
+                <button className="flex-1 px-8 py-4 bg-gradient-to-r from-orange-500 to-orange-600 text-white font-semibold rounded-xl hover:from-orange-600 hover:to-orange-700">
+                  Request Proposal
+                </button>
+                <button className="px-8 py-4 bg-zinc-800 text-white font-semibold rounded-xl hover:bg-zinc-700 border border-zinc-700">
+                  Save for Later
+                </button>
+              </div>
+            </>
+          )}
+        </div>
+      </div>
+    );
+  }
+
+  return (
+    <div className="min-h-screen bg-black text-white">
+      <style>{`
+        input[type="range"]::-webkit-slider-thumb {
+          appearance: none;
+          width: 20px;
+          height: 20px;
+          border-radius: 50%;
+          background: linear-gradient(135deg, #f97316, #ea580c);
+          cursor: pointer;
+          border: 2px solid #18181b;
+        }
+        input[type="range"]::-moz-range-thumb {
+          width: 20px;
+          height: 20px;
+          border-radius: 50%;
+          background: linear-gradient(135deg, #f97316, #ea580c);
+          cursor: pointer;
+          border: 2px solid #18181b;
+        }
+      `}</style>
+      <div className="fixed inset-0 bg-gradient-to-br from-zinc-950 via-black to-zinc-950 pointer-events-none" />
+      <div className="fixed inset-0 opacity-30 pointer-events-none" style={{
+        backgroundImage: 'radial-gradient(circle at 20% 20%, rgba(249, 115, 22, 0.08) 0%, transparent 50%)'
+      }} />
+
+      <div className="relative max-w-4xl mx-auto px-6 py-12">
+        <header className="mb-12">
+          <div className="flex items-center justify-between mb-4">
+            <div className="flex items-center gap-2 text-zinc-500 text-sm">
+              <span className="text-2xl font-bold">33</span>
+              <span className="text-xs uppercase tracking-wider">Strategies</span>
+            </div>
+            <button
+              onClick={() => setViewMode('cart')}
+              className="relative px-4 py-2 bg-zinc-900/60 rounded-xl border border-zinc-800/60 hover:border-zinc-700/80 transition-all flex items-center gap-2"
+            >
+              <ShoppingCart />
+              {cart.length > 0 && (
+                <span className="absolute -top-2 -right-2 w-6 h-6 bg-orange-500 rounded-full flex items-center justify-center text-xs font-bold">
+                  {cart.length}
+                </span>
+              )}
+            </button>
+          </div>
+          <h1 className="text-4xl md:text-5xl font-bold mb-4 bg-gradient-to-r from-white via-zinc-300 to-zinc-500 bg-clip-text text-transparent">
+            PLYA Project Proposal
+          </h1>
+          <p className="text-zinc-400 text-lg leading-relaxed">
+            Build your custom engagement package for Phase 1 MVP development and optional Phase 2 ongoing support.
+          </p>
+        </header>
+
+        {/* Project Overview */}
+        <section className="mb-12 bg-gradient-to-br from-orange-500/10 via-orange-600/5 to-transparent rounded-2xl p-8 border border-orange-500/20">
+          <div className="flex items-start gap-4 mb-4">
+            <div className="w-12 h-12 rounded-xl bg-orange-500/20 flex items-center justify-center flex-shrink-0">
+              <Rocket />
+            </div>
+            <div>
+              <h2 className="text-2xl font-bold mb-2 text-white">About PLYA</h2>
+              <p className="text-zinc-300 text-sm leading-relaxed mb-4">
+                PLYA is an AI-powered platform designed to revolutionize how athletes and sports enthusiasts connect,
+                train, and compete. The platform combines intelligent matchmaking, performance tracking, and community
+                building to create a comprehensive sports networking ecosystem.
+              </p>
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mt-6">
+                <div className="bg-zinc-900/60 rounded-lg p-4 border border-zinc-800/60">
+                  <div className="flex items-center gap-2 mb-2">
+                    <Calendar />
+                    <span className="text-sm font-semibold text-orange-400">Timeline</span>
+                  </div>
+                  <p className="text-xs text-zinc-400">33 days to MVP delivery</p>
+                </div>
+                <div className="bg-zinc-900/60 rounded-lg p-4 border border-zinc-800/60">
+                  <div className="flex items-center gap-2 mb-2">
+                    <Brain />
+                    <span className="text-sm font-semibold text-orange-400">Approach</span>
+                  </div>
+                  <p className="text-xs text-zinc-400">AI-native development</p>
+                </div>
+                <div className="bg-zinc-900/60 rounded-lg p-4 border border-zinc-800/60">
+                  <div className="flex items-center gap-2 mb-2">
+                    <Users />
+                    <span className="text-sm font-semibold text-orange-400">Target</span>
+                  </div>
+                  <p className="text-xs text-zinc-400">Athletes & sports communities</p>
+                </div>
+              </div>
+            </div>
+          </div>
+        </section>
+
+        {/* Phase 1 Services */}
+        <section className="mb-12">
+          <div className="mb-6">
+            <h2 className="text-2xl font-bold mb-2">Phase 1: MVP Development</h2>
+            <p className="text-zinc-400 text-sm">Select the services you need for your 33-day sprint to MVP</p>
+          </div>
+          <div className="space-y-4">
+            {services.map(service => (
+              <ServiceCard
+                key={service.id}
+                item={service}
+                inCart={isInCart(service.id)}
+                onAdd={addToCart}
+                onRemove={removeFromCart}
+                phase={1}
+              />
+            ))}
+          </div>
+        </section>
+
+        {/* Deliverables */}
+        <section className="mb-12">
+          <div className="mb-6">
+            <h2 className="text-2xl font-bold mb-2">Choose Your Deliverable</h2>
+            <p className="text-zinc-400 text-sm">Select one deliverable option that best fits your needs</p>
+          </div>
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+            {deliverables.map(del => (
+              <DeliverableCard
+                key={del.id}
+                item={del}
+                inCart={isInCart(del.id)}
+                onAdd={(id) => {
+                  // Remove other deliverables first
+                  deliverables.forEach(d => {
+                    if (d.id !== id && isInCart(d.id)) {
+                      removeFromCart(d.id);
+                    }
+                  });
+                  addToCart(id);
+                }}
+                onRemove={removeFromCart}
+              />
+            ))}
+          </div>
+        </section>
+
+        {cart.length > 0 && (
+          <div className="fixed bottom-6 right-6 bg-zinc-900 rounded-xl p-4 border border-zinc-800 shadow-2xl">
+            <div className="flex items-center gap-4">
+              <div>
+                <p className="text-xs text-zinc-500 mb-1">{cart.length} items</p>
+                <p className="text-lg font-bold text-white">${calculateTotal().phase1Total.toLocaleString()}</p>
+              </div>
+              <button
+                onClick={() => setViewMode('cart')}
+                className="px-6 py-3 bg-orange-500 text-white rounded-lg hover:bg-orange-600 font-semibold"
+              >
+                View Cart
+              </button>
+            </div>
+          </div>
+        )}
+      </div>
+    </div>
+  );
+}

@@ -1,15 +1,10 @@
-import { cookies } from 'next/headers';
-import { redirect } from 'next/navigation';
-import { getIronSession } from 'iron-session';
-import { getSessionOptions, SessionData } from '@/lib/session';
-import TradeblockDeck from '@/components/TradeblockDeck';
+import LandingPage from '@/components/landing/LandingPage';
 
-export default async function Home() {
-  const session = await getIronSession<SessionData>(await cookies(), getSessionOptions());
-
-  if (!session.isLoggedIn) {
-    redirect('/login');
-  }
-
-  return <TradeblockDeck />;
+export default function Home() {
+  return <LandingPage />;
 }
+
+export const metadata = {
+  title: '33 Strategies',
+  description: 'Premium strategy presentations and consulting proposals',
+};

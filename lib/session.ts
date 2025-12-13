@@ -2,10 +2,12 @@ import { SessionOptions } from 'iron-session';
 
 export interface SessionData {
   isLoggedIn: boolean;
+  clientId?: string; // Which client portal is authenticated
 }
 
 export const defaultSession: SessionData = {
   isLoggedIn: false,
+  clientId: undefined,
 };
 
 export function getSessionOptions(): SessionOptions {
@@ -19,7 +21,7 @@ export function getSessionOptions(): SessionOptions {
 
   return {
     password: secret,
-    cookieName: 'tradeblock-deck-session',
+    cookieName: '33strategies-session',
     cookieOptions: {
       secure: process.env.NODE_ENV === 'production',
       httpOnly: true,
@@ -27,4 +29,15 @@ export function getSessionOptions(): SessionOptions {
       maxAge: 60 * 60 * 24 * 7, // 7 days
     },
   };
+}
+
+/**
+ * Check if session is valid for a specific client
+ */
+export function isSessionValidForClient(
+  session: SessionData,
+  clientId: string
+): boolean {
+  // Case-insensitive comparison - session stores lowercase clientId
+  return session.isLoggedIn === true && session.clientId === clientId.toLowerCase();
 }

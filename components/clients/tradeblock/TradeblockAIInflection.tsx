@@ -268,7 +268,7 @@ const AnalyticsCard = ({ title, value, subtitle, color = 'zinc', delay = 0 }: An
 };
 
 // Main component
-export default function TradeblockDeck() {
+export default function TradeblockAIInflection() {
   const [activeSection, setActiveSection] = useState('title');
 
   const sections = [
@@ -1292,15 +1292,13 @@ export default function TradeblockDeck() {
               <p className="text-zinc-400 mb-6">I&apos;ll walk through the AI engine, show TradeblockGPT in action, and answer any questions.</p>
 
               <a
-                href="REPLACE_WITH_CALENDAR_LINK"
-                target="_blank"
-                rel="noopener noreferrer"
+                href="mailto:hello@33strategies.ai?subject=Tradeblock%20Demo%20Request&body=I'd%20like%20to%20schedule%20a%20demo%20of%20the%20AI%20engine."
                 className="inline-flex items-center gap-3 bg-amber-500 hover:bg-amber-400 text-black font-bold px-8 py-4 rounded-xl transition-all duration-200 hover:scale-105"
               >
                 <svg className="w-5 h-5" viewBox="0 0 24 24" fill="currentColor">
                   <path d="M19 4h-1V2h-2v2H8V2H6v2H5c-1.11 0-1.99.9-1.99 2L3 20c0 1.1.89 2 2 2h14c1.1 0 2-.9 2-2V6c0-1.1-.9-2-2-2zm0 16H5V9h14v11zM9 11H7v2h2v-2zm4 0h-2v2h2v-2zm4 0h-2v2h2v-2zm-8 4H7v2h2v-2zm4 0h-2v2h2v-2zm4 0h-2v2h2v-2z"/>
                 </svg>
-                Add to Calendar
+                Schedule Demo
               </a>
             </div>
           </RevealText>

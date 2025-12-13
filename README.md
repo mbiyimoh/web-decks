@@ -1,15 +1,23 @@
 # Web Decks
 
-Password-protected investor presentation decks built with Next.js 14.
+Password-protected client portals for investor presentations and proposals, built with Next.js 14.
 
 **Live:** https://web-decks-production.up.railway.app
 
 ## Features
 
+- Client portal system with per-client password protection
 - Full-screen scrollable presentations with smooth Framer Motion animations
-- Password protection using iron-session (7-day sessions)
+- Session management using iron-session (7-day sessions)
 - Responsive design with Tailwind CSS
 - Deployed on Railway with health checks
+
+## Client Portal Architecture
+
+Each client gets their own password-protected portal:
+
+- `/client-portals/tradeblock` - Tradeblock portal (AI Inflection deck)
+- `/client-portals/plya` - PLYA portal (Project proposal)
 
 ## Local Development
 
@@ -25,7 +33,8 @@ Password-protected investor presentation decks built with Next.js 14.
 
 3. Edit `.env.local` with your values:
    ```
-   DECK_PASSWORD=your_password
+   TRADEBLOCK_PASSWORD=your_tradeblock_password
+   PLYA_PASSWORD=your_plya_password
    SESSION_SECRET=your_64_char_hex_secret
    ```
 
@@ -49,7 +58,8 @@ Password-protected investor presentation decks built with Next.js 14.
 2. Create new project in [Railway](https://railway.app)
 3. Connect your GitHub repository
 4. Set environment variables:
-   - `DECK_PASSWORD` - Password for deck access
+   - `TRADEBLOCK_PASSWORD` - Password for Tradeblock portal
+   - `PLYA_PASSWORD` - Password for PLYA portal
    - `SESSION_SECRET` - 64-character hex secret
 
 ### Critical Configuration
@@ -88,26 +98,32 @@ If you see 502 errors but logs show "Ready":
 web-decks/
 ├── app/
 │   ├── api/
-│   │   ├── auth/       # Login/logout/session API
-│   │   └── health/     # Railway health check
-│   ├── login/          # Login page
-│   ├── layout.tsx      # Root layout with fonts
-│   └── page.tsx        # Main deck (requires auth)
+│   │   ├── auth/[client]/  # Per-client auth API
+│   │   └── health/         # Railway health check
+│   ├── client-portals/
+│   │   ├── [client]/       # Client portal pages
+│   │   └── [client]/[slug] # Content pages
+│   ├── layout.tsx          # Root layout with fonts
+│   └── page.tsx            # Landing page
 ├── components/
-│   └── TradeblockDeck.tsx  # Full presentation component
+│   ├── clients/            # Client-specific content
+│   │   ├── tradeblock/     # Tradeblock presentations
+│   │   └── plya/           # PLYA proposals
+│   ├── landing/            # Landing page components
+│   └── portal/             # Portal UI (PasswordGate, ContentIndex)
 ├── lib/
-│   └── session.ts      # iron-session configuration
-├── styles/
-│   └── globals.css     # Tailwind + global styles
-├── middleware.ts       # Auth check (Edge-compatible)
-└── railway.toml        # Railway deployment config
+│   ├── clients.ts          # Client registry
+│   └── session.ts          # iron-session configuration
+├── middleware.ts           # Security headers
+└── railway.toml            # Railway deployment config
 ```
 
 ## Key Files
 
 | File | Purpose |
 |------|---------|
+| `lib/clients.ts` | Client registry with content definitions |
+| `lib/session.ts` | Session options with per-client validation |
+| `app/api/auth/[client]/route.ts` | Per-client authentication |
+| `components/portal/PasswordGate.tsx` | Inline password form |
 | `railway.toml` | Railway deployment configuration |
-| `middleware.ts` | Redirects unauthenticated users (Edge Runtime compatible) |
-| `lib/session.ts` | Session options with env validation |
-| `app/api/health/route.ts` | Health check for Railway |
