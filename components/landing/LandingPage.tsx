@@ -2,6 +2,10 @@
 
 import { motion } from 'framer-motion';
 
+// Brand colors
+const GOLD = '#d4a54a';
+const GOLD_GLOW = 'rgba(212,165,74,0.3)';
+
 // Geometric animation component - concentric rotating rings
 function GeometricAnimation() {
   const rings = [
@@ -19,7 +23,7 @@ function GeometricAnimation() {
         {rings.map((ring, ringIndex) => (
           <motion.g
             key={ringIndex}
-            style={{ originX: '200px', originY: '200px' }}
+            style={{ transformOrigin: '200px 200px' }}
             animate={{ rotate: 360 * ring.direction }}
             transition={{
               duration: ring.duration,
@@ -47,7 +51,7 @@ function GeometricAnimation() {
                   cx={x}
                   cy={y}
                   r={dotIndex % 4 === 0 ? 3 : 1.5}
-                  fill={dotIndex % 4 === 0 ? 'rgba(245,158,11,0.4)' : 'rgba(255,255,255,0.15)'}
+                  fill={dotIndex % 4 === 0 ? GOLD_GLOW : 'rgba(255,255,255,0.15)'}
                 />
               );
             })}
@@ -62,8 +66,8 @@ function GeometricAnimation() {
         />
         <defs>
           <radialGradient id="centerGlow" cx="50%" cy="50%" r="50%">
-            <stop offset="0%" stopColor="rgba(245,158,11,0.1)" />
-            <stop offset="100%" stopColor="rgba(245,158,11,0)" />
+            <stop offset="0%" stopColor={GOLD_GLOW} />
+            <stop offset="100%" stopColor="rgba(212,165,74,0)" />
           </radialGradient>
         </defs>
       </svg>
@@ -73,7 +77,7 @@ function GeometricAnimation() {
 
 export default function LandingPage() {
   return (
-    <div className="min-h-screen bg-black text-white flex flex-col items-center justify-center px-6 relative overflow-hidden">
+    <div className="min-h-screen bg-[#0a0a0f] text-white flex flex-col items-center justify-center px-6 relative overflow-hidden">
       {/* Geometric background animation */}
       <GeometricAnimation />
 
@@ -86,10 +90,13 @@ export default function LandingPage() {
           transition={{ duration: 0.8, ease: [0.25, 0.4, 0.25, 1] }}
           className="mb-6"
         >
-          <span className="text-7xl md:text-9xl font-bold font-display tracking-tight">
+          <span
+            className="text-7xl md:text-9xl font-display tracking-tight"
+            style={{ color: GOLD }}
+          >
             33
           </span>
-          <p className="text-zinc-400 uppercase tracking-[0.4em] text-sm md:text-base mt-2">
+          <p className="text-zinc-400 uppercase tracking-[0.4em] text-sm md:text-base mt-2 font-mono">
             Strategies
           </p>
         </motion.div>
@@ -99,7 +106,7 @@ export default function LandingPage() {
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.8, delay: 0.2, ease: [0.25, 0.4, 0.25, 1] }}
-          className="text-xl md:text-2xl text-zinc-300 leading-relaxed mb-12 font-light"
+          className="text-xl md:text-2xl text-zinc-300 leading-relaxed mb-12 font-body"
         >
           Build brilliant things with brilliant people.
         </motion.p>
@@ -111,8 +118,14 @@ export default function LandingPage() {
           transition={{ duration: 0.6, delay: 0.4, ease: [0.25, 0.4, 0.25, 1] }}
           className="inline-block"
         >
-          <div className="px-6 py-3 bg-zinc-900/80 border border-zinc-800 rounded-full backdrop-blur-sm">
-            <span className="text-amber-500 font-medium tracking-wide">
+          <div
+            className="px-6 py-3 bg-zinc-900/80 rounded-full backdrop-blur-sm"
+            style={{ border: `1px solid ${GOLD}40` }}
+          >
+            <span
+              className="font-medium tracking-wide font-mono text-sm"
+              style={{ color: GOLD }}
+            >
               Coming Soon
             </span>
           </div>
@@ -127,7 +140,7 @@ export default function LandingPage() {
         >
           <a
             href="mailto:whatsgood@33strategies.ai"
-            className="text-zinc-500 hover:text-zinc-300 text-sm transition-colors"
+            className="text-zinc-500 hover:text-zinc-300 text-sm transition-colors font-body"
           >
             whatsgood@33strategies.ai
           </a>
@@ -139,7 +152,7 @@ export default function LandingPage() {
         initial={{ opacity: 0 }}
         animate={{ opacity: 1 }}
         transition={{ delay: 0.8, duration: 0.8 }}
-        className="absolute bottom-8 text-zinc-700 text-xs"
+        className="absolute bottom-8 text-zinc-700 text-xs font-body"
       >
         &copy; 2025 33 Strategies
       </motion.p>
