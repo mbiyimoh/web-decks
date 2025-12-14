@@ -53,8 +53,22 @@ export async function generateMetadata({ params }: Props) {
     return { title: 'Portal Not Found' };
   }
 
+  const title = `${client.name} Portal | 33 Strategies`;
+  const description = `Access your ${client.name} strategy materials, proposals, and deliverables.`;
+
   return {
-    title: `${client.name} Portal | 33 Strategies`,
-    description: `Access your ${client.name} materials`,
+    title,
+    description,
+    openGraph: {
+      title,
+      description,
+      siteName: '33 Strategies',
+      type: 'website',
+    },
+    twitter: {
+      card: 'summary_large_image',
+      title,
+      description,
+    },
   };
 }
