@@ -80,7 +80,7 @@ export default async function Image() {
           >
             <span
               style={{
-                fontSize: '96px',
+                fontSize: '72px',
                 fontFamily: 'Georgia, serif',
                 color: GOLD,
                 lineHeight: 1,
@@ -91,7 +91,7 @@ export default async function Image() {
             </span>
             <span
               style={{
-                fontSize: '18px',
+                fontSize: '28px',
                 fontFamily: 'monospace',
                 color: TEXT_MUTED,
                 letterSpacing: '0.3em',
@@ -102,32 +102,47 @@ export default async function Image() {
             </span>
           </div>
 
-          {/* Tagline */}
+          {/* Tagline - two lines */}
           <div
             style={{
-              fontSize: '32px',
-              fontFamily: 'Georgia, serif',
-              color: TEXT_PRIMARY,
-              textAlign: 'center',
-              maxWidth: '800px',
-              lineHeight: 1.3,
               display: 'flex',
-              flexWrap: 'wrap',
-              justifyContent: 'center',
+              flexDirection: 'column',
+              alignItems: 'center',
               gap: '8px',
             }}
           >
-            <span>Build</span>
-            <span style={{ color: GOLD }}>brilliant</span>
-            <span>things with</span>
-            <span style={{ color: GOLD }}>brilliant</span>
-            <span>people</span>
+            <div
+              style={{
+                fontSize: '48px',
+                fontFamily: 'Georgia, serif',
+                color: TEXT_PRIMARY,
+                display: 'flex',
+                gap: '12px',
+              }}
+            >
+              <span>Build</span>
+              <span style={{ color: GOLD }}>brilliant</span>
+              <span>things</span>
+            </div>
+            <div
+              style={{
+                fontSize: '48px',
+                fontFamily: 'Georgia, serif',
+                color: TEXT_PRIMARY,
+                display: 'flex',
+                gap: '12px',
+              }}
+            >
+              <span>with</span>
+              <span style={{ color: GOLD }}>brilliant</span>
+              <span>people</span>
+            </div>
           </div>
 
           {/* Subtitle */}
           <span
             style={{
-              fontSize: '15px',
+              fontSize: '28px',
               color: TEXT_DIM,
               letterSpacing: '0.1em',
             }}
@@ -143,20 +158,20 @@ export default async function Image() {
             bottom: '60px',
             display: 'flex',
             alignItems: 'center',
-            gap: '10px',
+            gap: '12px',
           }}
         >
           <div
             style={{
-              width: '6px',
-              height: '6px',
+              width: '10px',
+              height: '10px',
               borderRadius: '50%',
               backgroundColor: GOLD,
             }}
           />
           <span
             style={{
-              fontSize: '15px',
+              fontSize: '28px',
               color: TEXT_DIM,
             }}
           >

@@ -83,7 +83,7 @@ export default async function Image({ params }: { params: { client: string } }) 
           </span>
           <span
             style={{
-              fontSize: '13px',
+              fontSize: '20px',
               fontFamily: 'monospace',
               color: TEXT_MUTED,
               letterSpacing: '0.25em',
@@ -99,12 +99,12 @@ export default async function Image({ params }: { params: { client: string } }) 
           style={{
             display: 'flex',
             flexDirection: 'column',
-            gap: '20px',
+            gap: '24px',
           }}
         >
           <span
             style={{
-              fontSize: '13px',
+              fontSize: '26px',
               fontFamily: 'monospace',
               color: GOLD,
               letterSpacing: '0.25em',
@@ -115,7 +115,7 @@ export default async function Image({ params }: { params: { client: string } }) 
           </span>
           <span
             style={{
-              fontSize: '80px',
+              fontSize: '120px',
               fontFamily: 'Georgia, serif',
               color: TEXT_PRIMARY,
               lineHeight: 1.0,
@@ -130,20 +130,20 @@ export default async function Image({ params }: { params: { client: string } }) 
           style={{
             display: 'flex',
             alignItems: 'center',
-            gap: '10px',
+            gap: '12px',
           }}
         >
           <div
             style={{
-              width: '6px',
-              height: '6px',
+              width: '10px',
+              height: '10px',
               borderRadius: '50%',
               backgroundColor: GOLD,
             }}
           />
           <span
             style={{
-              fontSize: '15px',
+              fontSize: '28px',
               color: TEXT_DIM,
             }}
           >
