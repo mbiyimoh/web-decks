@@ -1095,11 +1095,16 @@ export default function PLYAProposal(): JSX.Element {
   const [includeTrackB, setIncludeTrackB] = useState<boolean>(false);
   const [equitySlider, setEquitySlider] = useState<number>(0);
 
-  // Read initial hash on mount
+  // Read initial hash on mount and normalize URL
   useEffect(() => {
     const hash = window.location.hash || '';
     const initialMode = HASH_MAP[hash] || 'intro';
     setViewMode(initialMode);
+
+    // Ensure URL always shows the hash (e.g., #intro even on first load)
+    if (hash !== MODE_TO_HASH[initialMode]) {
+      window.history.replaceState(null, '', MODE_TO_HASH[initialMode]);
+    }
 
     // Listen for hash changes (browser back/forward)
     const handleHashChange = () => {
