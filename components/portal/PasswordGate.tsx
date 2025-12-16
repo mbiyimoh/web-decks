@@ -4,6 +4,10 @@ import { useState, FormEvent } from 'react';
 import { useRouter } from 'next/navigation';
 import { motion } from 'framer-motion';
 
+// Brand constants
+const GOLD = '#d4a54a';
+const BG_PRIMARY = '#0a0a0f';
+
 interface PasswordGateProps {
   clientId: string;
   clientName: string;
@@ -41,7 +45,10 @@ export default function PasswordGate({ clientId, clientName }: PasswordGateProps
   };
 
   return (
-    <div className="min-h-screen bg-black flex items-center justify-center px-6">
+    <div
+      className="min-h-screen flex items-center justify-center px-6"
+      style={{ background: BG_PRIMARY }}
+    >
       <motion.div
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
@@ -49,10 +56,13 @@ export default function PasswordGate({ clientId, clientName }: PasswordGateProps
         className="w-full max-w-sm"
       >
         <div className="text-center mb-8">
-          <p className="text-zinc-500 uppercase tracking-[0.2em] text-xs mb-2">
+          <p
+            className="uppercase tracking-[0.2em] text-xs mb-3 font-mono"
+            style={{ color: GOLD }}
+          >
             Client Portal
           </p>
-          <h1 className="text-3xl font-bold text-white font-display">
+          <h1 className="text-3xl md:text-4xl text-white font-display">
             {clientName}
           </h1>
         </div>
@@ -64,7 +74,17 @@ export default function PasswordGate({ clientId, clientName }: PasswordGateProps
               value={password}
               onChange={(e) => setPassword(e.target.value)}
               placeholder="Enter password"
-              className="w-full px-4 py-3 bg-zinc-900 border border-zinc-800 rounded-xl text-white placeholder-zinc-500 focus:outline-none focus:border-zinc-600 transition-colors"
+              className="w-full px-4 py-3 rounded-xl text-white font-body focus:outline-none transition-colors"
+              style={{
+                background: 'rgba(255, 255, 255, 0.03)',
+                border: '1px solid rgba(255, 255, 255, 0.08)',
+              }}
+              onFocus={(e) => {
+                e.target.style.borderColor = GOLD;
+              }}
+              onBlur={(e) => {
+                e.target.style.borderColor = 'rgba(255, 255, 255, 0.08)';
+              }}
               disabled={loading}
               autoFocus
             />
@@ -74,7 +94,7 @@ export default function PasswordGate({ clientId, clientName }: PasswordGateProps
             <motion.p
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
-              className="text-red-400 text-sm text-center"
+              className="text-red-400 text-sm text-center font-body"
             >
               {error}
             </motion.p>
@@ -83,14 +103,18 @@ export default function PasswordGate({ clientId, clientName }: PasswordGateProps
           <button
             type="submit"
             disabled={loading || !password}
-            className="w-full px-4 py-3 bg-white text-black font-medium rounded-xl hover:bg-zinc-200 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+            className="w-full px-4 py-3 font-medium font-body rounded-xl transition-all disabled:opacity-50 disabled:cursor-not-allowed"
+            style={{
+              background: GOLD,
+              color: BG_PRIMARY,
+            }}
           >
             {loading ? 'Verifying...' : 'Access Portal'}
           </button>
         </form>
 
-        <p className="text-center text-zinc-600 text-xs mt-8">
-          33 Strategies
+        <p className="text-center text-sm mt-8 font-body" style={{ color: '#555' }}>
+          <span className="font-display" style={{ color: GOLD }}>33</span> Strategies
         </p>
       </motion.div>
     </div>
