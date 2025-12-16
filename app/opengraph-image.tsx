@@ -1,9 +1,8 @@
 import { ImageResponse } from 'next/og';
-import { getClient } from '@/lib/clients';
 
 // Image metadata
 export const runtime = 'edge';
-export const alt = 'Client Portal - 33 Strategies';
+export const alt = '33 Strategies - Build brilliant things with brilliant people';
 export const size = {
   width: 1200,
   height: 630,
@@ -17,10 +16,7 @@ const TEXT_PRIMARY = '#f5f5f5';
 const TEXT_MUTED = '#71717a';
 const TEXT_DIM = '#52525b';
 
-export default async function Image({ params }: { params: { client: string } }) {
-  const client = getClient(params.client);
-  const clientName = client?.name || 'Client Portal';
-
+export default async function Image() {
   // Load fonts
   const instrumentSerifData = await fetch(
     new URL('https://fonts.gstatic.com/s/instrumentserif/v4/jizBRFtNs2ka5fXjeivQ4LroWlx-2zIZj1bIkNo.woff2')
@@ -42,104 +38,115 @@ export default async function Image({ params }: { params: { client: string } }) 
           width: '100%',
           display: 'flex',
           flexDirection: 'column',
-          alignItems: 'flex-start',
-          justifyContent: 'space-between',
+          alignItems: 'center',
+          justifyContent: 'center',
           backgroundColor: BG_PRIMARY,
           padding: '60px 80px',
           position: 'relative',
           overflow: 'hidden',
         }}
       >
-        {/* Background glow effect - top right */}
+        {/* Background glow effect - centered */}
+        <div
+          style={{
+            position: 'absolute',
+            top: '50%',
+            left: '50%',
+            transform: 'translate(-50%, -50%)',
+            width: '800px',
+            height: '800px',
+            borderRadius: '50%',
+            background: `radial-gradient(circle, ${GOLD}12 0%, transparent 50%)`,
+          }}
+        />
+
+        {/* Secondary glow - top right */}
         <div
           style={{
             position: 'absolute',
             top: '-150px',
             right: '-150px',
-            width: '600px',
-            height: '600px',
+            width: '500px',
+            height: '500px',
             borderRadius: '50%',
-            background: `radial-gradient(circle, ${GOLD}15 0%, transparent 60%)`,
+            background: `radial-gradient(circle, ${GOLD}10 0%, transparent 60%)`,
           }}
         />
 
-        {/* Subtle bottom-left glow */}
-        <div
-          style={{
-            position: 'absolute',
-            bottom: '-200px',
-            left: '-100px',
-            width: '400px',
-            height: '400px',
-            borderRadius: '50%',
-            background: `radial-gradient(circle, ${GOLD}08 0%, transparent 70%)`,
-          }}
-        />
-
-        {/* Top section - 33 Strategies branding */}
-        <div
-          style={{
-            display: 'flex',
-            alignItems: 'center',
-            gap: '16px',
-          }}
-        >
-          <span
-            style={{
-              fontSize: '48px',
-              fontFamily: 'Instrument Serif',
-              color: GOLD,
-            }}
-          >
-            33
-          </span>
-          <span
-            style={{
-              fontSize: '13px',
-              fontFamily: 'JetBrains Mono',
-              color: TEXT_MUTED,
-              letterSpacing: '0.25em',
-              textTransform: 'uppercase',
-            }}
-          >
-            Strategies
-          </span>
-        </div>
-
-        {/* Middle section - Client name */}
+        {/* Main content - centered */}
         <div
           style={{
             display: 'flex',
             flexDirection: 'column',
-            gap: '20px',
+            alignItems: 'center',
+            gap: '32px',
+            zIndex: 10,
           }}
         >
-          <span
+          {/* 33 Strategies brand mark */}
+          <div
             style={{
-              fontSize: '13px',
-              fontFamily: 'JetBrains Mono',
-              color: GOLD,
-              letterSpacing: '0.25em',
-              textTransform: 'uppercase',
+              display: 'flex',
+              alignItems: 'center',
+              gap: '20px',
             }}
           >
-            Client Portal
-          </span>
+            <span
+              style={{
+                fontSize: '96px',
+                fontFamily: 'Instrument Serif',
+                color: GOLD,
+                lineHeight: 1,
+              }}
+            >
+              33
+            </span>
+            <span
+              style={{
+                fontSize: '18px',
+                fontFamily: 'JetBrains Mono',
+                color: TEXT_MUTED,
+                letterSpacing: '0.3em',
+                textTransform: 'uppercase',
+              }}
+            >
+              Strategies
+            </span>
+          </div>
+
+          {/* Tagline */}
           <span
             style={{
-              fontSize: '80px',
+              fontSize: '32px',
               fontFamily: 'Instrument Serif',
               color: TEXT_PRIMARY,
-              lineHeight: 1.0,
+              textAlign: 'center',
+              maxWidth: '800px',
+              lineHeight: 1.3,
             }}
           >
-            {clientName}
+            Build <span style={{ color: GOLD }}>brilliant</span> things with{' '}
+            <span style={{ color: GOLD }}>brilliant</span> people
+          </span>
+
+          {/* Subtitle */}
+          <span
+            style={{
+              fontSize: '15px',
+              fontFamily: 'DM Sans',
+              color: TEXT_DIM,
+              letterSpacing: '0.1em',
+            }}
+          >
+            AI Strategy & Product Development
           </span>
         </div>
 
         {/* Bottom section - Domain */}
         <div
           style={{
+            position: 'absolute',
+            bottom: '60px',
             display: 'flex',
             alignItems: 'center',
             gap: '10px',
@@ -172,7 +179,7 @@ export default async function Image({ params }: { params: { client: string } }) 
             left: '0',
             right: '0',
             height: '4px',
-            background: `linear-gradient(90deg, ${GOLD}, ${GOLD}40, transparent)`,
+            background: `linear-gradient(90deg, transparent, ${GOLD}60, ${GOLD}, ${GOLD}60, transparent)`,
           }}
         />
       </div>
