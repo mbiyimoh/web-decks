@@ -20,19 +20,6 @@ export default async function Image({ params }: { params: { client: string } }) 
   const client = getClient(params.client);
   const clientName = client?.name || 'Client Portal';
 
-  // Load fonts
-  const instrumentSerifData = await fetch(
-    new URL('https://fonts.gstatic.com/s/instrumentserif/v4/jizBRFtNs2ka5fXjeivQ4LroWlx-2zIZj1bIkNo.woff2')
-  ).then((res) => res.arrayBuffer());
-
-  const dmSansData = await fetch(
-    new URL('https://fonts.gstatic.com/s/dmsans/v14/rP2Hp2ywxg089UriCZOIHTWEBlw.woff2')
-  ).then((res) => res.arrayBuffer());
-
-  const jetbrainsMonoData = await fetch(
-    new URL('https://fonts.gstatic.com/s/jetbrainsmono/v18/tDbY2o-flEEny0FZhsfKu5WU4zr3E_BX0PnT8RD8yKxjPVmUsaaDhw.woff2')
-  ).then((res) => res.arrayBuffer());
-
   return new ImageResponse(
     (
       <div
@@ -47,6 +34,7 @@ export default async function Image({ params }: { params: { client: string } }) 
           padding: '60px 80px',
           position: 'relative',
           overflow: 'hidden',
+          fontFamily: 'system-ui, -apple-system, sans-serif',
         }}
       >
         {/* Background glow effect - top right */}
@@ -86,7 +74,8 @@ export default async function Image({ params }: { params: { client: string } }) 
           <span
             style={{
               fontSize: '48px',
-              fontFamily: 'Instrument Serif',
+              fontFamily: 'Georgia, serif',
+              fontStyle: 'italic',
               color: GOLD,
             }}
           >
@@ -95,7 +84,7 @@ export default async function Image({ params }: { params: { client: string } }) 
           <span
             style={{
               fontSize: '13px',
-              fontFamily: 'JetBrains Mono',
+              fontFamily: 'monospace',
               color: TEXT_MUTED,
               letterSpacing: '0.25em',
               textTransform: 'uppercase',
@@ -116,7 +105,7 @@ export default async function Image({ params }: { params: { client: string } }) 
           <span
             style={{
               fontSize: '13px',
-              fontFamily: 'JetBrains Mono',
+              fontFamily: 'monospace',
               color: GOLD,
               letterSpacing: '0.25em',
               textTransform: 'uppercase',
@@ -127,7 +116,7 @@ export default async function Image({ params }: { params: { client: string } }) 
           <span
             style={{
               fontSize: '80px',
-              fontFamily: 'Instrument Serif',
+              fontFamily: 'Georgia, serif',
               color: TEXT_PRIMARY,
               lineHeight: 1.0,
             }}
@@ -155,7 +144,6 @@ export default async function Image({ params }: { params: { client: string } }) 
           <span
             style={{
               fontSize: '15px',
-              fontFamily: 'DM Sans',
               color: TEXT_DIM,
             }}
           >
@@ -178,26 +166,6 @@ export default async function Image({ params }: { params: { client: string } }) 
     ),
     {
       ...size,
-      fonts: [
-        {
-          name: 'Instrument Serif',
-          data: instrumentSerifData,
-          style: 'normal',
-          weight: 400,
-        },
-        {
-          name: 'DM Sans',
-          data: dmSansData,
-          style: 'normal',
-          weight: 400,
-        },
-        {
-          name: 'JetBrains Mono',
-          data: jetbrainsMonoData,
-          style: 'normal',
-          weight: 400,
-        },
-      ],
     }
   );
 }

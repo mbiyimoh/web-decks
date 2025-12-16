@@ -16,19 +16,6 @@ const TEXT_MUTED = '#71717a';
 const TEXT_DIM = '#52525b';
 
 export default async function Image() {
-  // Load fonts
-  const instrumentSerifData = await fetch(
-    new URL('https://fonts.gstatic.com/s/instrumentserif/v4/jizBRFtNs2ka5fXjeivQ4LroWlx-2zIZj1bIkNo.woff2')
-  ).then((res) => res.arrayBuffer());
-
-  const dmSansData = await fetch(
-    new URL('https://fonts.gstatic.com/s/dmsans/v14/rP2Hp2ywxg089UriCZOIHTWEBlw.woff2')
-  ).then((res) => res.arrayBuffer());
-
-  const jetbrainsMonoData = await fetch(
-    new URL('https://fonts.gstatic.com/s/jetbrainsmono/v18/tDbY2o-flEEny0FZhsfKu5WU4zr3E_BX0PnT8RD8yKxjPVmUsaaDhw.woff2')
-  ).then((res) => res.arrayBuffer());
-
   return new ImageResponse(
     (
       <div
@@ -43,6 +30,7 @@ export default async function Image() {
           padding: '60px 80px',
           position: 'relative',
           overflow: 'hidden',
+          fontFamily: 'system-ui, -apple-system, sans-serif',
         }}
       >
         {/* Background glow effect - centered */}
@@ -93,9 +81,10 @@ export default async function Image() {
             <span
               style={{
                 fontSize: '96px',
-                fontFamily: 'Instrument Serif',
+                fontFamily: 'Georgia, serif',
                 color: GOLD,
                 lineHeight: 1,
+                fontStyle: 'italic',
               }}
             >
               33
@@ -103,7 +92,7 @@ export default async function Image() {
             <span
               style={{
                 fontSize: '18px',
-                fontFamily: 'JetBrains Mono',
+                fontFamily: 'monospace',
                 color: TEXT_MUTED,
                 letterSpacing: '0.3em',
                 textTransform: 'uppercase',
@@ -114,25 +103,31 @@ export default async function Image() {
           </div>
 
           {/* Tagline */}
-          <span
+          <div
             style={{
               fontSize: '32px',
-              fontFamily: 'Instrument Serif',
+              fontFamily: 'Georgia, serif',
               color: TEXT_PRIMARY,
               textAlign: 'center',
               maxWidth: '800px',
               lineHeight: 1.3,
+              display: 'flex',
+              flexWrap: 'wrap',
+              justifyContent: 'center',
+              gap: '8px',
             }}
           >
-            Build <span style={{ color: GOLD }}>brilliant</span> things with{' '}
-            <span style={{ color: GOLD }}>brilliant</span> people
-          </span>
+            <span>Build</span>
+            <span style={{ color: GOLD }}>brilliant</span>
+            <span>things with</span>
+            <span style={{ color: GOLD }}>brilliant</span>
+            <span>people</span>
+          </div>
 
           {/* Subtitle */}
           <span
             style={{
               fontSize: '15px',
-              fontFamily: 'DM Sans',
               color: TEXT_DIM,
               letterSpacing: '0.1em',
             }}
@@ -162,7 +157,6 @@ export default async function Image() {
           <span
             style={{
               fontSize: '15px',
-              fontFamily: 'DM Sans',
               color: TEXT_DIM,
             }}
           >
@@ -185,26 +179,6 @@ export default async function Image() {
     ),
     {
       ...size,
-      fonts: [
-        {
-          name: 'Instrument Serif',
-          data: instrumentSerifData,
-          style: 'normal',
-          weight: 400,
-        },
-        {
-          name: 'DM Sans',
-          data: dmSansData,
-          style: 'normal',
-          weight: 400,
-        },
-        {
-          name: 'JetBrains Mono',
-          data: jetbrainsMonoData,
-          style: 'normal',
-          weight: 400,
-        },
-      ],
     }
   );
 }
