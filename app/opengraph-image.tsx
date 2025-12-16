@@ -1,7 +1,6 @@
 import { ImageResponse } from 'next/og';
 
 // Image metadata
-export const runtime = 'edge';
 export const alt = '33 Strategies - Build brilliant things with brilliant people';
 export const size = {
   width: 1200,

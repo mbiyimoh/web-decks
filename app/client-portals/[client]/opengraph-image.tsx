@@ -1,8 +1,7 @@
 import { ImageResponse } from 'next/og';
 import { getClient } from '@/lib/clients';
 
-// Image metadata
-export const runtime = 'edge';
+// Image metadata - using Node.js runtime because lib/clients uses next/dynamic
 export const alt = 'Client Portal - 33 Strategies';
 export const size = {
   width: 1200,

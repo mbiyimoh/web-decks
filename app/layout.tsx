@@ -16,8 +16,11 @@ const jetbrainsMono = JetBrains_Mono({
 });
 
 export const metadata: Metadata = {
-  title: 'Tradeblock: The AI Inflection',
-  description: 'Investor pitch deck for Tradeblock AI transformation',
+  metadataBase: new URL(
+    process.env.NEXT_PUBLIC_BASE_URL || 'https://web-decks-production.up.railway.app'
+  ),
+  title: '33 Strategies',
+  description: 'Build brilliant things with brilliant people',
 };
 
 export default function RootLayout({
