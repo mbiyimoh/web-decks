@@ -1,902 +1,703 @@
 'use client';
 
-import React, { useState } from 'react';
+import React, { useState, useRef, useEffect, ReactNode, CSSProperties, ChangeEvent } from 'react';
+import { motion, useScroll, useTransform, useInView } from 'framer-motion';
 
-// TypeScript interfaces
-interface DetailItem {
-  type: 'deliverable' | 'meeting';
-  text: string;
-}
+// ============================================================================
+// CONSTANTS
+// ============================================================================
 
-interface ServiceItem {
-  id: string;
-  icon: React.FC;
-  title: string;
-  value: number;
-  description: string;
-  details?: DetailItem[];
-}
-
-interface DeliverableItem {
-  id: string;
-  icon: React.FC;
-  title: string;
-  description: string;
-  timeframe: string;
-  basePrice: number;
-}
-
-interface Phase2Options {
-  businessConsulting: boolean;
-  technicalSupport: boolean;
-}
-
-type CompanyStage = 'idea' | 'prototype' | 'revenue' | 'growth';
-
-// Brand colors
 const GOLD = '#d4a54a';
-const GOLD_GLOW = 'rgba(212,165,74,0.3)';
+const GOLD_DIM = 'rgba(212, 165, 74, 0.15)';
 const BG_PRIMARY = '#0a0a0f';
-const BG_ELEVATED = '#0d0d14';
+const BG_SURFACE = '#111114';
+const BG_ELEVATED = '#1a1a1f';
 
-// Icon components
-const Check = () => (
-  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-    <polyline points="20 6 9 17 4 12"></polyline>
-  </svg>
-);
+const FULL_ENGAGEMENT = 33000;
+const MAX_EQUITY_PERCENT = 3.3;
 
-const FileText = () => (
-  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5">
-    <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
-    <polyline points="14 2 14 8 20 8"></polyline>
-    <line x1="16" y1="13" x2="8" y2="13"></line>
-    <line x1="16" y1="17" x2="8" y2="17"></line>
-  </svg>
-);
+// Hash to viewMode mapping
+const HASH_MAP: Record<string, ViewMode> = {
+  '': 'intro',
+  '#': 'intro',
+  '#intro': 'intro',
+  '#proposal': 'proposal',
+  '#commitment': 'letsBeGreat',
+};
 
-const MessageCircle = () => (
-  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5">
-    <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"></path>
-  </svg>
-);
+const MODE_TO_HASH: Record<ViewMode, string> = {
+  intro: '#intro',
+  proposal: '#proposal',
+  letsBeGreat: '#commitment',
+};
 
-const Lightbulb = () => (
-  <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5">
-    <path d="M9 18h6"></path>
-    <path d="M10 22h4"></path>
-    <path d="M15.09 14c.18-.98.65-1.74 1.41-2.5A4.65 4.65 0 0 0 18 8 6 6 0 0 0 6 8c0 1 .23 2.23 1.5 3.5A4.61 4.61 0 0 1 8.91 14"></path>
-  </svg>
-);
+// ============================================================================
+// TYPE DEFINITIONS
+// ============================================================================
 
-const TrendingUp = () => (
-  <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5">
-    <polyline points="23 6 13.5 15.5 8.5 10.5 1 18"></polyline>
-    <polyline points="17 6 23 6 23 12"></polyline>
-  </svg>
-);
+type ViewMode = 'intro' | 'proposal' | 'letsBeGreat';
 
-const Users = () => (
-  <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5">
-    <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path>
-    <circle cx="9" cy="7" r="4"></circle>
-    <path d="M23 21v-2a4 4 0 0 0-3-3.87"></path>
-    <path d="M16 3.13a4 4 0 0 1 0 7.75"></path>
-  </svg>
-);
+interface Phase {
+  id: string;
+  number: number;
+  title: string;
+  tagline: string;
+  traditionalLow: number;
+  traditionalHigh: number;
+  price: number;
+  deliverables: string[];
+  walkAway: ReactNode;
+}
 
-const Brain = () => (
-  <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5">
-    <path d="M9.5 2A2.5 2.5 0 0 1 12 4.5v15a2.5 2.5 0 0 1-4.96.44 2.5 2.5 0 0 1-2.96-3.08 3 3 0 0 1-.34-5.58 2.5 2.5 0 0 1 1.32-4.24 2.5 2.5 0 0 1 1.98-3A2.5 2.5 0 0 1 9.5 2Z"></path>
-    <path d="M14.5 2A2.5 2.5 0 0 0 12 4.5v15a2.5 2.5 0 0 0 4.96.44 2.5 2.5 0 0 0 2.96-3.08 3 3 0 0 0 .34-5.58 2.5 2.5 0 0 0-1.32-4.24 2.5 2.5 0 0 0-1.98-3A2.5 2.5 0 0 0 14.5 2Z"></path>
-  </svg>
-);
+interface TrackB {
+  id: string;
+  title: string;
+  tagline: string;
+  traditionalLow: number;
+  traditionalHigh: number;
+  price: number;
+  deliverables: string[];
+}
 
-const MousePointer = () => (
-  <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5">
-    <path d="m3 3 7.07 16.97 2.51-7.39 7.39-2.51L3 3z"></path>
-  </svg>
-);
+interface BuildingIconProps {
+  phase: number;
+  size?: number;
+}
 
-const Rocket = () => (
-  <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5">
-    <path d="M4.5 16.5c-1.5 1.26-2 5-2 5s3.74-.5 5-2c.71-.84.7-2.13-.09-2.91a2.18 2.18 0 0 0-2.91-.09z"></path>
-    <path d="m12 15-3-3a22 22 0 0 1 2-3.95A12.88 12.88 0 0 1 22 2c0 2.72-.78 7.5-6 11a22.35 22.35 0 0 1-4 2z"></path>
-  </svg>
-);
+interface SectionProps {
+  children: ReactNode;
+  id: string;
+}
 
-const ShoppingCart = () => (
-  <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5">
-    <circle cx="9" cy="21" r="1"></circle>
-    <circle cx="20" cy="21" r="1"></circle>
-    <path d="M1 1h4l2.68 13.39a2 2 0 0 0 2 1.61h9.72a2 2 0 0 0 2-1.61L23 6H6"></path>
-  </svg>
-);
+interface RevealTextProps {
+  children: ReactNode;
+  delay?: number;
+}
 
-const ArrowLeft = () => (
-  <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5">
-    <line x1="19" y1="12" x2="5" y2="12"></line>
-    <polyline points="12 19 5 12 12 5"></polyline>
-  </svg>
-);
+interface ChildrenOnlyProps {
+  children: ReactNode;
+}
 
-const Trash = () => (
-  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5">
-    <polyline points="3 6 5 6 21 6"></polyline>
-    <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path>
-  </svg>
-);
+interface BodyTextProps {
+  children: ReactNode;
+  style?: CSSProperties;
+}
 
-const ChevronDown = () => (
-  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-    <polyline points="6 9 12 15 18 9"></polyline>
-  </svg>
-);
+interface IntroSlideshowProps {
+  onComplete: () => void;
+}
 
-const ChevronUp = () => (
-  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-    <polyline points="18 15 12 9 6 15"></polyline>
-  </svg>
-);
+interface PhaseCardProps {
+  phase: Phase;
+  isSelected: boolean;
+  isLocked: boolean;
+  onSelect: (phaseId: string, selecting: boolean) => void;
+}
 
-const Calendar = () => (
-  <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5">
-    <rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect>
-    <line x1="16" y1="2" x2="16" y2="6"></line>
-    <line x1="8" y1="2" x2="8" y2="6"></line>
-    <line x1="3" y1="10" x2="21" y2="10"></line>
-  </svg>
-);
+interface TrackBCardProps {
+  isSelected: boolean;
+  onToggle: () => void;
+}
 
-const Wrench = () => (
-  <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5">
-    <path d="M14.7 6.3a1 1 0 0 0 0 1.4l1.6 1.6a1 1 0 0 0 1.4 0l3.77-3.77a6 6 0 0 1-7.94 7.94l-6.91 6.91a2.12 2.12 0 0 1-3-3l6.91-6.91a6 6 0 0 1 7.94-7.94l-3.76 3.76z"></path>
-  </svg>
-);
+interface ProposalBuilderProps {
+  selectedPhases: string[];
+  setSelectedPhases: React.Dispatch<React.SetStateAction<string[]>>;
+  includeTrackB: boolean;
+  setIncludeTrackB: React.Dispatch<React.SetStateAction<boolean>>;
+  equitySlider: number;
+  setEquitySlider: React.Dispatch<React.SetStateAction<number>>;
+  onNext: () => void;
+}
 
-// Section label component per brand guidelines
-const SectionLabel = ({ number, title }: { number: string; title: string }) => (
-  <p
-    className="text-xs font-medium tracking-[0.2em] uppercase mb-4 font-mono"
-    style={{ color: GOLD }}
-  >
-    {number} — {title}
+interface WeNeedItem {
+  text: string;
+  detail: string;
+}
+
+interface PlyaCommitment {
+  number: number;
+  title: string;
+  detail: ReactNode;
+}
+
+// ============================================================================
+// DATA
+// ============================================================================
+
+const phases: Phase[] = [
+  {
+    id: 'foundation',
+    number: 1,
+    title: 'Foundation',
+    tagline: 'Design assets + prototype you own',
+    traditionalLow: 13000,
+    traditionalHigh: 31000,
+    price: 5000,
+    deliverables: [
+      'Product requirements document (PRD)',
+      'User stories & feature specs',
+      'User journey mapping',
+      'Wireframes',
+      'Visual design system',
+      'High-fidelity screen designs',
+      'Clickable prototype (handoff-ready)'
+    ],
+    walkAway: <>You have <strong style={{ color: '#fff', fontWeight: 600 }}>a complete design package you own outright</strong> — ready to hand to any developer or use to get accurate build quotes.</>,
+  },
+  {
+    id: 'frame',
+    number: 2,
+    title: 'Frame',
+    tagline: 'Working web app with core functionality',
+    traditionalLow: 18000,
+    traditionalHigh: 43000,
+    price: 12000,
+    deliverables: [
+      'User system (auth, profiles, database)',
+      'Content engine (import, storage, basic tagging)',
+      'Calendar/planning (manual plan building, daily view)',
+      'Frontend build (mobile-first web app)',
+      'QA, deployment, hosting setup'
+    ],
+    walkAway: <>You have <strong style={{ color: '#fff', fontWeight: 600 }}>a live app real users can sign up for</strong> — ready to start generating feedback and behavioral data.</>,
+  },
+  {
+    id: 'finish',
+    number: 3,
+    title: 'Finish',
+    tagline: 'The AI layer that makes it magic',
+    traditionalLow: 12000,
+    traditionalHigh: 28000,
+    price: 10000,
+    deliverables: [
+      'AI content tagging (muscle groups, intensity, duration, equipment)',
+      'AI coach chat (contextual responses, understands user profile)',
+      'Smart plan generation (AI builds plans based on goals)',
+      'Plan modification via chat'
+    ],
+    walkAway: <>You have <strong style={{ color: '#fff', fontWeight: 600 }}>the full PLYA vision realized</strong> — an AI-powered fitness experience that stands apart from everything else.</>,
+  }
+];
+
+const trackB: TrackB = {
+  id: 'strategy',
+  title: 'Strategy & Go-to-Market',
+  tagline: 'The foundation to talk about PLYA coherently',
+  traditionalLow: 9000,
+  traditionalHigh: 19000,
+  price: 6000,
+  deliverables: [
+    'Target persona refinement & documentation',
+    'Business plan & strategy deck (investor/partner-ready)',
+    'User feedback framework',
+    'Feedback synthesis & recommendations',
+    'Landing page / marketing website'
+  ],
+};
+
+// ============================================================================
+// UTILITY COMPONENTS
+// ============================================================================
+
+const BuildingIcon: React.FC<BuildingIconProps> = ({ phase, size = 48 }) => {
+  const color = GOLD;
+  return (
+    <svg width={size} height={size} viewBox="0 0 48 48" fill="none">
+      <rect x="6" y="38" width="36" height="4" fill={color} rx="1" />
+      {phase >= 2 && (
+        <>
+          <rect x="8" y="20" width="4" height="18" fill="none" stroke={color} strokeWidth={2} />
+          <rect x="36" y="20" width="4" height="18" fill="none" stroke={color} strokeWidth={2} />
+          <path d="M6 22 L24 8 L42 22" stroke={color} strokeWidth={2} fill="none" strokeLinecap="round" strokeLinejoin="round" />
+        </>
+      )}
+      {phase >= 3 && (
+        <>
+          <rect x="8" y="20" width="4" height="18" fill={color} />
+          <rect x="36" y="20" width="4" height="18" fill={color} />
+          <path d="M6 22 L24 8 L42 22 L24 14 Z" fill={color} />
+          <rect x="32" y="6" width="5" height="10" fill={color} />
+          <rect x="20" y="28" width="8" height="10" fill={BG_PRIMARY} rx="1" stroke={color} strokeWidth={1.5} />
+          <rect x="30" y="24" width="6" height="6" fill={BG_PRIMARY} rx="0.5" stroke={color} strokeWidth={1.5} />
+          <line x1="33" y1="24" x2="33" y2="30" stroke={color} strokeWidth={1} />
+          <line x1="30" y1="27" x2="36" y2="27" stroke={color} strokeWidth={1} />
+        </>
+      )}
+    </svg>
+  );
+};
+
+const ProgressBar: React.FC = () => {
+  const { scrollYProgress } = useScroll();
+  const scaleX = useTransform(scrollYProgress, [0, 1], [0, 1]);
+  return (
+    <motion.div
+      style={{
+        position: 'fixed', top: 0, left: 0, right: 0, height: 3,
+        background: GOLD, transformOrigin: 'left', zIndex: 100, scaleX
+      }}
+    />
+  );
+};
+
+const Section: React.FC<SectionProps> = ({ children, id }) => {
+  const ref = useRef<HTMLElement>(null);
+  const isInView = useInView(ref, { once: false, margin: "-20%" });
+  return (
+    <motion.section
+      ref={ref}
+      id={id}
+      initial={{ opacity: 0 }}
+      animate={isInView ? { opacity: 1 } : { opacity: 0 }}
+      transition={{ duration: 0.8, ease: "easeOut" }}
+      style={{
+        minHeight: '100vh', display: 'flex', flexDirection: 'column',
+        justifyContent: 'center', padding: '64px 24px', position: 'relative',
+      }}
+    >
+      {children}
+    </motion.section>
+  );
+};
+
+const RevealText: React.FC<RevealTextProps> = ({ children, delay = 0 }) => {
+  const ref = useRef<HTMLDivElement>(null);
+  const isInView = useInView(ref, { once: false, margin: "-10%" });
+  return (
+    <motion.div
+      ref={ref}
+      initial={{ opacity: 0, y: 40 }}
+      animate={isInView ? { opacity: 1, y: 0 } : { opacity: 0, y: 40 }}
+      transition={{ duration: 0.7, delay, ease: [0.25, 0.4, 0.25, 1] }}
+    >
+      {children}
+    </motion.div>
+  );
+};
+
+const SectionLabel: React.FC<ChildrenOnlyProps> = ({ children }) => (
+  <p className="font-mono" style={{ color: GOLD, fontSize: 12, fontWeight: 500, letterSpacing: '0.2em', textTransform: 'uppercase', marginBottom: 16 }}>
+    {children}
   </p>
 );
 
-// Glass card component per brand guidelines
-const GlassCard = ({ children, glow = false, className = '', style = {} }: { children: React.ReactNode; glow?: boolean; className?: string; style?: React.CSSProperties }) => (
-  <div
-    className={`rounded-xl border backdrop-blur-sm ${className}`}
-    style={{
-      background: 'rgba(255,255,255,0.03)',
-      borderColor: glow ? GOLD : 'rgba(255,255,255,0.08)',
-      boxShadow: glow ? `0 0 40px ${GOLD_GLOW}` : 'none',
-      ...style,
-    }}
-  >
+const Headline: React.FC<ChildrenOnlyProps> = ({ children }) => (
+  <h2 className="font-display" style={{ fontSize: 'clamp(32px, 6vw, 56px)', fontWeight: 400, lineHeight: 1.15, color: '#fff', marginBottom: 24 }}>
     {children}
-  </div>
+  </h2>
 );
 
-// Detail tile component - replaces long bullet lists
-const DetailTile = ({ icon: Icon, label, items, color }: {
-  icon: React.FC;
-  label: string;
-  items: string[];
-  color: string;
-}) => (
-  <div className="flex-1 min-w-0">
-    <div className="flex items-center gap-2 mb-3">
-      <div className={`${color}`}>
-        <Icon />
-      </div>
-      <span className="text-xs font-mono font-medium tracking-wide uppercase" style={{ color }}>{label}</span>
-    </div>
-    <div className="grid grid-cols-1 gap-2">
-      {items.map((item, idx) => (
-        <div key={idx} className="text-sm text-zinc-400 pl-0">
-          {item}
-        </div>
-      ))}
-    </div>
-  </div>
+const BodyText: React.FC<BodyTextProps> = ({ children, style = {} }) => (
+  <p className="font-body" style={{ fontSize: 18, lineHeight: 1.7, color: '#a3a3a3', maxWidth: 600, ...style }}>{children}</p>
 );
 
-// Service card with add to cart
-interface ServiceCardProps {
-  item: ServiceItem;
-  inCart: boolean;
-  onAdd: (id: string) => void;
-  onRemove: (id: string) => void;
-  phase: number;
-}
+// ============================================================================
+// INTRO SLIDESHOW
+// ============================================================================
 
-const ServiceCard = ({ item, inCart, onAdd, onRemove }: ServiceCardProps) => {
-  const [isOpen, setIsOpen] = useState(false);
-  const Icon = item.icon;
-  const price = item.value;
-
-  const deliverables = item.details?.filter(d => d.type === 'deliverable').map(d => d.text) || [];
-  const meetings = item.details?.filter(d => d.type === 'meeting').map(d => d.text) || [];
-
+const IntroSlideshow: React.FC<IntroSlideshowProps> = ({ onComplete }) => {
   return (
-    <GlassCard className="overflow-hidden">
-      <div className="p-6">
-        <div className="flex items-start gap-4">
-          <div
-            className="w-12 h-12 rounded-xl flex items-center justify-center flex-shrink-0"
-            style={{ background: 'rgba(212,165,74,0.15)' }}
-          >
-            <div style={{ color: GOLD }}><Icon /></div>
-          </div>
-          <div className="flex-1">
-            <div className="flex items-start justify-between gap-3 mb-2">
-              <h3 className="text-lg font-display text-white">{item.title}</h3>
-              <div className="text-right flex-shrink-0">
-                <div className="text-xl font-display" style={{ color: GOLD }}>${price.toLocaleString()}</div>
-              </div>
+    <div className="font-body" style={{ background: BG_PRIMARY, color: '#fff' }}>
+      <ProgressBar />
+
+      <Section id="where-you-are">
+        <div style={{ maxWidth: 800, margin: '0 auto' }}>
+          <RevealText><SectionLabel>Where You Are</SectionLabel></RevealText>
+          <RevealText delay={0.1}>
+            <Headline>We've started to build the <span style={{ color: GOLD }}>foundations</span>.</Headline>
+          </RevealText>
+          <RevealText delay={0.2}>
+            <BodyText>Together, we've worked through the product vision, mapped out user journeys, and built some initial prototypes that bring the PLYA concept to life.</BodyText>
+          </RevealText>
+          <RevealText delay={0.3}>
+            <div style={{ marginTop: 32, padding: 24, background: BG_SURFACE, borderRadius: 16, border: `1px solid ${GOLD_DIM}` }}>
+              <p className="font-body" style={{ fontSize: 14, color: '#737373', marginBottom: 8 }}>What this type of work typically costs:</p>
+              <p className="font-display" style={{ fontSize: 28, color: GOLD }}>$15K – $30K</p>
+              <p className="font-body" style={{ fontSize: 14, color: '#737373', marginTop: 8 }}>4-6 weeks at agencies and design firms</p>
             </div>
-            <p className="text-zinc-400 text-sm font-body">{item.description}</p>
+          </RevealText>
+        </div>
+      </Section>
+
+      <Section id="zero-to-one">
+        <div style={{ maxWidth: 800, margin: '0 auto' }}>
+          <RevealText><SectionLabel>Getting from Zero to One</SectionLabel></RevealText>
+          <RevealText delay={0.1}>
+            <Headline>You need a <span style={{ color: GOLD }}>real app</span> that real people can use.</Headline>
+          </RevealText>
+          <RevealText delay={0.2}>
+            <BodyText>The goal isn't perfection — it's learning. You need something in people's hands so you can start gathering feedback on what they love and what they don't, and collect data on how they're actually using it.</BodyText>
+          </RevealText>
+          <RevealText delay={0.3}>
+            <BodyText style={{ marginTop: 20 }}>That's how you rapidly iterate and improve. Not by guessing, but by learning from real behavior.</BodyText>
+          </RevealText>
+          <RevealText delay={0.4}>
+            <div style={{ marginTop: 40, padding: 24, background: BG_SURFACE, borderRadius: 16, border: '1px solid #27272a' }}>
+              <p className="font-body" style={{ fontSize: 16, color: '#fff', marginBottom: 12 }}>The good news:</p>
+              <p className="font-body" style={{ fontSize: 16, lineHeight: 1.7, color: '#a3a3a3' }}>You don't need a full native mobile application for that. A <span style={{ color: GOLD }}>mobile-first web app</span> that looks and feels native — but runs in the browser — is more than sufficient.</p>
+              <p className="font-body" style={{ fontSize: 15, color: '#737373', marginTop: 16 }}>And it can be built much faster and cheaper.</p>
+            </div>
+          </RevealText>
+        </div>
+      </Section>
+
+      <Section id="scope">
+        <div style={{ maxWidth: 900, margin: '0 auto' }}>
+          <RevealText><SectionLabel>The Scope</SectionLabel></RevealText>
+          <RevealText delay={0.1}><Headline>Here's what we're <span style={{ color: GOLD }}>building</span>.</Headline></RevealText>
+          <RevealText delay={0.15}><BodyText style={{ marginBottom: 40 }}>Just so we're being explicit about it — these are the key features and components of the product:</BodyText></RevealText>
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(250px, 1fr))', gap: 20 }}>
+            {[
+              { icon: '👤', title: 'User System', desc: 'Accounts, profiles, secure login, personal settings' },
+              { icon: '📚', title: 'Content Engine', desc: 'Import URLs, store workouts, organize your library' },
+              { icon: '📅', title: 'Daily Planning', desc: 'Build workout plans, calendar view, track completion' },
+              { icon: '🤖', title: 'AI Coach', desc: 'Smart tagging, personalized plans, natural chat interface' },
+              { icon: '📱', title: 'Mobile-First App', desc: 'Looks and feels native, runs in any browser' },
+            ].map((item, i) => (
+              <RevealText key={i} delay={0.2 + i * 0.08}>
+                <div style={{ padding: 24, background: BG_SURFACE, borderRadius: 12, border: '1px solid #27272a' }}>
+                  <div style={{ fontSize: 28, marginBottom: 12 }}>{item.icon}</div>
+                  <h3 className="font-body" style={{ fontSize: 16, fontWeight: 600, color: '#fff', marginBottom: 8 }}>{item.title}</h3>
+                  <p className="font-body" style={{ fontSize: 14, color: '#737373', lineHeight: 1.5 }}>{item.desc}</p>
+                </div>
+              </RevealText>
+            ))}
           </div>
         </div>
-      </div>
+      </Section>
 
-      {inCart ? (
-        <button
-          onClick={() => onRemove(item.id)}
-          className="w-full px-6 py-3 flex items-center justify-center gap-2 text-sm font-medium font-body transition-all"
-          style={{
-            background: 'rgba(74,222,128,0.1)',
-            color: '#4ade80',
-            borderTop: '1px solid rgba(74,222,128,0.2)'
-          }}
-        >
-          <Check />
-          <span>Added to cart</span>
-        </button>
-      ) : (
-        <button
-          onClick={() => onAdd(item.id)}
-          className="w-full px-6 py-3 flex items-center justify-center gap-2 text-sm font-medium text-zinc-400 hover:text-white font-body transition-all"
-          style={{
-            borderTop: '1px solid rgba(255,255,255,0.08)',
-          }}
-          onMouseEnter={(e) => {
-            e.currentTarget.style.background = 'rgba(212,165,74,0.1)';
-            e.currentTarget.style.borderTopColor = 'rgba(212,165,74,0.2)';
-          }}
-          onMouseLeave={(e) => {
-            e.currentTarget.style.background = 'transparent';
-            e.currentTarget.style.borderTopColor = 'rgba(255,255,255,0.08)';
-          }}
-        >
-          <span>Add to cart</span>
-          <span className="text-lg">+</span>
-        </button>
-      )}
+      <Section id="work-required">
+        <div style={{ maxWidth: 800, margin: '0 auto' }}>
+          <RevealText><SectionLabel>The Work</SectionLabel></RevealText>
+          <RevealText delay={0.1}><Headline>What it takes to <span style={{ color: GOLD }}>get there</span>.</Headline></RevealText>
+          <RevealText delay={0.15}><BodyText style={{ marginBottom: 40 }}>Here's an outline of the work that has to be done to turn prototypes into a real product:</BodyText></RevealText>
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
+            {[
+              { phase: 'Foundation', items: 'PRD, user stories, wireframes, design system, high-fidelity screens, clickable prototype' },
+              { phase: 'Core Build', items: 'User auth, database setup, content storage, basic frontend architecture' },
+              { phase: 'Feature Development', items: 'Content import/tagging, calendar/planning UI, daily workout views, progress tracking' },
+              { phase: 'AI Integration', items: 'Smart tagging, plan generation, chat interface, contextual adjustments' },
+              { phase: 'Launch Prep', items: 'QA testing, deployment, hosting, bug fixes, polish' },
+            ].map((item, i) => (
+              <RevealText key={i} delay={0.2 + i * 0.08}>
+                <div style={{ display: 'flex', gap: 20, padding: 20, background: BG_SURFACE, borderRadius: 12, border: '1px solid #27272a', alignItems: 'flex-start' }}>
+                  <div style={{ width: 32, height: 32, borderRadius: '50%', background: GOLD_DIM, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 14, fontWeight: 600, color: GOLD, flexShrink: 0 }}>{i + 1}</div>
+                  <div>
+                    <h3 className="font-body" style={{ fontSize: 16, fontWeight: 600, color: '#fff', marginBottom: 6 }}>{item.phase}</h3>
+                    <p className="font-body" style={{ fontSize: 14, color: '#737373', lineHeight: 1.5 }}>{item.items}</p>
+                  </div>
+                </div>
+              </RevealText>
+            ))}
+          </div>
+        </div>
+      </Section>
 
-      {item.details && (
-        <>
-          <button
-            onClick={() => setIsOpen(!isOpen)}
-            className="w-full px-6 py-3 flex items-center justify-center gap-2 text-xs font-medium text-zinc-500 hover:text-zinc-300 font-mono tracking-wide uppercase"
-            style={{ borderTop: '1px solid rgba(255,255,255,0.05)' }}
-          >
-            {isOpen ? <><span>Less details</span><ChevronUp /></> : <><span>More details</span><ChevronDown /></>}
-          </button>
-          {isOpen && (
-            <div className="px-6 pb-6 pt-4" style={{ borderTop: '1px solid rgba(255,255,255,0.05)' }}>
-              <div className="grid md:grid-cols-2 gap-6">
-                <DetailTile
-                  icon={FileText}
-                  label="Deliverables"
-                  items={deliverables}
-                  color="text-blue-400"
-                />
-                <DetailTile
-                  icon={MessageCircle}
-                  label="Consulting"
-                  items={meetings}
-                  color="text-green-400"
-                />
+      <Section id="traditional">
+        <div style={{ maxWidth: 800, margin: '0 auto', textAlign: 'center' }}>
+          <RevealText><SectionLabel>The Traditional Path</SectionLabel></RevealText>
+          <RevealText delay={0.1}><Headline>What this <span style={{ color: GOLD }}>usually</span> costs.</Headline></RevealText>
+          <RevealText delay={0.2}>
+            <div style={{ marginTop: 40, padding: 48, background: BG_SURFACE, borderRadius: 24, border: '1px solid #27272a' }}>
+              <p className="font-display" style={{ fontSize: 64, color: '#fff', marginBottom: 8 }}>$40K – $100K</p>
+              <p className="font-body" style={{ fontSize: 24, color: '#737373' }}>4 – 6 months</p>
+              <div style={{ marginTop: 32, paddingTop: 24, borderTop: '1px solid #27272a' }}>
+                <p className="font-body" style={{ fontSize: 16, color: '#a3a3a3', lineHeight: 1.7 }}>That's what agencies and freelance teams typically charge to go from prototype to working web app — and that timeline assumes no major hiccups along the way.</p>
               </div>
             </div>
-          )}
-        </>
-      )}
-    </GlassCard>
+          </RevealText>
+        </div>
+      </Section>
+
+      <Section id="our-path">
+        <div style={{ maxWidth: 800, margin: '0 auto', textAlign: 'center' }}>
+          <RevealText><SectionLabel>Our Path</SectionLabel></RevealText>
+          <RevealText delay={0.1}><Headline>A <span style={{ color: GOLD }}>different</span> equation.</Headline></RevealText>
+          <RevealText delay={0.2}>
+            <div style={{ marginTop: 40, padding: 48, background: BG_SURFACE, borderRadius: 24, border: `2px solid ${GOLD}`, boxShadow: `0 0 60px ${GOLD_DIM}` }}>
+              <p className="font-display" style={{ fontSize: 64, color: GOLD, marginBottom: 8 }}>$27K</p>
+              <p className="font-body" style={{ fontSize: 24, color: '#a3a3a3' }}>~8 weeks</p>
+              <div style={{ marginTop: 32, paddingTop: 24, borderTop: `1px solid ${GOLD_DIM}` }}>
+                <p className="font-body" style={{ fontSize: 16, color: '#a3a3a3', lineHeight: 1.7 }}>For the complete product build — Foundation, Frame, and Finish — with a mobile-first web app that's ready for real users.</p>
+                <p className="font-body" style={{ fontSize: 14, color: '#737373', marginTop: 16 }}>(You can also start smaller and build in stages)</p>
+              </div>
+            </div>
+          </RevealText>
+          <RevealText delay={0.4}>
+            <div style={{ marginTop: 32, display: 'flex', justifyContent: 'center', gap: 24, flexWrap: 'wrap' }}>
+              <div style={{ padding: '12px 20px', background: 'rgba(74, 222, 128, 0.1)', borderRadius: 8, border: '1px solid rgba(74, 222, 128, 0.3)' }}>
+                <span style={{ color: '#4ade80', fontSize: 14, fontWeight: 500 }}>Save $13K – $73K</span>
+              </div>
+              <div style={{ padding: '12px 20px', background: 'rgba(74, 222, 128, 0.1)', borderRadius: 8, border: '1px solid rgba(74, 222, 128, 0.3)' }}>
+                <span style={{ color: '#4ade80', fontSize: 14, fontWeight: 500 }}>2-4 months faster</span>
+              </div>
+            </div>
+          </RevealText>
+        </div>
+      </Section>
+
+      <Section id="strategy">
+        <div style={{ maxWidth: 800, margin: '0 auto' }}>
+          <RevealText><SectionLabel>Beyond the Build</SectionLabel></RevealText>
+          <RevealText delay={0.1}><Headline>Strategy & <span style={{ color: GOLD }}>Go-to-Market</span></Headline></RevealText>
+          <RevealText delay={0.2}><BodyText style={{ marginBottom: 32 }}>Building the product is one thing. Knowing how to talk about it, who to target, and how to learn from early users is another. We can help with that too.</BodyText></RevealText>
+          <RevealText delay={0.3}>
+            <div style={{ padding: 32, background: BG_SURFACE, borderRadius: 16, border: '1px solid #27272a' }}>
+              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: 24, marginBottom: 32 }}>
+                {['Target persona refinement', 'Business plan & strategy deck', 'User feedback framework', 'Landing page / website'].map((item, i) => (
+                  <div key={i} style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
+                    <div style={{ width: 8, height: 8, borderRadius: '50%', background: GOLD }} />
+                    <span className="font-body" style={{ fontSize: 15, color: '#a3a3a3' }}>{item}</span>
+                  </div>
+                ))}
+              </div>
+              <div style={{ paddingTop: 24, borderTop: '1px solid #27272a', display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: 16 }}>
+                <div>
+                  <p className="font-body" style={{ fontSize: 14, color: '#737373' }}>Traditional cost:</p>
+                  <p className="font-body" style={{ fontSize: 16, color: '#a3a3a3', textDecoration: 'line-through' }}>$9K – $19K</p>
+                </div>
+                <div style={{ textAlign: 'right' }}>
+                  <p className="font-body" style={{ fontSize: 14, color: '#737373' }}>Add to your engagement:</p>
+                  <p className="font-display" style={{ fontSize: 28, color: GOLD }}>$6,000</p>
+                </div>
+              </div>
+            </div>
+          </RevealText>
+        </div>
+      </Section>
+
+      <Section id="timeline">
+        <div style={{ maxWidth: 900, margin: '0 auto' }}>
+          <RevealText><SectionLabel>How It Unfolds</SectionLabel></RevealText>
+          <RevealText delay={0.1}><Headline>Two tracks, <span style={{ color: GOLD }}>working in parallel</span>.</Headline></RevealText>
+          <RevealText delay={0.2}>
+            <div style={{ marginTop: 40, padding: 32, background: BG_SURFACE, borderRadius: 16, border: '1px solid #27272a', overflowX: 'auto' }}>
+              <div style={{ marginBottom: 32 }}>
+                <h3 className="font-mono" style={{ fontSize: 14, fontWeight: 600, color: GOLD, letterSpacing: '0.1em', textTransform: 'uppercase', marginBottom: 20 }}>Track A — Product Build</h3>
+                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: 12, minWidth: 600 }}>
+                  {[
+                    { week: 'Week 1-2', phase: 'Foundation', detail: 'PRD, Design, Prototype' },
+                    { week: 'Week 3-4', phase: 'Frame', detail: 'Auth, Database, Frontend' },
+                    { week: 'Week 5-6', phase: 'Frame', detail: 'Content, Calendar, QA' },
+                    { week: 'Week 7-8', phase: 'Finish', detail: 'AI Layer, Polish, Deploy' },
+                  ].map((item, i) => (
+                    <div key={i} style={{ padding: 16, background: BG_ELEVATED, borderRadius: 8, borderTop: `3px solid ${GOLD}` }}>
+                      <p className="font-mono" style={{ fontSize: 11, color: '#737373', textTransform: 'uppercase', letterSpacing: '0.05em' }}>{item.week}</p>
+                      <p className="font-body" style={{ fontSize: 15, fontWeight: 600, color: '#fff', marginTop: 8 }}>{item.phase}</p>
+                      <p className="font-body" style={{ fontSize: 13, color: '#a3a3a3', marginTop: 4 }}>{item.detail}</p>
+                    </div>
+                  ))}
+                </div>
+              </div>
+              <div>
+                <h3 className="font-mono" style={{ fontSize: 14, fontWeight: 600, color: '#4ade80', letterSpacing: '0.1em', textTransform: 'uppercase', marginBottom: 20 }}>Track B — Strategy & Go-to-Market</h3>
+                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: 12, minWidth: 600 }}>
+                  {[
+                    { week: 'Week 1-2', item: 'Personas' },
+                    { week: 'Week 3-4', item: 'Strategy Deck' },
+                    { week: 'Week 5-6', item: 'Landing Page' },
+                    { week: 'Week 7-8', item: 'Feedback System' },
+                  ].map((item, i) => (
+                    <div key={i} style={{ padding: 16, background: BG_ELEVATED, borderRadius: 8, borderTop: '3px solid #4ade80' }}>
+                      <p className="font-mono" style={{ fontSize: 11, color: '#737373', textTransform: 'uppercase', letterSpacing: '0.05em' }}>{item.week}</p>
+                      <p className="font-body" style={{ fontSize: 15, fontWeight: 500, color: '#fff', marginTop: 8 }}>{item.item}</p>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            </div>
+          </RevealText>
+        </div>
+      </Section>
+
+      <Section id="proposal-intro">
+        <div style={{ maxWidth: 700, margin: '0 auto', textAlign: 'center' }}>
+          <RevealText><SectionLabel>Your Proposal</SectionLabel></RevealText>
+          <RevealText delay={0.1}><Headline>You decide how far we go <span style={{ color: GOLD }}>together</span>.</Headline></RevealText>
+          <RevealText delay={0.2}><BodyText style={{ textAlign: 'center', maxWidth: 500, margin: '0 auto' }}>The next section lets you build your engagement — choose the stages that make sense for where you are and where you want to go.</BodyText></RevealText>
+          <RevealText delay={0.3}>
+            <motion.button onClick={onComplete} whileHover={{ scale: 1.02 }} whileTap={{ scale: 0.98 }}
+              className="font-body"
+              style={{ marginTop: 48, padding: '20px 48px', fontSize: 18, fontWeight: 600, background: GOLD, color: BG_PRIMARY, border: 'none', borderRadius: 12, cursor: 'pointer' }}>
+              Build Your Proposal →
+            </motion.button>
+          </RevealText>
+        </div>
+      </Section>
+    </div>
   );
 };
 
-// Deliverable option card
-interface DeliverableCardProps {
-  item: DeliverableItem;
-  inCart: boolean;
-  onAdd: (id: string) => void;
-  onRemove: (id: string) => void;
-}
+// ============================================================================
+// PHASE & TRACK CARDS
+// ============================================================================
 
-const DeliverableCard = ({ item, inCart, onAdd, onRemove }: DeliverableCardProps) => {
-  const Icon = item.icon;
+const PhaseCard: React.FC<PhaseCardProps> = ({ phase, isSelected, isLocked, onSelect }) => {
+  const handleClick = (): void => {
+    if (isLocked) return;
+    onSelect(phase.id, !isSelected);
+  };
 
   return (
-    <GlassCard glow={inCart} className="overflow-hidden">
-      <div className="p-5">
-        <div className="flex items-start justify-between mb-3">
-          <div
-            className="w-10 h-10 rounded-lg flex items-center justify-center"
-            style={{ background: inCart ? 'rgba(212,165,74,0.2)' : 'rgba(255,255,255,0.05)' }}
-          >
-            <div style={{ color: inCart ? GOLD : '#888' }}><Icon /></div>
+    <motion.div onClick={handleClick} whileHover={!isLocked ? { scale: 1.01 } : {}}
+      style={{ padding: 24, background: isSelected ? BG_ELEVATED : BG_SURFACE, borderRadius: 16, border: `2px solid ${isSelected ? GOLD : '#27272a'}`, cursor: isLocked ? 'not-allowed' : 'pointer', opacity: isLocked ? 0.5 : 1, transition: 'all 0.2s ease', display: 'flex', flexDirection: 'column' }}>
+      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: 16 }}>
+        <div style={{ display: 'flex', alignItems: 'flex-start', gap: 16 }}>
+          <BuildingIcon phase={phase.number} size={48} />
+          <div>
+            <h3 className="font-body" style={{ fontSize: 20, fontWeight: 600, color: '#fff', marginBottom: 4 }}>{phase.title}</h3>
+            <p className="font-body" style={{ fontSize: 14, color: '#737373' }}>{phase.tagline}</p>
           </div>
-          {inCart && (
-            <div className="w-5 h-5 rounded-full flex items-center justify-center" style={{ background: '#4ade80' }}>
-              <Check />
-            </div>
-          )}
         </div>
-        <h4 className="text-base font-display text-white mb-2">{item.title}</h4>
-        <p className="text-xs text-zinc-500 mb-3 font-body">{item.description}</p>
-        <div className="flex items-center justify-between text-sm pt-3" style={{ borderTop: '1px solid rgba(255,255,255,0.05)' }}>
-          <span className="text-zinc-500 font-mono text-xs">{item.timeframe}</span>
-          <span className="text-xl font-display" style={{ color: GOLD }}>${item.basePrice.toLocaleString()}</span>
+        <div style={{ width: 24, height: 24, borderRadius: 6, border: `2px solid ${isSelected ? GOLD : '#525252'}`, background: isSelected ? GOLD : 'transparent', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
+          {isSelected && <span style={{ color: BG_PRIMARY, fontSize: 14 }}>✓</span>}
         </div>
       </div>
 
-      {inCart ? (
-        <button
-          onClick={() => onRemove(item.id)}
-          className="w-full px-6 py-3 flex items-center justify-center gap-2 text-sm font-medium font-body"
-          style={{
-            background: 'rgba(74,222,128,0.1)',
-            color: '#4ade80',
-            borderTop: '1px solid rgba(74,222,128,0.2)'
-          }}
-        >
-          <Check />
-          <span>Selected</span>
-        </button>
-      ) : (
-        <button
-          onClick={() => onAdd(item.id)}
-          className="w-full px-6 py-3 flex items-center justify-center gap-2 text-sm font-medium text-zinc-400 hover:text-white font-body transition-all"
-          style={{ borderTop: '1px solid rgba(255,255,255,0.08)' }}
-          onMouseEnter={(e) => {
-            e.currentTarget.style.background = 'rgba(212,165,74,0.1)';
-          }}
-          onMouseLeave={(e) => {
-            e.currentTarget.style.background = 'transparent';
-          }}
-        >
-          <span>Select</span>
-          <span className="text-lg">+</span>
-        </button>
-      )}
-    </GlassCard>
+      <div style={{ marginBottom: 24, flex: 1 }}>
+        <p className="font-body" style={{ fontSize: 13, color: '#525252', marginBottom: 8 }}>Deliverables:</p>
+        <ul className="font-body" style={{ margin: 0, paddingLeft: 16, fontSize: 14, color: '#a3a3a3', lineHeight: 1.8 }}>
+          {phase.deliverables.slice(0, 4).map((d, i) => <li key={i}>{d}</li>)}
+          {phase.deliverables.length > 4 && <li style={{ color: '#737373' }}>+{phase.deliverables.length - 4} more</li>}
+        </ul>
+      </div>
+
+      <div style={{
+        marginBottom: 24,
+        padding: 16,
+        background: 'rgba(255,255,255,0.03)',
+        borderRadius: 10,
+        borderLeft: `3px solid ${GOLD}`,
+      }}>
+        <p className="font-mono" style={{ fontSize: 11, color: GOLD, textTransform: 'uppercase', letterSpacing: '0.08em', marginBottom: 8, fontWeight: 500 }}>After this phase</p>
+        <p className="font-body" style={{
+          fontSize: 15,
+          color: '#e5e5e5',
+          lineHeight: 1.55,
+          margin: 0,
+        }}>
+          {phase.walkAway}
+        </p>
+      </div>
+
+      <div style={{ paddingTop: 16, borderTop: '1px solid #27272a', display: 'flex', justifyContent: 'space-between', alignItems: 'flex-end' }}>
+        <div>
+          <p className="font-body" style={{ fontSize: 12, color: '#525252' }}>Traditional:</p>
+          <p className="font-body" style={{ fontSize: 14, color: '#737373', textDecoration: 'line-through' }}>${phase.traditionalLow.toLocaleString()} – ${phase.traditionalHigh.toLocaleString()}</p>
+        </div>
+        <p className="font-display" style={{ fontSize: 28, color: GOLD }}>${phase.price.toLocaleString()}</p>
+      </div>
+    </motion.div>
   );
 };
 
-export default function PLYAProposal() {
-  const [cart, setCart] = useState<(ServiceItem | DeliverableItem)[]>([]);
-  const [viewMode, setViewMode] = useState<'shop' | 'cart'>('shop');
-  const [equitySlider, setEquitySlider] = useState(0);
-  const [companyStage, setCompanyStage] = useState<CompanyStage>('idea');
-  const [phase2Options, setPhase2Options] = useState<Phase2Options>({
-    businessConsulting: false,
-    technicalSupport: false
-  });
+const TrackBCard: React.FC<TrackBCardProps> = ({ isSelected, onToggle }) => (
+  <motion.div onClick={onToggle} whileHover={{ scale: 1.01 }}
+    style={{ padding: 24, background: isSelected ? BG_ELEVATED : BG_SURFACE, borderRadius: 16, border: `2px solid ${isSelected ? '#4ade80' : '#27272a'}`, cursor: 'pointer', transition: 'all 0.2s ease' }}>
+    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: 16 }}>
+      <div>
+        <div style={{ display: 'inline-flex', alignItems: 'center', gap: 8, padding: '4px 12px', background: 'rgba(74, 222, 128, 0.15)', borderRadius: 20, marginBottom: 12 }}>
+          <span className="font-mono" style={{ fontSize: 12, fontWeight: 600, color: '#4ade80' }}>Track B</span>
+        </div>
+        <h3 className="font-body" style={{ fontSize: 20, fontWeight: 600, color: '#fff', marginBottom: 4 }}>{trackB.title}</h3>
+        <p className="font-body" style={{ fontSize: 14, color: '#737373' }}>{trackB.tagline}</p>
+      </div>
+      <div style={{ width: 24, height: 24, borderRadius: 6, border: `2px solid ${isSelected ? '#4ade80' : '#525252'}`, background: isSelected ? '#4ade80' : 'transparent', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+        {isSelected && <span style={{ color: BG_PRIMARY, fontSize: 14 }}>✓</span>}
+      </div>
+    </div>
+    <div style={{ marginBottom: 20 }}>
+      <ul className="font-body" style={{ margin: 0, paddingLeft: 16, fontSize: 14, color: '#a3a3a3', lineHeight: 1.8 }}>
+        {trackB.deliverables.map((d, i) => <li key={i}>{d}</li>)}
+      </ul>
+    </div>
+    <div style={{ paddingTop: 16, borderTop: '1px solid #27272a', display: 'flex', justifyContent: 'space-between', alignItems: 'flex-end' }}>
+      <div>
+        <p className="font-body" style={{ fontSize: 12, color: '#525252' }}>Traditional:</p>
+        <p className="font-body" style={{ fontSize: 14, color: '#737373', textDecoration: 'line-through' }}>${trackB.traditionalLow.toLocaleString()} – ${trackB.traditionalHigh.toLocaleString()}</p>
+      </div>
+      <p className="font-display" style={{ fontSize: 28, color: '#4ade80' }}>${trackB.price.toLocaleString()}</p>
+    </div>
+  </motion.div>
+);
 
-  const services: ServiceItem[] = [
-    {
-      id: 'thought',
-      icon: Lightbulb,
-      title: 'Developmental Thought Process & Business Development',
-      value: 8000,
-      description: 'Strategic thinking to crystallize your vision into an executable product concept, including comprehensive business development planning.',
-      details: [
-        { type: 'deliverable', text: 'Product vision documentation' },
-        { type: 'deliverable', text: 'User journey maps' },
-        { type: 'deliverable', text: 'Feature prioritization framework' },
-        { type: 'deliverable', text: 'Business development strategy & roadmap' },
-        { type: 'deliverable', text: 'Partnership & revenue model design' },
-        { type: 'deliverable', text: 'Go-to-market strategy document' },
-        { type: 'deliverable', text: 'Business model canvas' },
-        { type: 'meeting', text: 'Product vision workshops' },
-        { type: 'meeting', text: 'Technical feasibility sessions' },
-        { type: 'meeting', text: 'Risk identification & mitigation planning' },
-        { type: 'meeting', text: 'Business development strategy sessions' },
-        { type: 'meeting', text: 'Business model refinement workshops' }
-      ]
-    },
-    {
-      id: 'validation',
-      icon: TrendingUp,
-      title: 'Market Validation',
-      value: 3000,
-      description: 'Competitive analysis, user research, and market positioning to validate product-market fit.',
-      details: [
-        { type: 'deliverable', text: 'Competitive landscape analysis report' },
-        { type: 'deliverable', text: 'Market sizing & opportunity assessment' },
-        { type: 'deliverable', text: 'Pricing strategy recommendations' },
-        { type: 'deliverable', text: 'Early adopter profile & targeting plan' },
-        { type: 'meeting', text: 'Target customer interviews' },
-        { type: 'meeting', text: 'Market research review sessions' },
-        { type: 'meeting', text: 'Competitive positioning workshops' }
-      ]
-    },
-    {
-      id: 'ai',
-      icon: Brain,
-      title: 'AI Expert Guidance',
-      value: 4000,
-      description: 'Technical architecture, AI capability assessment, and implementation strategy.',
-      details: [
-        { type: 'deliverable', text: 'AI capability assessment report' },
-        { type: 'deliverable', text: 'Technical architecture documentation' },
-        { type: 'deliverable', text: 'Model selection & evaluation framework' },
-        { type: 'deliverable', text: 'Data pipeline design specifications' },
-        { type: 'deliverable', text: 'Cost optimization strategy' },
-        { type: 'meeting', text: 'Technical architecture review sessions' },
-        { type: 'meeting', text: 'AI implementation planning' },
-        { type: 'meeting', text: 'Performance & quality optimization consultations' }
-      ]
-    },
-  ];
+// ============================================================================
+// EQUITY EXPLAINER
+// ============================================================================
 
-  const deliverables: DeliverableItem[] = [
-    {
-      id: 'deck',
-      icon: FileText,
-      title: 'Strategy Deck',
-      description: 'Comprehensive presentation with full strategy, market analysis, and roadmap',
-      timeframe: '33 days',
-      basePrice: 2000,
-    },
-    {
-      id: 'prototype',
-      icon: MousePointer,
-      title: 'Clickable Prototype',
-      description: 'Interactive prototype demonstrating core user flows and key features',
-      timeframe: '33 days',
-      basePrice: 3000,
-    },
-    {
-      id: 'mvp',
-      icon: Rocket,
-      title: 'Full MVP',
-      description: 'Production-ready minimum viable product with deployment',
-      timeframe: '45 days',
-      basePrice: 5000,
-    },
-  ];
+const EquityExplainer: React.FC = () => {
+  const [isOpen, setIsOpen] = useState<boolean>(false);
+  return (
+    <div style={{ marginTop: 24, padding: 20, background: BG_SURFACE, borderRadius: 12, border: '1px solid #27272a' }}>
+      <button onClick={() => setIsOpen(!isOpen)} className="font-body" style={{ width: '100%', display: 'flex', justifyContent: 'space-between', alignItems: 'center', background: 'none', border: 'none', cursor: 'pointer', color: '#a3a3a3', fontSize: 14 }}>
+        <span>How do we determine the equity amount?</span>
+        <span style={{ transform: isOpen ? 'rotate(180deg)' : 'rotate(0)', transition: 'transform 0.2s' }}>▼</span>
+      </button>
+      {isOpen && (
+        <div className="font-body" style={{ marginTop: 16, fontSize: 14, color: '#737373', lineHeight: 1.7 }}>
+          <p style={{ marginBottom: 12 }}>We use a framework that values contributions across six phases of company-building: Legacy (prior patterns and systems we bring), Discovery, Creation, Validation, Growth, and Operations.</p>
+          <p style={{ marginBottom: 12 }}>For PLYA, our work falls primarily in Legacy and Creation — roughly 20-25% of zero-to-one value.</p>
+          <p style={{ marginBottom: 12 }}>We discount that significantly (~85%) because we're getting paid, the harder work of validation and growth is ahead of you, and our philosophy prioritizes your success.</p>
+          <p>The result: up to 3.3% equity at maximum conversion. Enough to align our interests in your success, but not so much that it undervalues everything you'll do after v1 ships.</p>
+        </div>
+      )}
+    </div>
+  );
+};
 
-  const allItems = [...services, ...deliverables];
+// ============================================================================
+// PROPOSAL BUILDER
+// ============================================================================
 
-  const addToCart = (id: string) => {
-    const item = allItems.find(i => i.id === id);
-    if (item && !cart.find(c => c.id === id)) {
-      setCart([...cart, item]);
+const ProposalBuilder: React.FC<ProposalBuilderProps> = ({
+  selectedPhases,
+  setSelectedPhases,
+  includeTrackB,
+  setIncludeTrackB,
+  equitySlider,
+  setEquitySlider,
+  onNext
+}) => {
+  const phaseTotal = selectedPhases.reduce((sum, id) => {
+    const phase = phases.find(p => p.id === id);
+    return sum + (phase?.price || 0);
+  }, 0);
+  const trackBTotal = includeTrackB ? trackB.price : 0;
+  const totalPrice = phaseTotal + trackBTotal;
+
+  const traditionalLow = selectedPhases.reduce((sum, id) => {
+    const phase = phases.find(p => p.id === id);
+    return sum + (phase?.traditionalLow || 0);
+  }, 0) + (includeTrackB ? trackB.traditionalLow : 0);
+
+  const traditionalHigh = selectedPhases.reduce((sum, id) => {
+    const phase = phases.find(p => p.id === id);
+    return sum + (phase?.traditionalHigh || 0);
+  }, 0) + (includeTrackB ? trackB.traditionalHigh : 0);
+
+  const maxEquity = (totalPrice / FULL_ENGAGEMENT) * MAX_EQUITY_PERCENT;
+  const equityPercent = (equitySlider / 33) * maxEquity;
+  const cashDiscount = (equitySlider / 100) * totalPrice;
+  const cashDue = totalPrice - cashDiscount;
+
+  const handlePhaseSelect = (phaseId: string, selecting: boolean): void => {
+    if (selecting) {
+      const phaseIndex = phases.findIndex(p => p.id === phaseId);
+      const prerequisitePhases = phases.slice(0, phaseIndex + 1).map(p => p.id);
+      setSelectedPhases(prerequisitePhases);
+    } else {
+      const phaseIndex = phases.findIndex(p => p.id === phaseId);
+      const remainingPhases = phases.slice(0, phaseIndex).map(p => p.id);
+      setSelectedPhases(remainingPhases);
     }
   };
 
-  const removeFromCart = (id: string) => setCart(cart.filter(c => c.id !== id));
-  const isInCart = (id: string) => cart.some(c => c.id === id);
-
-  const calculateTotal = () => {
-    const phase1Total = cart.reduce((sum, item) => sum + ('basePrice' in item ? item.basePrice : item.value), 0);
-    const phase2Monthly = (phase2Options.businessConsulting ? 3000 : 0) + (phase2Options.technicalSupport ? 3000 : 0);
-
-    const equityPct = equitySlider / 100;
-    const cashPayment = phase1Total * (1 - equityPct);
-    const equityPayment = phase1Total * equityPct;
-    const equityPercent = (equityPayment / 10000) * 1;
-
-    return {
-      phase1Total,
-      phase2Monthly,
-      cashPayment,
-      equityPayment,
-      equityPercent: Math.min(equityPercent, 5)
-    };
+  const handleSliderChange = (e: ChangeEvent<HTMLInputElement>): void => {
+    setEquitySlider(parseInt(e.target.value));
   };
-
-  const getRecommendation = () => {
-    const rec: Record<CompanyStage, { max: number; reasoning: string }> = {
-      idea: { max: 3, reasoning: "Pre-product companies should preserve equity for future rounds" },
-      prototype: { max: 2.5, reasoning: "Early-stage companies need flexibility for seed rounds" },
-      revenue: { max: 2, reasoning: "Revenue-generating companies should minimize dilution" },
-      growth: { max: 1.5, reasoning: "Growth-stage companies should prioritize cash" }
-    };
-    return rec[companyStage];
-  };
-
-  const totals = calculateTotal();
-  const recommendation = getRecommendation();
-  const hasPhase2 = phase2Options.businessConsulting || phase2Options.technicalSupport;
-
-  if (viewMode === 'cart') {
-    return (
-      <div className="min-h-screen text-white font-body" style={{ background: BG_PRIMARY }}>
-        {/* Background glow */}
-        <div className="fixed inset-0 pointer-events-none overflow-hidden">
-          <div
-            className="absolute top-1/4 left-1/4 w-96 h-96 rounded-full blur-3xl opacity-10"
-            style={{ background: GOLD }}
-          />
-        </div>
-
-        <div className="relative max-w-4xl mx-auto px-6 md:px-12 py-12">
-          <button
-            onClick={() => setViewMode('shop')}
-            className="flex items-center gap-2 text-zinc-400 hover:text-white mb-6 font-body"
-          >
-            <ArrowLeft /><span className="text-sm">Back to proposal</span>
-          </button>
-
-          <header className="mb-8">
-            <h1 className="text-3xl md:text-4xl font-display mb-2">Your Cart</h1>
-            <p className="text-zinc-400 font-body">{cart.length} {cart.length === 1 ? 'item' : 'items'} selected</p>
-          </header>
-
-          {cart.length === 0 ? (
-            <GlassCard className="text-center py-16">
-              <div
-                className="w-16 h-16 rounded-full flex items-center justify-center mx-auto mb-4"
-                style={{ background: 'rgba(255,255,255,0.05)' }}
-              >
-                <div className="text-zinc-500"><ShoppingCart /></div>
-              </div>
-              <p className="text-zinc-400 mb-4 font-body">Your cart is empty</p>
-              <button
-                onClick={() => setViewMode('shop')}
-                className="px-6 py-3 text-white rounded-xl font-body font-medium"
-                style={{ background: GOLD }}
-              >
-                Browse Services
-              </button>
-            </GlassCard>
-          ) : (
-            <>
-              {/* Cart items */}
-              <div className="mb-6">
-                <SectionLabel number="01" title="Phase 1 — MVP Development" />
-                <div className="space-y-3">
-                  {cart.map(item => {
-                    const Icon = item.icon;
-                    const price = 'basePrice' in item ? item.basePrice : item.value;
-                    return (
-                      <GlassCard key={item.id} className="p-5">
-                        <div className="flex items-start gap-4">
-                          <div
-                            className="w-10 h-10 rounded-lg flex items-center justify-center flex-shrink-0"
-                            style={{ background: 'rgba(212,165,74,0.15)' }}
-                          >
-                            <div style={{ color: GOLD }}><Icon /></div>
-                          </div>
-                          <div className="flex-1">
-                            <h3 className="text-base font-display text-white mb-1">{item.title}</h3>
-                            <p className="text-xs text-zinc-500 font-body">{item.description}</p>
-                            {'timeframe' in item && <p className="text-xs text-zinc-600 mt-1 font-mono">{item.timeframe}</p>}
-                          </div>
-                          <div className="flex items-center gap-4">
-                            <div className="text-lg font-display" style={{ color: GOLD }}>${price.toLocaleString()}</div>
-                            <button onClick={() => removeFromCart(item.id)} className="text-zinc-500 hover:text-red-400">
-                              <Trash />
-                            </button>
-                          </div>
-                        </div>
-                      </GlassCard>
-                    );
-                  })}
-                </div>
-              </div>
-
-              {/* Phase 2 options */}
-              <div className="mb-8">
-                <SectionLabel number="02" title="Phase 2 — Ongoing Support" />
-
-                <div className="space-y-3">
-                  {/* Business Consulting */}
-                  <GlassCard className="overflow-hidden">
-                    <div className="p-5">
-                      <div className="flex items-start justify-between mb-3">
-                        <div className="flex items-start gap-4 flex-1">
-                          <div
-                            className="w-10 h-10 rounded-xl flex items-center justify-center flex-shrink-0"
-                            style={{ background: 'rgba(168,139,250,0.2)' }}
-                          >
-                            <div className="text-purple-400"><Users /></div>
-                          </div>
-                          <div>
-                            <h4 className="text-lg font-display text-white mb-2">Ongoing Business Consulting</h4>
-                            <p className="text-sm text-zinc-400 mb-4 font-body">Strategic guidance for growth and market adoption</p>
-                            <div className="grid md:grid-cols-2 gap-4">
-                              <DetailTile
-                                icon={MessageCircle}
-                                label="Sessions"
-                                items={[
-                                  'User growth strategy',
-                                  'Feedback implementation',
-                                  'Market expansion tactics',
-                                  'Customer acquisition'
-                                ]}
-                                color="text-purple-400"
-                              />
-                              <DetailTile
-                                icon={FileText}
-                                label="Deliverables"
-                                items={[
-                                  'Monthly growth reports',
-                                  'Strategic recommendations'
-                                ]}
-                                color="text-blue-400"
-                              />
-                            </div>
-                          </div>
-                        </div>
-                        <div className="text-right flex-shrink-0 ml-4">
-                          <div className="text-xl font-display" style={{ color: GOLD }}>$3,000</div>
-                          <div className="text-xs text-zinc-500 font-mono">/month</div>
-                        </div>
-                      </div>
-                    </div>
-                    <button
-                      onClick={() => setPhase2Options({...phase2Options, businessConsulting: !phase2Options.businessConsulting})}
-                      className={`w-full px-6 py-3 flex items-center justify-center gap-2 text-sm font-medium font-body transition-all`}
-                      style={{
-                        background: phase2Options.businessConsulting ? 'rgba(168,139,250,0.15)' : 'transparent',
-                        color: phase2Options.businessConsulting ? '#a78bfa' : '#888',
-                        borderTop: `1px solid ${phase2Options.businessConsulting ? 'rgba(168,139,250,0.3)' : 'rgba(255,255,255,0.08)'}`
-                      }}
-                    >
-                      {phase2Options.businessConsulting ? (
-                        <><Check /><span>Added to cart</span></>
-                      ) : (
-                        <><span>Add to cart</span><span className="text-lg">+</span></>
-                      )}
-                    </button>
-                  </GlassCard>
-
-                  {/* Technical Support */}
-                  <GlassCard className="overflow-hidden">
-                    <div className="p-5">
-                      <div className="flex items-start justify-between mb-3">
-                        <div className="flex items-start gap-4 flex-1">
-                          <div
-                            className="w-10 h-10 rounded-xl flex items-center justify-center flex-shrink-0"
-                            style={{ background: 'rgba(96,165,250,0.2)' }}
-                          >
-                            <div className="text-blue-400"><Wrench /></div>
-                          </div>
-                          <div>
-                            <h4 className="text-lg font-display text-white mb-2">Technical Support & AI Expertise</h4>
-                            <p className="text-sm text-zinc-400 mb-4 font-body">Ongoing technical maintenance and AI optimization</p>
-                            <div className="grid md:grid-cols-2 gap-4">
-                              <DetailTile
-                                icon={MessageCircle}
-                                label="Sessions"
-                                items={[
-                                  'Change management',
-                                  'Version upgrades',
-                                  'User support',
-                                  'AI optimization'
-                                ]}
-                                color="text-blue-400"
-                              />
-                              <DetailTile
-                                icon={FileText}
-                                label="Deliverables"
-                                items={[
-                                  'Monthly health reports',
-                                  'Technical documentation'
-                                ]}
-                                color="text-green-400"
-                              />
-                            </div>
-                          </div>
-                        </div>
-                        <div className="text-right flex-shrink-0 ml-4">
-                          <div className="text-xl font-display" style={{ color: GOLD }}>$3,000</div>
-                          <div className="text-xs text-zinc-500 font-mono">/month</div>
-                        </div>
-                      </div>
-                    </div>
-                    <button
-                      onClick={() => setPhase2Options({...phase2Options, technicalSupport: !phase2Options.technicalSupport})}
-                      className={`w-full px-6 py-3 flex items-center justify-center gap-2 text-sm font-medium font-body transition-all`}
-                      style={{
-                        background: phase2Options.technicalSupport ? 'rgba(96,165,250,0.15)' : 'transparent',
-                        color: phase2Options.technicalSupport ? '#60a5fa' : '#888',
-                        borderTop: `1px solid ${phase2Options.technicalSupport ? 'rgba(96,165,250,0.3)' : 'rgba(255,255,255,0.08)'}`
-                      }}
-                    >
-                      {phase2Options.technicalSupport ? (
-                        <><Check /><span>Added to cart</span></>
-                      ) : (
-                        <><span>Add to cart</span><span className="text-lg">+</span></>
-                      )}
-                    </button>
-                  </GlassCard>
-                </div>
-              </div>
-
-              {/* Company stage selector */}
-              <div className="mb-8">
-                <SectionLabel number="03" title="Payment Structure" />
-                <GlassCard className="p-6">
-                  <label className="block text-sm font-medium text-white mb-3 font-body">Company Stage</label>
-                  <div className="grid grid-cols-2 md:grid-cols-4 gap-2">
-                    {([
-                      { id: 'idea' as const, label: 'Idea Stage' },
-                      { id: 'prototype' as const, label: 'Prototype' },
-                      { id: 'revenue' as const, label: 'Has Revenue' },
-                      { id: 'growth' as const, label: 'Growth' }
-                    ]).map(stage => (
-                      <button
-                        key={stage.id}
-                        onClick={() => setCompanyStage(stage.id)}
-                        className="px-4 py-3 rounded-lg text-sm font-medium font-body transition-all"
-                        style={{
-                          background: companyStage === stage.id ? GOLD : 'rgba(255,255,255,0.05)',
-                          color: companyStage === stage.id ? '#000' : '#888'
-                        }}
-                      >
-                        {stage.label}
-                      </button>
-                    ))}
-                  </div>
-                </GlassCard>
-              </div>
-
-              {/* Payment structure slider */}
-              <GlassCard className="p-6 mb-8">
-                <div className="flex items-center justify-between mb-4">
-                  <label className="text-sm font-medium text-white font-body">Phase 1 Payment Structure</label>
-                  <div className="text-sm text-zinc-400 font-mono">
-                    {equitySlider === 0 ? '100% Cash' : equitySlider === 20 ? '20% Equity (Max)' : `${100-equitySlider}% Cash / ${equitySlider}% Equity`}
-                  </div>
-                </div>
-
-                <input
-                  type="range"
-                  min="0"
-                  max="20"
-                  value={equitySlider}
-                  onChange={(e) => setEquitySlider(Number(e.target.value))}
-                  className="w-full h-2 rounded-lg appearance-none cursor-pointer"
-                  style={{
-                    background: `linear-gradient(to right, #ffffff ${(100-equitySlider)*5}%, ${GOLD} ${(100-equitySlider)*5}%)`
-                  }}
-                />
-
-                <div className="flex justify-between mt-2 text-xs text-zinc-500 font-mono">
-                  <span>All Cash</span>
-                  <span>20% Equity (Maximum)</span>
-                </div>
-
-                {totals.equityPercent > 0 && (
-                  <div
-                    className="mt-4 p-3 rounded-lg"
-                    style={{ background: 'rgba(212,165,74,0.1)', border: '1px solid rgba(212,165,74,0.2)' }}
-                  >
-                    <p className="text-xs text-zinc-300 font-body">
-                      <span className="font-medium" style={{ color: GOLD }}>Equity estimate:</span> ~{totals.equityPercent.toFixed(2)}% for ${Math.round(totals.equityPayment).toLocaleString()} equity payment
-                    </p>
-                    <p className="text-xs text-zinc-500 mt-1 font-body">Actual terms negotiated based on valuation</p>
-                  </div>
-                )}
-              </GlassCard>
-
-              {/* Equity recommendation */}
-              <GlassCard className="p-5 mb-8" style={{ background: 'rgba(96,165,250,0.05)', borderColor: 'rgba(96,165,250,0.2)' }}>
-                <div className="flex items-start gap-3">
-                  <div
-                    className="w-8 h-8 rounded-lg flex items-center justify-center flex-shrink-0"
-                    style={{ background: 'rgba(96,165,250,0.2)' }}
-                  >
-                    <div className="text-blue-400"><Lightbulb /></div>
-                  </div>
-                  <div>
-                    <p className="text-sm font-medium text-blue-400 mb-2 font-body">Recommendation for {companyStage} stage</p>
-                    <p className="text-xs text-zinc-300 mb-2 font-body">
-                      Max <span className="font-semibold text-blue-400">{recommendation.max}% equity</span> for projects of this scope. Maximum equity option is capped at 20%.
-                    </p>
-                    <p className="text-xs text-zinc-500 font-body">{recommendation.reasoning}</p>
-                  </div>
-                </div>
-              </GlassCard>
-
-              {/* Total breakdown */}
-              <GlassCard className="p-6 mb-8">
-                <h3 className="text-lg font-display mb-4">Investment Summary</h3>
-
-                <div className="space-y-3 mb-4">
-                  <div className="flex justify-between text-sm">
-                    <span className="text-zinc-400 font-body">Phase 1 Subtotal</span>
-                    <span className="text-white font-display">${totals.phase1Total.toLocaleString()}</span>
-                  </div>
-
-                  {equitySlider > 0 && (
-                    <>
-                      <div className="flex justify-between text-sm">
-                        <span className="text-zinc-400 font-body">Cash ({100-equitySlider}%)</span>
-                        <span className="text-white font-display">${Math.round(totals.cashPayment).toLocaleString()}</span>
-                      </div>
-                      <div className="flex justify-between text-sm">
-                        <span className="text-zinc-400 font-body">Equity ({equitySlider}%)</span>
-                        <span className="font-display" style={{ color: GOLD }}>${Math.round(totals.equityPayment).toLocaleString()}</span>
-                      </div>
-                    </>
-                  )}
-
-                  {hasPhase2 && (
-                    <div className="pt-3" style={{ borderTop: '1px solid rgba(255,255,255,0.08)' }}>
-                      <div className="text-sm font-medium text-zinc-300 mb-2 font-body">Phase 2 Monthly Retainer:</div>
-                      {phase2Options.businessConsulting && (
-                        <div className="flex justify-between text-sm">
-                          <span className="text-zinc-400 font-body">Business Consulting</span>
-                          <span className="text-purple-400 font-display">$3,000/mo</span>
-                        </div>
-                      )}
-                      {phase2Options.technicalSupport && (
-                        <div className="flex justify-between text-sm">
-                          <span className="text-zinc-400 font-body">Technical Support</span>
-                          <span className="text-blue-400 font-display">$3,000/mo</span>
-                        </div>
-                      )}
-                      <div className="flex justify-between text-sm mt-2 pt-2" style={{ borderTop: '1px solid rgba(255,255,255,0.05)' }}>
-                        <span className="text-zinc-400 font-medium font-body">Phase 2 Total</span>
-                        <span className="text-white font-display">${totals.phase2Monthly.toLocaleString()}/mo</span>
-                      </div>
-                    </div>
-                  )}
-                </div>
-
-                <div className="pt-4" style={{ borderTop: '1px solid rgba(255,255,255,0.08)' }}>
-                  <div className="flex justify-between mb-1">
-                    <span className="font-semibold text-white font-body">Phase 1 Due at Start</span>
-                    <span className="text-2xl font-display" style={{ color: GOLD }}>
-                      ${Math.round(equitySlider === 0 ? totals.phase1Total : totals.cashPayment).toLocaleString()}
-                    </span>
-                  </div>
-                  {equitySlider > 0 && (
-                    <p className="text-xs text-zinc-500 text-right font-body">
-                      + ~{totals.equityPercent.toFixed(2)}% equity (${Math.round(totals.equityPayment).toLocaleString()} value)
-                    </p>
-                  )}
-                  {hasPhase2 && (
-                    <p className="text-xs text-blue-400 text-right mt-1 font-body">
-                      Phase 2: ${totals.phase2Monthly.toLocaleString()}/month starting after MVP delivery
-                    </p>
-                  )}
-                </div>
-              </GlassCard>
-
-              {/* CTA */}
-              <div className="flex flex-col sm:flex-row gap-4">
-                <button
-                  className="flex-1 px-8 py-4 text-black font-semibold rounded-xl font-body transition-all hover:opacity-90"
-                  style={{ background: `linear-gradient(135deg, ${GOLD}, #c49a42)` }}
-                >
-                  Request Proposal
-                </button>
-                <button
-                  className="px-8 py-4 text-white font-semibold rounded-xl font-body transition-all"
-                  style={{ background: 'rgba(255,255,255,0.05)', border: '1px solid rgba(255,255,255,0.1)' }}
-                >
-                  Save for Later
-                </button>
-              </div>
-            </>
-          )}
-        </div>
-      </div>
-    );
-  }
 
   return (
-    <div className="min-h-screen text-white font-body" style={{ background: BG_PRIMARY }}>
+    <div className="font-body" style={{ minHeight: '100vh', background: BG_PRIMARY, color: '#fff', padding: '64px 24px' }}>
       <style>{`
         input[type="range"]::-webkit-slider-thumb {
           appearance: none;
@@ -916,172 +717,424 @@ export default function PLYAProposal() {
           border: 2px solid ${BG_PRIMARY};
         }
       `}</style>
+      <div style={{ maxWidth: 1100, margin: '0 auto' }}>
+        <div style={{ textAlign: 'center', marginBottom: 64 }}>
+          <p className="font-mono" style={{ color: GOLD, fontSize: 12, fontWeight: 500, letterSpacing: '0.2em', textTransform: 'uppercase', marginBottom: 16 }}>Build Your Engagement</p>
+          <h1 className="font-display" style={{ fontSize: 'clamp(32px, 5vw, 48px)', fontWeight: 400, marginBottom: 16 }}>PLYA <span style={{ color: GOLD }}>×</span> 33 Strategies</h1>
+        </div>
 
-      {/* Background glow */}
-      <div className="fixed inset-0 pointer-events-none overflow-hidden">
-        <div
-          className="absolute top-1/4 right-1/4 w-96 h-96 rounded-full blur-3xl opacity-10"
-          style={{ background: GOLD }}
-        />
-      </div>
+        <div style={{ marginBottom: 48 }}>
+          <h2 className="font-mono" style={{ fontSize: 14, fontWeight: 600, color: GOLD, letterSpacing: '0.1em', textTransform: 'uppercase', marginBottom: 24 }}>Track A — Product Build</h2>
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(300px, 1fr))', gap: 20 }}>
+            {phases.map((phase) => {
+              const isSelected = selectedPhases.includes(phase.id);
+              return <PhaseCard key={phase.id} phase={phase} isSelected={isSelected} isLocked={false} onSelect={handlePhaseSelect} />;
+            })}
+          </div>
+        </div>
 
-      <div className="relative max-w-4xl mx-auto px-6 md:px-12 py-12">
-        <header className="mb-12">
-          <div className="flex items-center justify-between mb-6">
-            <div className="flex items-center gap-2">
-              <span className="text-2xl font-display" style={{ color: GOLD }}>33</span>
-              <span className="text-xs uppercase tracking-[0.2em] text-zinc-500 font-mono">Strategies</span>
+        <div style={{ marginBottom: 48 }}>
+          <h2 className="font-mono" style={{ fontSize: 14, fontWeight: 600, color: '#4ade80', letterSpacing: '0.1em', textTransform: 'uppercase', marginBottom: 24 }}>Track B — Strategy & Go-to-Market</h2>
+          <TrackBCard isSelected={includeTrackB} onToggle={() => setIncludeTrackB(!includeTrackB)} />
+        </div>
+
+        {totalPrice > 0 && (
+          <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} style={{ padding: 32, background: BG_SURFACE, borderRadius: 20, border: `1px solid ${GOLD}` }}>
+            <h3 className="font-body" style={{ fontSize: 18, fontWeight: 600, color: '#fff', marginBottom: 24 }}>Your Selection</h3>
+            <div style={{ marginBottom: 24 }}>
+              {selectedPhases.map(id => {
+                const phase = phases.find(p => p.id === id);
+                return phase ? (
+                  <div key={id} style={{ display: 'flex', justifyContent: 'space-between', padding: '12px 0', borderBottom: '1px solid #27272a' }}>
+                    <span style={{ color: '#a3a3a3' }}>{phase.title}</span>
+                    <span style={{ color: '#fff', fontWeight: 500 }}>${phase.price.toLocaleString()}</span>
+                  </div>
+                ) : null;
+              })}
+              {includeTrackB && (
+                <div style={{ display: 'flex', justifyContent: 'space-between', padding: '12px 0', borderBottom: '1px solid #27272a' }}>
+                  <span style={{ color: '#a3a3a3' }}>Strategy & Go-to-Market</span>
+                  <span style={{ color: '#fff', fontWeight: 500 }}>${trackB.price.toLocaleString()}</span>
+                </div>
+              )}
             </div>
-            <button
-              onClick={() => setViewMode('cart')}
-              className="relative px-4 py-2 rounded-xl flex items-center gap-2 transition-all"
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-end', marginBottom: 32, paddingBottom: 24, borderBottom: '1px solid #27272a' }}>
+              <div>
+                <p style={{ fontSize: 13, color: '#525252', marginBottom: 4 }}>Traditional cost:</p>
+                <p style={{ fontSize: 18, color: '#737373', textDecoration: 'line-through' }}>${traditionalLow.toLocaleString()} – ${traditionalHigh.toLocaleString()}</p>
+              </div>
+              <div style={{ textAlign: 'right' }}>
+                <p style={{ fontSize: 13, color: '#525252', marginBottom: 4 }}>Your investment:</p>
+                <p className="font-display" style={{ fontSize: 32, color: GOLD }}>${totalPrice.toLocaleString()}</p>
+              </div>
+            </div>
+            <div>
+              <h4 style={{ fontSize: 14, fontWeight: 600, color: '#fff', marginBottom: 16 }}>Payment Structure</h4>
+              <div style={{ marginBottom: 16 }}>
+                <input
+                  type="range"
+                  min="0"
+                  max="33"
+                  value={equitySlider}
+                  onChange={handleSliderChange}
+                  style={{ width: '100%', height: 8, borderRadius: 4, background: `linear-gradient(to right, ${GOLD} ${equitySlider * 3}%, #27272a ${equitySlider * 3}%)`, cursor: 'pointer', WebkitAppearance: 'none' }}
+                />
+                <div className="font-mono" style={{ display: 'flex', justifyContent: 'space-between', fontSize: 12, color: '#525252', marginTop: 8 }}>
+                  <span>100% Cash</span>
+                  <span>67% Cash / {MAX_EQUITY_PERCENT.toFixed(1)}% Equity</span>
+                </div>
+              </div>
+              <div style={{ display: 'flex', gap: 24, padding: 20, background: BG_ELEVATED, borderRadius: 12 }}>
+                <div style={{ flex: 1 }}>
+                  <p style={{ fontSize: 12, color: '#525252', marginBottom: 4 }}>Cash due</p>
+                  <p className="font-display" style={{ fontSize: 24, color: '#fff' }}>${Math.round(cashDue).toLocaleString()}</p>
+                </div>
+                {equitySlider > 0 && (
+                  <div style={{ flex: 1 }}>
+                    <p style={{ fontSize: 12, color: '#525252', marginBottom: 4 }}>Equity</p>
+                    <p className="font-display" style={{ fontSize: 24, color: GOLD }}>{equityPercent.toFixed(2)}%</p>
+                  </div>
+                )}
+              </div>
+              <EquityExplainer />
+            </div>
+          </motion.div>
+        )}
+
+        {totalPrice > 0 && (
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            transition={{ delay: 0.3 }}
+            style={{ marginTop: 48, textAlign: 'center' }}
+          >
+            <motion.button
+              onClick={onNext}
+              whileHover={{ scale: 1.02 }}
+              whileTap={{ scale: 0.98 }}
               style={{
-                background: 'rgba(255,255,255,0.03)',
-                border: '1px solid rgba(255,255,255,0.08)'
+                padding: '20px 48px',
+                fontSize: 18,
+                fontWeight: 600,
+                background: GOLD,
+                color: BG_PRIMARY,
+                border: 'none',
+                borderRadius: 12,
+                cursor: 'pointer',
+                marginBottom: 16,
               }}
             >
-              <div className="text-zinc-400"><ShoppingCart /></div>
-              {cart.length > 0 && (
-                <span
-                  className="absolute -top-2 -right-2 w-6 h-6 rounded-full flex items-center justify-center text-xs font-bold text-black"
-                  style={{ background: GOLD }}
-                >
-                  {cart.length}
-                </span>
-              )}
-            </button>
-          </div>
-          <h1 className="text-4xl md:text-5xl lg:text-6xl font-display mb-4">
-            PLYA <span style={{ color: GOLD }}>Project Proposal</span>
-          </h1>
-          <p className="text-zinc-400 text-lg font-body leading-relaxed max-w-2xl">
-            Build your custom engagement package for Phase 1 MVP development and optional Phase 2 ongoing support.
-          </p>
-        </header>
-
-        {/* Project Overview */}
-        <section className="mb-12">
-          <SectionLabel number="00" title="About PLYA" />
-          <GlassCard glow className="p-8">
-            <div className="flex items-start gap-4 mb-6">
-              <div
-                className="w-12 h-12 rounded-xl flex items-center justify-center flex-shrink-0"
-                style={{ background: 'rgba(212,165,74,0.2)' }}
-              >
-                <div style={{ color: GOLD }}><Rocket /></div>
-              </div>
-              <div>
-                <h2 className="text-2xl font-display mb-3 text-white">AI-Powered Sports Platform</h2>
-                <p className="text-zinc-300 text-sm font-body leading-relaxed">
-                  PLYA is an AI-powered platform designed to revolutionize how athletes and sports enthusiasts connect,
-                  train, and compete. The platform combines intelligent matchmaking, performance tracking, and community
-                  building to create a comprehensive sports networking ecosystem.
-                </p>
-              </div>
-            </div>
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-              <div
-                className="rounded-lg p-4"
-                style={{ background: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.05)' }}
-              >
-                <div className="flex items-center gap-2 mb-2">
-                  <div style={{ color: GOLD }}><Calendar /></div>
-                  <span className="text-sm font-display" style={{ color: GOLD }}>Timeline</span>
-                </div>
-                <p className="text-xs text-zinc-400 font-body">33 days to MVP delivery</p>
-              </div>
-              <div
-                className="rounded-lg p-4"
-                style={{ background: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.05)' }}
-              >
-                <div className="flex items-center gap-2 mb-2">
-                  <div style={{ color: GOLD }}><Brain /></div>
-                  <span className="text-sm font-display" style={{ color: GOLD }}>Approach</span>
-                </div>
-                <p className="text-xs text-zinc-400 font-body">AI-native development</p>
-              </div>
-              <div
-                className="rounded-lg p-4"
-                style={{ background: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.05)' }}
-              >
-                <div className="flex items-center gap-2 mb-2">
-                  <div style={{ color: GOLD }}><Users /></div>
-                  <span className="text-sm font-display" style={{ color: GOLD }}>Target</span>
-                </div>
-                <p className="text-xs text-zinc-400 font-body">Athletes & sports communities</p>
-              </div>
-            </div>
-          </GlassCard>
-        </section>
-
-        {/* Phase 1 Services */}
-        <section className="mb-12">
-          <SectionLabel number="01" title="MVP Development Services" />
-          <p className="text-zinc-400 text-sm mb-6 font-body">Select the services you need for your 33-day sprint to MVP</p>
-          <div className="space-y-4">
-            {services.map(service => (
-              <ServiceCard
-                key={service.id}
-                item={service}
-                inCart={isInCart(service.id)}
-                onAdd={addToCart}
-                onRemove={removeFromCart}
-                phase={1}
-              />
-            ))}
-          </div>
-        </section>
-
-        {/* Deliverables */}
-        <section className="mb-12">
-          <SectionLabel number="02" title="Choose Your Deliverable" />
-          <p className="text-zinc-400 text-sm mb-6 font-body">Select one deliverable option that best fits your needs</p>
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-            {deliverables.map(del => (
-              <DeliverableCard
-                key={del.id}
-                item={del}
-                inCart={isInCart(del.id)}
-                onAdd={(id) => {
-                  // Remove other deliverables first
-                  deliverables.forEach(d => {
-                    if (d.id !== id && isInCart(d.id)) {
-                      removeFromCart(d.id);
-                    }
-                  });
-                  addToCart(id);
-                }}
-                onRemove={removeFromCart}
-              />
-            ))}
-          </div>
-        </section>
-
-        {cart.length > 0 && (
-          <div
-            className="fixed bottom-6 right-6 rounded-xl p-4 shadow-2xl"
-            style={{
-              background: BG_ELEVATED,
-              border: '1px solid rgba(255,255,255,0.1)',
-              boxShadow: `0 0 40px ${GOLD_GLOW}`
-            }}
-          >
-            <div className="flex items-center gap-4">
-              <div>
-                <p className="text-xs text-zinc-500 mb-1 font-mono">{cart.length} items</p>
-                <p className="text-lg font-display" style={{ color: GOLD }}>${calculateTotal().phase1Total.toLocaleString()}</p>
-              </div>
-              <button
-                onClick={() => setViewMode('cart')}
-                className="px-6 py-3 text-black rounded-lg font-semibold font-body"
-                style={{ background: GOLD }}
-              >
-                View Cart
-              </button>
-            </div>
-          </div>
+              I'm in. What's next?
+            </motion.button>
+            <p style={{ fontSize: 14, color: '#525252', maxWidth: 500, margin: '0 auto', lineHeight: 1.6 }}>
+              Don't worry — you're not committing to anything yet. We'll send the real paperwork later if you decide to move forward.
+            </p>
+          </motion.div>
         )}
       </div>
     </div>
   );
+};
+
+// ============================================================================
+// LET'S BE GREAT PAGE
+// ============================================================================
+
+const LetsBeGreat: React.FC = () => {
+  const weBring: string[] = [
+    'Deep expertise in AI product development',
+    'Hands-on guidance through every critical decision',
+    'Technical execution and implementation support',
+    'Frameworks from successful 0→1 journeys',
+    'Candid feedback when needed',
+  ];
+
+  const weNeed: WeNeedItem[] = [
+    { text: 'Weekly commitment', detail: '10-15 hours minimum' },
+    { text: 'Ownership', detail: 'Drive your vision — we guide, you decide' },
+    { text: 'Responsiveness', detail: '24-48 hour turnaround on decisions' },
+    { text: 'User access', detail: 'Direct line to early users' },
+    { text: 'Transparency', detail: 'Open communication about constraints' },
+  ];
+
+  const plyaCommitments: PlyaCommitment[] = [
+    { number: 1, title: 'Athlete Network', detail: <>Identify <strong style={{ color: '#fff' }}>25 athletes</strong> with 1,000+ followers who will test PLYA</> },
+    { number: 2, title: 'User Feedback', detail: <>Conduct weekly user interviews — <strong style={{ color: '#fff' }}>minimum 5 per week</strong>, starting in week four</> },
+    { number: 3, title: 'Responsiveness', detail: <>Respond within <strong style={{ color: '#fff' }}>a few hours</strong> (even just an acknowledgment) unless something wild is happening</> },
+  ];
+
+  return (
+    <div className="font-body" style={{
+      minHeight: '100vh',
+      background: BG_PRIMARY,
+      color: '#fff',
+      padding: '80px 24px',
+    }}>
+      <div style={{ maxWidth: 900, margin: '0 auto' }}>
+
+        {/* Hero */}
+        <div style={{ textAlign: 'center', marginBottom: 64 }}>
+          <p className="font-mono" style={{
+            color: GOLD,
+            fontSize: 12,
+            fontWeight: 500,
+            letterSpacing: '0.2em',
+            textTransform: 'uppercase',
+            marginBottom: 16
+          }}>
+            The Partnership
+          </p>
+          <h1 className="font-display" style={{
+            fontSize: 'clamp(40px, 6vw, 64px)',
+            fontWeight: 400,
+            marginBottom: 24,
+            color: '#fff',
+          }}>
+            Let's Be <span style={{ color: GOLD }}>Great</span>
+          </h1>
+          <p style={{
+            fontSize: 18,
+            color: '#a3a3a3',
+            maxWidth: 600,
+            margin: '0 auto',
+            lineHeight: 1.7,
+          }}>
+            You're hiring us because you want to build something exceptional. Our job isn't just to execute — it's to push you, challenge you, and hold you accountable so we achieve something great together.
+          </p>
+        </div>
+
+        {/* Two Columns: What We Bring / What We Need */}
+        <div style={{
+          display: 'grid',
+          gridTemplateColumns: 'repeat(auto-fit, minmax(300px, 1fr))',
+          gap: 24,
+          marginBottom: 48,
+        }}>
+          {/* What We Bring */}
+          <div style={{
+            padding: 32,
+            background: BG_SURFACE,
+            borderRadius: 16,
+            border: '1px solid #27272a',
+          }}>
+            <h2 className="font-mono" style={{
+              fontSize: 13,
+              fontWeight: 600,
+              color: '#4ade80',
+              letterSpacing: '0.1em',
+              textTransform: 'uppercase',
+              marginBottom: 24,
+            }}>
+              What We Bring
+            </h2>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
+              {weBring.map((item, i) => (
+                <div key={i} style={{ display: 'flex', alignItems: 'flex-start', gap: 12 }}>
+                  <span style={{ color: '#4ade80', fontSize: 16, marginTop: 2 }}>✓</span>
+                  <span style={{ fontSize: 15, color: '#d4d4d4', lineHeight: 1.5 }}>{item}</span>
+                </div>
+              ))}
+            </div>
+          </div>
+
+          {/* What We Need */}
+          <div style={{
+            padding: 32,
+            background: BG_SURFACE,
+            borderRadius: 16,
+            border: '1px solid #27272a',
+          }}>
+            <h2 className="font-mono" style={{
+              fontSize: 13,
+              fontWeight: 600,
+              color: GOLD,
+              letterSpacing: '0.1em',
+              textTransform: 'uppercase',
+              marginBottom: 24,
+            }}>
+              What We Need From You
+            </h2>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
+              {weNeed.map((item, i) => (
+                <div key={i} style={{ display: 'flex', alignItems: 'flex-start', gap: 12 }}>
+                  <span style={{ color: GOLD, fontSize: 14, marginTop: 3 }}>→</span>
+                  <div>
+                    <span style={{ fontSize: 15, color: '#fff', fontWeight: 500 }}>{item.text}</span>
+                    <span style={{ fontSize: 15, color: '#737373' }}> — {item.detail}</span>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+        </div>
+
+        {/* PLYA Specific Commitments */}
+        <div style={{
+          padding: 32,
+          background: BG_SURFACE,
+          borderRadius: 20,
+          border: `2px solid ${GOLD}`,
+          marginBottom: 64,
+        }}>
+          <h2 className="font-mono" style={{
+            fontSize: 13,
+            fontWeight: 600,
+            color: GOLD,
+            letterSpacing: '0.1em',
+            textTransform: 'uppercase',
+            marginBottom: 8,
+          }}>
+            Your Commitments
+          </h2>
+          <p className="font-display" style={{
+            fontSize: 24,
+            color: '#fff',
+            marginBottom: 12,
+          }}>
+            For PLYA
+          </p>
+          <p style={{
+            fontSize: 15,
+            color: '#737373',
+            marginBottom: 32,
+            lineHeight: 1.6,
+          }}>
+            Over the course of our 8-week engagement, here's what we need from you:
+          </p>
+
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 20 }}>
+            {plyaCommitments.map((item) => (
+              <div key={item.number} style={{
+                display: 'flex',
+                alignItems: 'flex-start',
+                gap: 16,
+                padding: 20,
+                background: 'rgba(255,255,255,0.03)',
+                borderRadius: 12,
+              }}>
+                <div style={{
+                  width: 32,
+                  height: 32,
+                  borderRadius: '50%',
+                  background: GOLD_DIM,
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  fontSize: 14,
+                  fontWeight: 600,
+                  color: GOLD,
+                  flexShrink: 0,
+                }}>
+                  {item.number}
+                </div>
+                <div>
+                  <p style={{ fontSize: 16, fontWeight: 600, color: '#fff', marginBottom: 4 }}>
+                    {item.title}
+                  </p>
+                  <p style={{ fontSize: 15, color: '#a3a3a3', lineHeight: 1.5, margin: 0 }}>
+                    {item.detail}
+                  </p>
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+
+        {/* Closing */}
+        <div style={{
+          textAlign: 'center',
+          padding: 48,
+          background: BG_SURFACE,
+          borderRadius: 16,
+          border: '1px solid #27272a',
+        }}>
+          <h3 className="font-display" style={{
+            fontSize: 20,
+            fontWeight: 400,
+            color: '#fff',
+            marginBottom: 16,
+          }}>
+            What Happens Next
+          </h3>
+          <p style={{ fontSize: 16, color: '#a3a3a3', lineHeight: 1.7, maxWidth: 500, margin: '0 auto 24px' }}>
+            We're scheduled to talk <strong style={{ color: '#fff' }}>Thursday at 2pm CT</strong>. After we finalize everything on that call, we'll send over the official <em>Let's Be Great</em> commitment along with the contract paperwork via our eSign platform.
+          </p>
+          <p style={{ fontSize: 14, color: '#525252' }}>
+            Looking forward to building something brilliant together.
+          </p>
+        </div>
+
+        {/* 33 Strategies Wordmark */}
+        <div style={{
+          marginTop: 64,
+          paddingTop: 32,
+          borderTop: '1px solid #1a1a1a',
+          textAlign: 'center',
+        }}>
+          <p className="font-display" style={{
+            fontSize: 24,
+            color: '#525252',
+            margin: 0,
+          }}>
+            <span style={{ color: GOLD }}>33</span> Strategies
+          </p>
+        </div>
+
+      </div>
+    </div>
+  );
+};
+
+// ============================================================================
+// MAIN COMPONENT WITH HASH-BASED ROUTING
+// ============================================================================
+
+export default function PLYAProposal(): JSX.Element {
+  const [viewMode, setViewMode] = useState<ViewMode>('intro');
+  const [selectedPhases, setSelectedPhases] = useState<string[]>([]);
+  const [includeTrackB, setIncludeTrackB] = useState<boolean>(false);
+  const [equitySlider, setEquitySlider] = useState<number>(0);
+
+  // Read initial hash on mount
+  useEffect(() => {
+    const hash = window.location.hash || '';
+    const initialMode = HASH_MAP[hash] || 'intro';
+    setViewMode(initialMode);
+
+    // Listen for hash changes (browser back/forward)
+    const handleHashChange = () => {
+      const newHash = window.location.hash || '';
+      const newMode = HASH_MAP[newHash] || 'intro';
+      setViewMode(newMode);
+    };
+
+    window.addEventListener('hashchange', handleHashChange);
+    return () => window.removeEventListener('hashchange', handleHashChange);
+  }, []);
+
+  // Update hash when viewMode changes
+  const navigateTo = (mode: ViewMode) => {
+    setViewMode(mode);
+    window.history.pushState(null, '', MODE_TO_HASH[mode]);
+  };
+
+  if (viewMode === 'intro') {
+    return <IntroSlideshow onComplete={() => navigateTo('proposal')} />;
+  }
+
+  if (viewMode === 'proposal') {
+    return (
+      <ProposalBuilder
+        selectedPhases={selectedPhases}
+        setSelectedPhases={setSelectedPhases}
+        includeTrackB={includeTrackB}
+        setIncludeTrackB={setIncludeTrackB}
+        equitySlider={equitySlider}
+        setEquitySlider={setEquitySlider}
+        onNext={() => navigateTo('letsBeGreat')}
+      />
+    );
+  }
+
+  return <LetsBeGreat />;
 }
