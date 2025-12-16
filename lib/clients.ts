@@ -50,8 +50,8 @@ export const clients: Record<string, ClientEntry> = {
       {
         slug: 'project-proposal',
         type: 'proposal',
-        title: 'Project Proposal',
-        description: 'Interactive consulting proposal',
+        title: 'The Path Forward',
+        description: 'Explore your personalized roadmap to launch',
         component: PLYAProposal,
       },
     ],
