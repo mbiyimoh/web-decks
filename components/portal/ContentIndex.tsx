@@ -3,6 +3,11 @@
 import Link from 'next/link';
 import { motion } from 'framer-motion';
 
+// Brand constants
+const GOLD = '#d4a54a';
+const GOLD_GLOW = 'rgba(212, 165, 74, 0.25)';
+const BG_PRIMARY = '#0a0a0f';
+
 // Serializable content item (no component reference)
 interface ContentItemData {
   slug: string;
@@ -28,82 +33,139 @@ const typeLabels: Record<ContentItemData['type'], string> = {
   document: 'Document',
 };
 
-const typeColors: Record<ContentItemData['type'], string> = {
-  deck: 'bg-amber-500/10 text-amber-400 border-amber-500/30',
-  proposal: 'bg-blue-500/10 text-blue-400 border-blue-500/30',
-  document: 'bg-zinc-500/10 text-zinc-400 border-zinc-500/30',
-};
+// Content tile component with special styling for proposals
+function ContentTile({
+  item,
+  clientId,
+  index
+}: {
+  item: ContentItemData;
+  clientId: string;
+  index: number;
+}) {
+  const isProposal = item.type === 'proposal';
+
+  return (
+    <motion.div
+      key={item.slug}
+      initial={{ opacity: 0, y: 10 }}
+      animate={{ opacity: 1, y: 0 }}
+      transition={{ duration: 0.4, delay: index * 0.1 }}
+    >
+      <Link
+        href={`/client-portals/${clientId}/${item.slug}`}
+        className="block rounded-xl p-6 transition-all duration-300 group relative"
+        style={{
+          background: isProposal
+            ? 'linear-gradient(135deg, rgba(212, 165, 74, 0.08) 0%, rgba(212, 165, 74, 0.02) 100%)'
+            : 'rgba(255, 255, 255, 0.03)',
+          border: isProposal
+            ? `1px solid ${GOLD}`
+            : '1px solid rgba(255, 255, 255, 0.08)',
+          boxShadow: isProposal
+            ? `0 0 40px ${GOLD_GLOW}, 0 0 80px rgba(212, 165, 74, 0.1)`
+            : 'none',
+        }}
+      >
+        <div className="flex items-start justify-between">
+          <div className="flex-1">
+            {/* Type badge */}
+            <span
+              className="inline-block px-2 py-0.5 text-xs font-mono font-medium tracking-wider uppercase rounded mb-3"
+              style={{
+                background: isProposal ? 'rgba(212, 165, 74, 0.15)' : 'rgba(255, 255, 255, 0.05)',
+                color: isProposal ? GOLD : '#888',
+                border: isProposal ? `1px solid rgba(212, 165, 74, 0.3)` : '1px solid rgba(255, 255, 255, 0.1)',
+              }}
+            >
+              {typeLabels[item.type]}
+            </span>
+
+            {/* Title */}
+            <h2
+              className="text-xl font-display transition-colors"
+              style={{ color: isProposal ? '#fff' : '#f5f5f5' }}
+            >
+              {item.title}
+            </h2>
+
+            {/* Description */}
+            {item.description && (
+              <p
+                className="text-sm mt-2 font-body"
+                style={{ color: isProposal ? '#a3a3a3' : '#888' }}
+              >
+                {item.description}
+              </p>
+            )}
+          </div>
+
+          {/* Arrow icon */}
+          <div
+            className="transition-all duration-300 ml-4 group-hover:translate-x-1"
+            style={{ color: isProposal ? GOLD : '#555' }}
+          >
+            <svg
+              className="w-5 h-5"
+              fill="none"
+              stroke="currentColor"
+              viewBox="0 0 24 24"
+            >
+              <path
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                strokeWidth={2}
+                d="M9 5l7 7-7 7"
+              />
+            </svg>
+          </div>
+        </div>
+      </Link>
+    </motion.div>
+  );
+}
 
 export default function ContentIndex({ client }: ContentIndexProps) {
   return (
-    <div className="min-h-screen bg-black px-6 py-12">
+    <div
+      className="min-h-screen px-6 py-12"
+      style={{ background: BG_PRIMARY }}
+    >
       <div className="max-w-2xl mx-auto">
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.6 }}
         >
+          {/* Header */}
           <div className="mb-12">
-            <p className="text-zinc-500 uppercase tracking-[0.2em] text-xs mb-2">
+            <p
+              className="uppercase tracking-[0.2em] text-xs mb-3 font-mono"
+              style={{ color: GOLD }}
+            >
               Client Portal
             </p>
-            <h1 className="text-4xl font-bold text-white font-display">
+            <h1 className="text-4xl md:text-5xl font-display text-white">
               {client.name}
             </h1>
           </div>
 
+          {/* Content tiles */}
           <div className="space-y-4">
             {client.content.map((item, index) => (
-              <motion.div
+              <ContentTile
                 key={item.slug}
-                initial={{ opacity: 0, y: 10 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ duration: 0.4, delay: index * 0.1 }}
-              >
-                <Link
-                  href={`/client-portals/${client.id}/${item.slug}`}
-                  className="block bg-zinc-900 border border-zinc-800 rounded-xl p-6 hover:border-zinc-700 transition-colors group"
-                >
-                  <div className="flex items-start justify-between">
-                    <div className="flex-1">
-                      <span
-                        className={`inline-block px-2 py-0.5 text-xs font-medium rounded border mb-3 ${typeColors[item.type]}`}
-                      >
-                        {typeLabels[item.type]}
-                      </span>
-                      <h2 className="text-xl font-semibold text-white group-hover:text-zinc-200 transition-colors">
-                        {item.title}
-                      </h2>
-                      {item.description && (
-                        <p className="text-zinc-500 text-sm mt-1">
-                          {item.description}
-                        </p>
-                      )}
-                    </div>
-                    <div className="text-zinc-600 group-hover:text-zinc-400 transition-colors ml-4">
-                      <svg
-                        className="w-5 h-5"
-                        fill="none"
-                        stroke="currentColor"
-                        viewBox="0 0 24 24"
-                      >
-                        <path
-                          strokeLinecap="round"
-                          strokeLinejoin="round"
-                          strokeWidth={2}
-                          d="M9 5l7 7-7 7"
-                        />
-                      </svg>
-                    </div>
-                  </div>
-                </Link>
-              </motion.div>
+                item={item}
+                clientId={client.id}
+                index={index}
+              />
             ))}
           </div>
 
-          <div className="mt-12 pt-8 border-t border-zinc-800">
-            <p className="text-zinc-600 text-sm text-center">
-              33 Strategies
+          {/* Footer */}
+          <div className="mt-12 pt-8 border-t" style={{ borderColor: 'rgba(255, 255, 255, 0.08)' }}>
+            <p className="text-sm text-center font-body" style={{ color: '#555' }}>
+              <span className="font-display" style={{ color: GOLD }}>33</span> Strategies
             </p>
           </div>
         </motion.div>
