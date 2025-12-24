@@ -8,10 +8,12 @@ import ContentIndex from '@/components/portal/ContentIndex';
 
 interface Props {
   params: Promise<{ client: string }>;
+  searchParams: Promise<{ returnTo?: string }>;
 }
 
-export default async function ClientPortalPage({ params }: Props) {
+export default async function ClientPortalPage({ params, searchParams }: Props) {
   const { client: clientId } = await params;
+  const { returnTo } = await searchParams;
   const client = getClient(clientId);
 
   if (!client) {
@@ -26,7 +28,7 @@ export default async function ClientPortalPage({ params }: Props) {
   const isAuthenticated = isSessionValidForClient(session, clientId);
 
   if (!isAuthenticated) {
-    return <PasswordGate clientId={clientId} clientName={client.name} />;
+    return <PasswordGate clientId={clientId} clientName={client.name} returnTo={returnTo} />;
   }
 
   // Strip component references before passing to client component

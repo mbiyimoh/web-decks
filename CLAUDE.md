@@ -602,6 +602,29 @@ export default async function Home() {
 - **Always use `getSessionOptions()` function** - validates env vars at runtime, not build time
 - **Middleware file location must be at root** - not in `app/` directory
 
+### Deep Link Support (Return URL Pattern)
+
+Protected routes redirect to login with a `returnTo` query param:
+
+```typescript
+// In protected page - redirect with returnTo
+if (!isAuthenticated) {
+  const returnTo = encodeURIComponent(currentPath);
+  redirect(`/client-portals/${clientId}?returnTo=${returnTo}`);
+}
+
+// In PasswordGate - use returnTo after login
+if (response.ok) {
+  if (returnTo) {
+    router.push(returnTo);  // Go to original destination
+  } else {
+    router.refresh();       // Stay on portal index
+  }
+}
+```
+
+This ensures shared links work - users land on the content they were trying to access after login.
+
 ---
 
 ## Skills & Design Review

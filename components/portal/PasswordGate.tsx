@@ -11,9 +11,10 @@ const BG_PRIMARY = '#0a0a0f';
 interface PasswordGateProps {
   clientId: string;
   clientName: string;
+  returnTo?: string;
 }
 
-export default function PasswordGate({ clientId, clientName }: PasswordGateProps) {
+export default function PasswordGate({ clientId, clientName, returnTo }: PasswordGateProps) {
   const [password, setPassword] = useState('');
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
@@ -32,7 +33,12 @@ export default function PasswordGate({ clientId, clientName }: PasswordGateProps
       });
 
       if (response.ok) {
-        router.refresh();
+        // Redirect to returnTo URL if provided, otherwise refresh current page
+        if (returnTo) {
+          router.push(returnTo);
+        } else {
+          router.refresh();
+        }
       } else {
         const data = await response.json();
         setError(data.error || 'Invalid password');

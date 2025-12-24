@@ -47,7 +47,9 @@ This guide covers the client portal system - password-protected areas where clie
 │  │       ├── SUCCESS: session.save() + { success: true }           │   │
 │  │       └── FAILURE: { error: "Invalid password" }, 401           │   │
 │  │                                                                  │   │
-│  │  PasswordGate calls router.refresh() → page re-renders          │   │
+│  │  PasswordGate handles success:                                  │   │
+│  │  ├── If returnTo param: router.push(returnTo) → deep link      │   │
+│  │  └── Otherwise: router.refresh() → page re-renders             │   │
 │  │  Server Component now sees valid session → shows ContentIndex   │   │
 │  │                                                                  │   │
 │  └─────────────────────────────────────────────────────────────────┘   │
@@ -58,7 +60,8 @@ This guide covers the client portal system - password-protected areas where clie
 │  │  /client-portals/[client]/[slug]                                │   │
 │  │       │                                                          │   │
 │  │       ├── Validate session                                       │   │
-│  │       │   └── If invalid: redirect to /client-portals/[client]  │   │
+│  │       │   └── If invalid: redirect with returnTo param          │   │
+│  │       │       → /client-portals/[client]?returnTo=<current-url> │   │
 │  │       │                                                          │   │
 │  │       ├── getClientContent(clientId, slug)                      │   │
 │  │       │   └── Returns ContentItem with component reference       │   │
@@ -138,6 +141,24 @@ There is no portal directory. Users receive direct links to their portal:
 3. Enters password, clicks button
 4. **On error**: Red error message appears, can retry
 5. **On success**: Page refreshes, shows content index
+
+### Deep Link Flow (Return URL)
+
+When users access a specific content item directly (e.g., from a shared link):
+
+1. User visits `/client-portals/plya/ip-framework` (unauthenticated)
+2. `[slug]/page.tsx` checks session → invalid
+3. Redirects to `/client-portals/plya?returnTo=%2Fclient-portals%2Fplya%2Fip-framework`
+4. Password gate shows
+5. User enters password
+6. **On success**: Redirects to original URL (`/client-portals/plya/ip-framework`)
+
+This ensures shared links work as expected - users land on the content they were trying to access, not the portal index.
+
+**Implementation:**
+- `[slug]/page.tsx` passes `returnTo` query param when redirecting
+- `[client]/page.tsx` reads `searchParams.returnTo` and passes to PasswordGate
+- `PasswordGate.tsx` uses `router.push(returnTo)` instead of `router.refresh()` when returnTo exists
 
 ### Content Index
 

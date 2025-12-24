@@ -28,8 +28,9 @@ export default async function ContentPage({ params }: Props) {
   );
 
   if (!isSessionValidForClient(session, clientId)) {
-    // Redirect to portal page (which will show password gate)
-    redirect(`/client-portals/${clientId}`);
+    // Redirect to portal page with returnTo param so we come back after login
+    const returnTo = encodeURIComponent(`/client-portals/${clientId}/${slug}`);
+    redirect(`/client-portals/${clientId}?returnTo=${returnTo}`);
   }
 
   const Component = contentItem.component;
