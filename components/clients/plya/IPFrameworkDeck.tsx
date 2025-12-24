@@ -294,7 +294,7 @@ export default function IPFrameworkDeck() {
             </div>
           </div>
           <p style={{ marginTop: 32, fontSize: 16, color: '#737373', textAlign: 'center' }}>
-            Meanwhile, we&apos;ll continue laying the groundwork for the PLYA v1 app&nbsp;build&nbsp;out.
+            Meanwhile, we&apos;ll continue laying the groundwork for the PLYA v1 app build out with a target delivery date of March&nbsp;3.
           </p>
         </div>
       </Section>
