@@ -269,13 +269,27 @@ export default function IPFrameworkDeck() {
                 </p>
               </div>
             </div>
-            <div style={{ padding: 24, background: BG_SURFACE, borderRadius: 12, border: `1px solid ${GREEN}40`, display: 'flex', alignItems: 'flex-start', gap: 16 }}>
-              <div style={{ width: 28, height: 28, borderRadius: '50%', background: `${GREEN}20`, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 12, fontWeight: 600, color: GREEN, flexShrink: 0 }}>3</div>
+            <div style={{ padding: 24, background: BG_SURFACE, borderRadius: 12, border: '1px solid #27272a', display: 'flex', alignItems: 'flex-start', gap: 16 }}>
+              <div style={{ width: 28, height: 28, borderRadius: '50%', background: GOLD_DIM, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 12, fontWeight: 600, color: GOLD, flexShrink: 0 }}>3</div>
               <div>
-                <p style={{ fontSize: 16, fontWeight: 500, color: '#fff', marginBottom: 4 }}>Review and sign</p>
+                <p style={{ fontSize: 16, fontWeight: 500, color: '#fff', marginBottom: 4 }}>Review terms</p>
                 <p style={{ fontSize: 14, color: '#a3a3a3', lineHeight: 1.5, margin: 0 }}>
-                  Once you have had a chance to review and we have addressed any questions, we finalize the agreement and&nbsp;get&nbsp;started.
+                  Take the time you need to review. We will address any questions and make sure everything is&nbsp;clear.
                 </p>
+              </div>
+            </div>
+            <div style={{ padding: 24, background: BG_SURFACE, borderRadius: 12, border: `1px solid ${GREEN}40`, display: 'flex', alignItems: 'flex-start', gap: 16 }}>
+              <div style={{ width: 28, height: 28, borderRadius: '50%', background: `${GREEN}20`, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 12, fontWeight: 600, color: GREEN, flexShrink: 0 }}>4</div>
+              <div>
+                <p style={{ fontSize: 16, fontWeight: 500, color: '#fff', marginBottom: 4 }}>Sign and kick off</p>
+                <p style={{ fontSize: 14, color: '#a3a3a3', lineHeight: 1.5, margin: 0 }}>
+                  Once aligned, sign the agreement and submit the first 1/3 deposit to begin the&nbsp;engagement.
+                </p>
+                <div style={{ marginTop: 12, padding: 12, background: 'rgba(255,255,255,0.03)', borderRadius: 8, borderLeft: `2px solid ${GOLD}` }}>
+                  <p style={{ fontSize: 13, color: '#737373', margin: 0, lineHeight: 1.5 }}>
+                    <span style={{ color: '#a3a3a3' }}>Agreed terms:</span> <span style={{ color: GOLD }}>$29,700</span> cash + <span style={{ color: GOLD }}>1% equity</span> in PLYA
+                  </p>
+                </div>
               </div>
             </div>
           </div>
