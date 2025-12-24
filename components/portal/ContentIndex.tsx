@@ -14,6 +14,14 @@ interface ContentItemData {
   type: 'deck' | 'proposal' | 'document';
   title: string;
   description?: string;
+  addedOn?: string;
+  lastUpdated?: string;
+}
+
+// Format date string (YYYY-MM-DD) to readable format (Dec 24, 2024)
+function formatDate(dateStr: string): string {
+  const date = new Date(dateStr + 'T00:00:00');
+  return date.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
 }
 
 // Serializable client data (can be passed from Server to Client component)
@@ -33,18 +41,18 @@ const typeLabels: Record<ContentItemData['type'], string> = {
   document: 'Document',
 };
 
-// Content tile component with special styling for proposals
+// Content tile component with special styling for the most recent item
 function ContentTile({
   item,
   clientId,
-  index
+  index,
+  isNewest
 }: {
   item: ContentItemData;
   clientId: string;
   index: number;
+  isNewest: boolean;
 }) {
-  const isProposal = item.type === 'proposal';
-
   return (
     <motion.div
       key={item.slug}
@@ -56,13 +64,13 @@ function ContentTile({
         href={`/client-portals/${clientId}/${item.slug}`}
         className="block rounded-xl p-6 transition-all duration-300 group relative"
         style={{
-          background: isProposal
+          background: isNewest
             ? 'linear-gradient(135deg, rgba(212, 165, 74, 0.08) 0%, rgba(212, 165, 74, 0.02) 100%)'
             : 'rgba(255, 255, 255, 0.03)',
-          border: isProposal
+          border: isNewest
             ? `1px solid ${GOLD}`
             : '1px solid rgba(255, 255, 255, 0.08)',
-          boxShadow: isProposal
+          boxShadow: isNewest
             ? `0 0 40px ${GOLD_GLOW}, 0 0 80px rgba(212, 165, 74, 0.1)`
             : 'none',
         }}
@@ -73,9 +81,9 @@ function ContentTile({
             <span
               className="inline-block px-2 py-0.5 text-xs font-mono font-medium tracking-wider uppercase rounded mb-3"
               style={{
-                background: isProposal ? 'rgba(212, 165, 74, 0.15)' : 'rgba(255, 255, 255, 0.05)',
-                color: isProposal ? GOLD : '#888',
-                border: isProposal ? `1px solid rgba(212, 165, 74, 0.3)` : '1px solid rgba(255, 255, 255, 0.1)',
+                background: isNewest ? 'rgba(212, 165, 74, 0.15)' : 'rgba(255, 255, 255, 0.05)',
+                color: isNewest ? GOLD : '#888',
+                border: isNewest ? `1px solid rgba(212, 165, 74, 0.3)` : '1px solid rgba(255, 255, 255, 0.1)',
               }}
             >
               {typeLabels[item.type]}
@@ -84,7 +92,7 @@ function ContentTile({
             {/* Title */}
             <h2
               className="text-xl font-display transition-colors"
-              style={{ color: isProposal ? '#fff' : '#f5f5f5' }}
+              style={{ color: isNewest ? '#fff' : '#f5f5f5' }}
             >
               {item.title}
             </h2>
@@ -93,9 +101,23 @@ function ContentTile({
             {item.description && (
               <p
                 className="text-sm mt-2 font-body"
-                style={{ color: isProposal ? '#a3a3a3' : '#888' }}
+                style={{ color: isNewest ? '#a3a3a3' : '#888' }}
               >
                 {item.description}
+              </p>
+            )}
+
+            {/* Dates */}
+            {(item.addedOn || item.lastUpdated) && (
+              <p
+                className="text-xs mt-3 font-mono"
+                style={{ color: '#525252' }}
+              >
+                {item.lastUpdated ? (
+                  <>Updated {formatDate(item.lastUpdated)}</>
+                ) : item.addedOn ? (
+                  <>Added {formatDate(item.addedOn)}</>
+                ) : null}
               </p>
             )}
           </div>
@@ -103,7 +125,7 @@ function ContentTile({
           {/* Arrow icon */}
           <div
             className="transition-all duration-300 ml-4 group-hover:translate-x-1"
-            style={{ color: isProposal ? GOLD : '#555' }}
+            style={{ color: isNewest ? GOLD : '#555' }}
           >
             <svg
               className="w-5 h-5"
@@ -150,16 +172,26 @@ export default function ContentIndex({ client }: ContentIndexProps) {
             </h1>
           </div>
 
-          {/* Content tiles */}
+          {/* Content tiles - sorted by addedOn date, newest first */}
           <div className="space-y-4">
-            {client.content.map((item, index) => (
-              <ContentTile
-                key={item.slug}
-                item={item}
-                clientId={client.id}
-                index={index}
-              />
-            ))}
+            {[...client.content]
+              .sort((a, b) => {
+                // Sort by addedOn date descending (newest first)
+                // Items without dates go to the end
+                if (!a.addedOn && !b.addedOn) return 0;
+                if (!a.addedOn) return 1;
+                if (!b.addedOn) return -1;
+                return b.addedOn.localeCompare(a.addedOn);
+              })
+              .map((item, index) => (
+                <ContentTile
+                  key={item.slug}
+                  item={item}
+                  clientId={client.id}
+                  index={index}
+                  isNewest={index === 0}
+                />
+              ))}
           </div>
 
           {/* Footer */}

@@ -39,6 +39,8 @@ export default async function ClientPortalPage({ params }: Props) {
       type: item.type,
       title: item.title,
       description: item.description,
+      addedOn: item.addedOn,
+      lastUpdated: item.lastUpdated,
     })),
   };
 

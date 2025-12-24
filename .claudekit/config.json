@@ -1,0 +1,44 @@
+{
+  "hooks": {
+    "self-review": {
+      "focusAreas": [
+        {
+          "name": "Change Significance Gate",
+          "questions": [
+            "FIRST: Is this a meaningful code change that warrants detailed review? Trivial changes (content text edits, hiding elements, adding a line) should be acknowledged with '✅ Trivial change, no review needed' and you should NOT address the other review points. Only proceed with the full review for structural code changes, new logic, refactoring, or architectural decisions."
+          ]
+        },
+        {
+          "name": "Implementation Completeness",
+          "questions": [
+            "Does the implementation actually do what it claims, or just return hardcoded values?",
+            "Are all the features actually working, or just pretending to work?"
+          ]
+        },
+        {
+          "name": "Code Quality",
+          "questions": [
+            "Is there duplicated logic that should be extracted?",
+            "Is the code more complex now than it needs to be?"
+          ]
+        },
+        {
+          "name": "Integration & Refactoring",
+          "questions": [
+            "Does the code structure still make sense after your additions?",
+            "Should you consolidate similar functions that now exist?",
+            "Did you leave any temporary workarounds or hacks?"
+          ]
+        },
+        {
+          "name": "Codebase Consistency",
+          "questions": [
+            "Did you update all the places that depend on what you changed?",
+            "Are there related files that need the same changes?",
+            "Should your solution be applied elsewhere for consistency?"
+          ]
+        }
+      ]
+    }
+  }
+}

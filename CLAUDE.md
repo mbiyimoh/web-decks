@@ -162,53 +162,61 @@ import { StatusBadge } from '@/components';
 
 ## Design System
 
+**IMPORTANT:** The authoritative design specification is in `.claude/skills/33-strategies-frontend-design.md`. Always reference it when:
+- Creating new components or decks
+- Reviewing/auditing existing designs
+- Checking brand alignment
+
+Use `/design:audit <component>` to check any component against the design system.
+
 ### Colors
 
-Defined in `styles/tokens.ts`:
-
 ```ts
-export const colors = {
-  // Backgrounds
-  bg: {
-    primary: '#000000',
-    surface: '#18181b',
-    surfaceDim: '#09090b',
-    elevated: '#27272a',
-  },
-  
-  // Text
-  text: {
-    primary: '#ffffff',
-    secondary: '#a1a1aa',
-    muted: '#71717a',
-  },
-  
-  // Accent (override per deck if needed)
-  accent: {
-    primary: '#f59e0b',    // Amber
-    success: '#10b981',    // Emerald
-    info: '#3b82f6',       // Blue
-    highlight: '#a855f7',  // Purple
-  },
-  
-  // Borders
-  border: {
-    default: '#27272a',
-    subtle: '#3f3f46',
-  },
-};
+// Backgrounds - Dark with subtle blue undertone
+const BG_PRIMARY = '#0a0a0f';
+const BG_SURFACE = '#111114';
+const BG_ELEVATED = '#0d0d14';
+const BG_CARD = 'rgba(255,255,255,0.03)';
+
+// Text Hierarchy
+const TEXT_PRIMARY = '#f5f5f5';
+const TEXT_MUTED = '#888888';
+const TEXT_DIM = '#555555';
+
+// Primary Accent - Warm Gold (signature color)
+const GOLD = '#d4a54a';
+const GOLD_GLOW = 'rgba(212,165,74,0.3)';
+
+// Semantic Colors
+const GREEN = '#4ade80';   // Value creation, success
+const BLUE = '#60a5fa';    // Information
+const PURPLE = '#a78bfa';  // Transformation
+const RED = '#f87171';     // Warnings
+
+// Borders
+const BORDER = 'rgba(255,255,255,0.08)';
 ```
 
 ### Typography
 
-Fonts loaded via Google Fonts in `styles/globals.css`:
-- **Headlines:** Space Grotesk (500, 600, 700)
-- **Body:** Inter (400, 500, 600, 700)
+Fonts configured in `tailwind.config.ts` and loaded via Google Fonts:
+
+| Role | Font | Tailwind Class |
+|------|------|----------------|
+| Display/Headlines | Instrument Serif | `font-display` |
+| Body/UI | DM Sans | `font-body` |
+| Technical/Labels | JetBrains Mono | `font-mono` |
 
 ```css
-.font-display { font-family: 'Space Grotesk', sans-serif; }
-.font-body { font-family: 'Inter', sans-serif; }
+.font-display { font-family: 'Instrument Serif', Georgia, serif; }
+.font-body { font-family: var(--font-body), sans-serif; }
+.font-mono { font-family: var(--font-mono), monospace; }
 ```
+
+**Usage Rules:**
+- Headlines and the "33" in brand name: `font-display`
+- Body text, buttons, descriptions: `font-body`
+- Section labels, tags, code: `font-mono` with `tracking-[0.2em] uppercase`
 
 ### Animation Presets
 
@@ -332,6 +340,40 @@ URL: https://...
 
 ---
 
+## Local Development
+
+**Always run the dev server on port 3033:**
+
+```bash
+npm run dev
+# Starts at http://localhost:3033
+```
+
+The port is configured in `package.json` scripts. This avoids conflicts with other local projects.
+
+### Local URLs
+
+| Route | URL |
+|-------|-----|
+| Landing page | http://localhost:3033 |
+| PLYA portal | http://localhost:3033/client-portals/plya |
+| Tradeblock portal | http://localhost:3033/client-portals/tradeblock |
+
+### Environment Variables
+
+Copy `.env.example` to `.env` and set values:
+
+```bash
+cp .env.example .env
+```
+
+Required for authentication to work locally:
+- `SESSION_SECRET` - Generate with `openssl rand -hex 32`
+- `PLYA_PASSWORD` - Password for PLYA portal
+- `TRADEBLOCK_PASSWORD` - Password for Tradeblock portal
+
+---
+
 ## Deployment
 
 Each deck can be deployed independently or as part of a multi-deck site.
@@ -414,8 +456,8 @@ Stagger content within sections using 0.05-0.1s increments:
 ### Glow Effect
 
 ```tsx
-<div className="shadow-[0_0_60px_rgba(245,158,11,0.15)]">
-  Card with glow
+<div style={{ boxShadow: '0 0 40px rgba(212,165,74,0.3)' }}>
+  Card with gold glow
 </div>
 ```
 
@@ -562,9 +604,40 @@ export default async function Home() {
 
 ---
 
+## Skills & Design Review
+
+### Design Skill
+
+The **33 Strategies Frontend Design Skill** (`.claude/skills/33-strategies-frontend-design.md`) is the authoritative source for:
+- Brand aesthetic and tone
+- Typography (Instrument Serif, DM Sans, JetBrains Mono)
+- Color system (gold #d4a54a accent)
+- Component patterns
+- Animation specifications
+
+**When to use:** Any request involving design review, brand alignment, visual audits, or "does this match our design language" questions should reference this skill.
+
+### Design Audit Command
+
+Use `/design:audit <component-or-file>` to check any component against the design system. This will:
+1. Load the design skill
+2. Analyze the target file
+3. Report compliance issues
+4. Recommend specific fixes
+
+Example:
+```
+/design:audit IPFrameworkDeck
+/design:audit components/clients/plya/
+```
+
+---
+
 ## Getting Help
 
 - Check existing decks for patterns and examples
+- Reference the design skill: `.claude/skills/33-strategies-frontend-design.md`
+- Use `/design:audit` to check brand alignment
 - Reference Framer Motion docs: https://www.framer.com/motion/
 - Reference Tailwind docs: https://tailwindcss.com/docs
 

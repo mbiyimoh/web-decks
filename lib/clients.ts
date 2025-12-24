@@ -6,6 +6,8 @@ export interface ContentItem {
   type: 'deck' | 'proposal' | 'document';
   title: string;
   description?: string;
+  addedOn?: string;      // ISO date string (YYYY-MM-DD) - when first published
+  lastUpdated?: string;  // ISO date string (YYYY-MM-DD) - when last modified
   component: ComponentType;
 }
 
@@ -27,6 +29,11 @@ const PLYAProposal = dynamic(
   { ssr: true }
 );
 
+const IPFrameworkDeck = dynamic(
+  () => import('@/components/clients/plya/IPFrameworkDeck'),
+  { ssr: true }
+);
+
 export const clients: Record<string, ClientEntry> = {
   'tradeblock': {
     id: 'tradeblock',
@@ -38,6 +45,8 @@ export const clients: Record<string, ClientEntry> = {
         type: 'deck',
         title: 'The AI Inflection',
         description: 'Investor pitch deck - November 2025',
+        addedOn: '2024-11-15',
+        lastUpdated: '2024-12-03',
         component: TradeblockAIInflection,
       },
     ],
@@ -52,7 +61,16 @@ export const clients: Record<string, ClientEntry> = {
         type: 'proposal',
         title: 'The Path Forward',
         description: 'Explore your personalized roadmap to launch',
+        addedOn: '2024-12-01',
         component: PLYAProposal,
+      },
+      {
+        slug: 'ip-framework',
+        type: 'deck',
+        title: 'IP: Protecting Both Yours and Ours',
+        description: 'How we think about intellectual property in the context of client engagements',
+        addedOn: '2024-12-24',
+        component: IPFrameworkDeck,
       },
     ],
   },
