@@ -358,6 +358,7 @@ The port is configured in `package.json` scripts. This avoids conflicts with oth
 | Landing page | http://localhost:3033 |
 | PLYA portal | http://localhost:3033/client-portals/plya |
 | Tradeblock portal | http://localhost:3033/client-portals/tradeblock |
+| WSBC portal | http://localhost:3033/client-portals/wsbc |
 
 ### Environment Variables
 
@@ -371,6 +372,7 @@ Required for authentication to work locally:
 - `SESSION_SECRET` - Generate with `openssl rand -hex 32`
 - `PLYA_PASSWORD` - Password for PLYA portal
 - `TRADEBLOCK_PASSWORD` - Password for Tradeblock portal
+- `WSBC_PASSWORD` - Password for WSBC portal
 
 ---
 
@@ -480,6 +482,33 @@ Stagger content within sections using 0.05-0.1s increments:
   </p>
 </div>
 ```
+
+### React Strict Mode Initialization
+
+Prevent duplicate initialization in development (Strict Mode mounts components twice):
+
+```tsx
+const MyComponent = () => {
+  const [data, setData] = useState([]);
+  const hasInitialized = useRef(false);
+
+  useEffect(() => {
+    // Prevent duplicate initialization in React Strict Mode
+    if (hasInitialized.current) return;
+    hasInitialized.current = true;
+
+    // One-time initialization logic
+    initializeData();
+  }, []);
+
+  return <div>{/* ... */}</div>;
+};
+```
+
+**When to use:**
+- Components that should only initialize once (chat message loading, demo sequences)
+- Prevents duplicate API calls or state updates in development
+- Production behavior unaffected (components only mount once)
 
 ---
 

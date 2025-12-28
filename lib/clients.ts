@@ -34,6 +34,11 @@ const IPFrameworkDeck = dynamic(
   { ssr: true }
 );
 
+const WSBCFinalProposal = dynamic(
+  () => import('@/components/clients/wsbc/WSBCFinalProposal'),
+  { ssr: true }
+);
+
 export const clients: Record<string, ClientEntry> = {
   'tradeblock': {
     id: 'tradeblock',
@@ -71,6 +76,21 @@ export const clients: Record<string, ClientEntry> = {
         description: 'How we think about intellectual property in the context of client engagements',
         addedOn: '2024-12-24',
         component: IPFrameworkDeck,
+      },
+    ],
+  },
+  'wsbc': {
+    id: 'wsbc',
+    name: 'WSBC',
+    passwordEnvVar: 'WSBC_PASSWORD',
+    content: [
+      {
+        slug: 'final-proposal',
+        type: 'deck',
+        title: 'WSBC VIP Experience Proposal',
+        description: 'Interactive proposal for the Wisconsin Sports Business Conference VIP experience',
+        addedOn: '2024-12-27',
+        component: WSBCFinalProposal,
       },
     ],
   },

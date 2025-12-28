@@ -362,10 +362,34 @@ Motion: Fade up on scroll, 0.5s duration, staggered delays
 ## Brand Voice in UI
 
 - Confident, not boastful
-- Clear, not clever  
+- Clear, not clever
 - Premium, not pretentious
 - Founder-to-founder peer energy
 - "Build brilliant things with brilliant people"
+
+---
+
+## Content Layout Principles
+
+### Text Alignment
+- **Left-align body text** in narrative/scrollytelling sections
+- Centered text is reserved for:
+  - Hero headlines (title slides)
+  - Stats/numbers in isolation
+  - CTAs and buttons
+- Avoid center-aligning paragraphs of body copy—it reduces readability
+
+### Paragraph Structure
+- Break dense text into **short, digestible paragraphs**
+- One core idea per paragraph
+- Use line breaks to create breathing room
+- Never present a wall of text—chunk content for scanning
+
+### Visual Hierarchy
+- Headlines grab attention (serif, large)
+- Subheads orient the reader (gold accent, uppercase, tracked)
+- Body text delivers value (sans-serif, comfortable line height)
+- Each element should have clear visual separation
 
 ---
 
