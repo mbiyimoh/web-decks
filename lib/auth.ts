@@ -10,6 +10,10 @@ if (!process.env.NEXTAUTH_SECRET) {
 }
 
 export const { handlers, auth, signIn, signOut } = NextAuth({
+  // Required for deployment behind proxies (Railway, Vercel, etc.)
+  // Without this, NextAuth fails with "Configuration" error on OAuth
+  // and session validation fails causing redirect loops
+  trustHost: true,
   secret: process.env.NEXTAUTH_SECRET,
   providers: [
     Google({
