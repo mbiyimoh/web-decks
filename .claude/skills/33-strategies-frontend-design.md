@@ -384,12 +384,62 @@ Motion: Fade up on scroll, 0.5s duration, staggered delays
 - One core idea per paragraph
 - Use line breaks to create breathing room
 - Never present a wall of text—chunk content for scanning
+- **Rule of thumb:** If body copy has 2+ complete sentences, split into separate `<p>` tags
+
+**Implementation pattern:**
+```tsx
+// ❌ Bad - wall of text
+<p style={{ fontSize: 17, color: TEXT_SECONDARY }}>
+  Your VIPs come to give back. But if all they get is awkward small talk
+  with strangers, they won't come twice.
+</p>
+
+// ✅ Good - chunked for scanning
+<div style={{ fontSize: 17, color: TEXT_SECONDARY }}>
+  <p style={{ margin: '0 0 16px 0' }}>
+    Your VIPs come to give back.
+  </p>
+  <p style={{ margin: 0 }}>
+    But if all they get is awkward small talk with strangers,
+    <span style={{ color: TEXT_PRIMARY }}>they won't come twice.</span>
+  </p>
+</div>
+```
 
 ### Visual Hierarchy
 - Headlines grab attention (serif, large)
 - Subheads orient the reader (gold accent, uppercase, tracked)
 - Body text delivers value (sans-serif, comfortable line height)
 - Each element should have clear visual separation
+
+---
+
+## Final Polish Checklist
+
+Before deploying any deck or proposal artifact, verify:
+
+### Navigation & Scroll Behavior
+- **Scroll-to-top on transitions:** When users click CTAs that navigate to a new section or phase, ensure `window.scrollTo(0, 0)` is called. Users should always land at the top of the new content—never mid-page or at the bottom.
+- **Phase/view transitions:** Add scroll reset in `useEffect` on phase change or in navigation handler functions.
+
+Example pattern:
+```tsx
+// Option A: In navigation handler
+const navigateTo = (mode: ViewMode) => {
+  setViewMode(mode);
+  window.scrollTo(0, 0);
+};
+
+// Option B: In useEffect on phase change
+useEffect(() => {
+  window.scrollTo(0, 0);
+}, [phase]);
+```
+
+### Common Issues to Check
+- CTA buttons that link to new sections land user at correct position
+- Multi-phase decks reset scroll on each phase transition
+- Hash-based navigation includes scroll reset
 
 ---
 

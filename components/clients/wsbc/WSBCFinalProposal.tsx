@@ -30,7 +30,7 @@ const TEXT_DIM = '#525252';
 // ============================================================================
 // TYPES
 // ============================================================================
-type Phase = 'intro' | 'demo' | 'pitch' | 'proposal';
+type Phase = 'intro' | 'demo' | 'pitch';
 
 // Demo internal phases
 const DEMO_PHASES = {
@@ -129,6 +129,53 @@ const ALL_ATTENDEES = [
   { id: 9, name: 'Montee Ball Jr', title: 'Ambassador', company: 'Sandstone Care', initials: 'MB', bio: "Wisconsin RB legend, College Football Hall of Fame 2025.", seeking: ['Athlete mental health partners'], offering: ['Mental health advocacy'], category: 'Hall of Famer' },
   { id: 10, name: 'Justin Klein', title: 'Founding Partner', company: 'Marks & Klein LLP', initials: 'JMK', bio: "Leading US franchise attorney. Founded WSBC.", seeking: ['Conference sponsors'], offering: ['Legal expertise', 'WSBC network'], category: 'Conference Founder' },
 ];
+
+// ============================================================================
+// PACKAGE ICONS (Progressive Network Visualization)
+// ============================================================================
+
+const PackageIcon = ({ level, size = 48 }: { level: number; size?: number }) => {
+  const color = GOLD;
+  return (
+    <svg width={size} height={size} viewBox="0 0 48 48" fill="none">
+      {/* Level 1: Single node with outgoing connection lines */}
+      <circle cx="24" cy="24" r="6" fill={color} />
+      <line x1="24" y1="18" x2="24" y2="8" stroke={color} strokeWidth="2" strokeLinecap="round" opacity={0.5} />
+      <line x1="29" y1="21" x2="36" y2="14" stroke={color} strokeWidth="2" strokeLinecap="round" opacity={0.5} />
+      <line x1="29" y1="27" x2="36" y2="34" stroke={color} strokeWidth="2" strokeLinecap="round" opacity={0.5} />
+
+      {/* Level 2: Add connected nodes (network forming) */}
+      {level >= 2 && (
+        <>
+          <circle cx="24" cy="8" r="4" fill={color} />
+          <circle cx="36" cy="14" r="4" fill={color} />
+          <circle cx="36" cy="34" r="4" fill={color} />
+          <line x1="24" y1="12" x2="24" y2="18" stroke={color} strokeWidth="2" />
+          <line x1="33" y1="16" x2="29" y2="21" stroke={color} strokeWidth="2" />
+          <line x1="33" y1="32" x2="29" y2="27" stroke={color} strokeWidth="2" />
+        </>
+      )}
+
+      {/* Level 3: Full constellation with more nodes and cross-connections */}
+      {level >= 3 && (
+        <>
+          <circle cx="12" cy="14" r="4" fill={color} />
+          <circle cx="12" cy="34" r="4" fill={color} />
+          <circle cx="24" cy="40" r="4" fill={color} />
+          <line x1="19" y1="21" x2="15" y2="16" stroke={color} strokeWidth="2" />
+          <line x1="19" y1="27" x2="15" y2="32" stroke={color} strokeWidth="2" />
+          <line x1="24" y1="30" x2="24" y2="36" stroke={color} strokeWidth="2" />
+          {/* Cross connections for rich network */}
+          <line x1="12" y1="18" x2="12" y2="30" stroke={color} strokeWidth="1.5" opacity={0.6} />
+          <line x1="15" y1="12" x2="21" y2="9" stroke={color} strokeWidth="1.5" opacity={0.6} />
+          <line x1="27" y1="9" x2="33" y2="12" stroke={color} strokeWidth="1.5" opacity={0.6} />
+          <line x1="15" y1="36" x2="21" y2="39" stroke={color} strokeWidth="1.5" opacity={0.6} />
+          <line x1="27" y1="39" x2="33" y2="36" stroke={color} strokeWidth="1.5" opacity={0.6} />
+        </>
+      )}
+    </svg>
+  );
+};
 
 // ============================================================================
 // M33T INTRO COMPONENTS (Gold Theme)
@@ -348,6 +395,7 @@ const M33TIntroSection = ({ onComplete }: { onComplete: () => void }) => {
 
   const sections = [
     { id: 'problem', label: 'The Problem' },
+    { id: 'wsbc-challenge', label: 'Your Challenge' },
     { id: 'whatif', label: 'What If' },
     { id: 'm33t', label: 'M33T' },
     { id: 'experience', label: 'Experience It' },
@@ -368,8 +416,29 @@ const M33TIntroSection = ({ onComplete }: { onComplete: () => void }) => {
         ))}
       </div>
 
+      {/* HEADER SLIDE - Better Networking for WSBC */}
+      <section style={{ minHeight: '100vh', display: 'flex', flexDirection: 'column', justifyContent: 'center', alignItems: 'center', padding: '64px 24px', position: 'relative' }}>
+        <div style={{ position: 'absolute', top: '50%', left: '50%', transform: 'translate(-50%, -50%)', width: 600, height: 600, pointerEvents: 'none', background: `radial-gradient(circle, ${GOLD}15 0%, transparent 60%)` }} />
+        <div style={{ maxWidth: 500, position: 'relative', zIndex: 10 }}>
+          <div style={{ width: 56, height: 56, borderRadius: 12, background: GOLD, display: 'flex', alignItems: 'center', justifyContent: 'center', marginBottom: 32, fontFamily: 'Georgia, serif', fontSize: 24, fontWeight: 700, color: BG_PRIMARY, boxShadow: `0 8px 32px rgba(212, 168, 75, 0.3)` }}>33</div>
+          <p style={{ fontSize: 12, fontWeight: 600, color: GOLD, letterSpacing: '0.2em', textTransform: 'uppercase', marginBottom: 20 }}>Better Networking for WSBC</p>
+          <h1 style={{ fontFamily: 'Georgia, serif', fontSize: 36, color: TEXT_PRIMARY, marginBottom: 20, lineHeight: 1.3, letterSpacing: '-0.01em' }}>
+            Make your VIPs feel like <span style={{ color: GOLD }}>VIPs</span>
+          </h1>
+          <p style={{ fontSize: 17, color: TEXT_SECONDARY, lineHeight: 1.7 }}>
+            Pre-event intelligence. Curated connections. A dedicated experience.
+          </p>
+        </div>
+        <div style={{ position: 'absolute', bottom: 40, left: '50%', transform: 'translateX(-50%)', textAlign: 'center' }}>
+          <p style={{ fontSize: 11, color: TEXT_MUTED, marginBottom: 8, letterSpacing: '0.1em' }}>Scroll</p>
+          <div style={{ width: 24, height: 40, borderRadius: 12, border: `2px solid ${TEXT_MUTED}`, margin: '0 auto', position: 'relative' }}>
+            <div style={{ width: 4, height: 8, borderRadius: 2, background: GOLD, position: 'absolute', top: 8, left: '50%', transform: 'translateX(-50%)', animation: 'scrollBounce 2s ease-in-out infinite' }} />
+          </div>
+        </div>
+      </section>
+
       {/* SECTION 1: THE PROBLEM */}
-      <section ref={el => { sectionRefs.current[0] = el; }} style={{ minHeight: '100vh', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', padding: '64px 24px', position: 'relative', textAlign: 'center' }}>
+      <section ref={el => { sectionRefs.current[0] = el; }} style={{ minHeight: '100vh', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', padding: '64px 24px', position: 'relative' }}>
         <div style={{ position: 'absolute', top: '30%', left: '50%', transform: 'translate(-50%, -50%)', width: 400, height: 400, background: `radial-gradient(circle, ${GOLD}10 0%, transparent 70%)`, pointerEvents: 'none' }} />
         <div style={{ maxWidth: 500, position: 'relative', zIndex: 10 }}>
           <p style={{ color: TEXT_DIM, fontSize: 12, letterSpacing: '0.2em', textTransform: 'uppercase', marginBottom: 24 }}>The networking problem</p>
@@ -377,9 +446,9 @@ const M33TIntroSection = ({ onComplete }: { onComplete: () => void }) => {
             Every event, the <span style={{ color: GOLD }}>same story</span>
           </h1>
           <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 16, marginBottom: 40 }}>
-            <div style={{ background: BG_SURFACE, borderRadius: 16, padding: 24, border: `1px solid ${GOLD}30`, textAlign: 'left' }}>
-              <p style={{ color: GOLD, fontSize: 10, letterSpacing: '0.15em', textTransform: 'uppercase', marginBottom: 16, fontWeight: 600 }}>Expectation</p>
-              <p style={{ fontFamily: 'Georgia, serif', color: TEXT_PRIMARY, fontSize: 20, lineHeight: 1.4, margin: 0 }}>
+            <div style={{ background: GOLD, borderRadius: 16, padding: 24, border: `1px solid ${GOLD}`, textAlign: 'left' }}>
+              <p style={{ color: BG_PRIMARY, fontSize: 10, letterSpacing: '0.15em', textTransform: 'uppercase', marginBottom: 16, fontWeight: 600, opacity: 0.7 }}>Expectation</p>
+              <p style={{ fontFamily: 'Georgia, serif', color: BG_PRIMARY, fontSize: 20, lineHeight: 1.4, margin: 0 }}>
                 Make 3-4 meaningful connections that could actually go somewhere
               </p>
             </div>
@@ -390,22 +459,41 @@ const M33TIntroSection = ({ onComplete }: { onComplete: () => void }) => {
               </p>
             </div>
           </div>
-          <p style={{ color: TEXT_MUTED, fontSize: 16, lineHeight: 1.6 }}>
+          <p style={{ fontFamily: 'Georgia, serif', color: TEXT_PRIMARY, fontSize: 22, lineHeight: 1.5, marginTop: 48 }}>
             The right people were probably in the room.<br/>
-            <span style={{ color: TEXT_PRIMARY }}>You just had no way to find each other.</span>
+            <span style={{ color: GOLD, fontWeight: 500 }}>You just had no way to find each other.</span>
           </p>
-        </div>
-        <div style={{ position: 'absolute', bottom: 32, left: '50%', transform: 'translateX(-50%)', textAlign: 'center' }}>
-          <p style={{ color: TEXT_DIM, fontSize: 11, letterSpacing: '0.1em', marginBottom: 8 }}>Scroll</p>
-          <div style={{ width: 20, height: 32, borderRadius: 10, border: `2px solid ${TEXT_DIM}`, margin: '0 auto', position: 'relative' }}>
-            <div style={{ width: 3, height: 6, borderRadius: 2, background: GOLD, position: 'absolute', top: 6, left: '50%', transform: 'translateX(-50%)', animation: 'scrollBounce 2s ease-in-out infinite' }} />
-          </div>
         </div>
         <style>{`@keyframes scrollBounce { 0%, 100% { transform: translateX(-50%) translateY(0); opacity: 1; } 50% { transform: translateX(-50%) translateY(8px); opacity: 0.5; } }`}</style>
       </section>
 
-      {/* SECTION 2: WHAT IF + PRODUCT TEASE */}
-      <section ref={el => { sectionRefs.current[1] = el; }} style={{ minHeight: '100vh', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', padding: '64px 24px', position: 'relative', textAlign: 'center' }}>
+      {/* SECTION 2: WSBC ORGANIZERS BRIDGE */}
+      <section ref={el => { sectionRefs.current[1] = el; }} style={{ minHeight: '100vh', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', padding: '64px 24px', position: 'relative' }}>
+        <div style={{ position: 'absolute', top: '35%', left: '50%', transform: 'translate(-50%, -50%)', width: 450, height: 450, background: `radial-gradient(circle, ${GOLD}12 0%, transparent 70%)`, pointerEvents: 'none' }} />
+        <div style={{ maxWidth: 520, position: 'relative', zIndex: 10 }}>
+          <p style={{ color: GOLD, fontSize: 11, letterSpacing: '0.2em', textTransform: 'uppercase', marginBottom: 24 }}>For WSBC Organizers</p>
+          <h1 style={{ fontFamily: 'Georgia, serif', fontSize: 32, fontWeight: 400, color: TEXT_PRIMARY, marginBottom: 32, lineHeight: 1.3, letterSpacing: '-0.01em' }}>
+            You need heavy hitters to show up.<br/>
+            <span style={{ color: TEXT_SECONDARY }}>But goodwill only goes so far.</span>
+          </h1>
+          <div style={{ fontSize: 17, color: TEXT_SECONDARY, lineHeight: 1.7, marginBottom: 40 }}>
+            <p style={{ margin: '0 0 16px 0' }}>
+              Your VIPs — the alumni execs, former players, industry leaders — they come to give back.
+            </p>
+            <p style={{ margin: 0 }}>
+              But if all they get is awkward small talk with strangers, <span style={{ color: TEXT_PRIMARY }}>they won&apos;t come twice.</span>
+            </p>
+          </div>
+          <div style={{ background: GOLD_MUTED, borderLeft: `3px solid ${GOLD}`, padding: '20px 24px', textAlign: 'left', borderRadius: '0 12px 12px 0' }}>
+            <p style={{ fontFamily: 'Georgia, serif', fontSize: 18, color: TEXT_PRIMARY, margin: 0, lineHeight: 1.5 }}>
+              What if your VIP invitation included a preview of the exact people they&apos;d want to meet?
+            </p>
+          </div>
+        </div>
+      </section>
+
+      {/* SECTION 3: WHAT IF + PRODUCT TEASE */}
+      <section ref={el => { sectionRefs.current[2] = el; }} style={{ minHeight: '100vh', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', padding: '64px 24px', position: 'relative' }}>
         <div style={{ maxWidth: 400, position: 'relative', zIndex: 10 }}>
           <p style={{ color: TEXT_PRIMARY, fontSize: 22, lineHeight: 1.5, marginBottom: 40, fontWeight: 500 }}>
             What if you knew <span style={{ color: GOLD }}>exactly who to meet</span> before you walked in?
@@ -417,8 +505,8 @@ const M33TIntroSection = ({ onComplete }: { onComplete: () => void }) => {
         </div>
       </section>
 
-      {/* SECTION 3: INTRODUCING M33T */}
-      <section ref={el => { sectionRefs.current[2] = el; }} style={{ minHeight: '100vh', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', padding: '64px 24px', position: 'relative', textAlign: 'center' }}>
+      {/* SECTION 4: INTRODUCING M33T */}
+      <section ref={el => { sectionRefs.current[3] = el; }} style={{ minHeight: '100vh', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', padding: '64px 24px', position: 'relative' }}>
         <div style={{ position: 'absolute', top: '40%', left: '50%', transform: 'translate(-50%, -50%)', width: 600, height: 600, background: `radial-gradient(circle, ${GOLD}12 0%, transparent 70%)`, pointerEvents: 'none' }} />
         <div style={{ maxWidth: 700, position: 'relative', zIndex: 10 }}>
           <p style={{ color: GOLD, fontSize: 12, letterSpacing: '0.2em', textTransform: 'uppercase', marginBottom: 16 }}>Introducing</p>
@@ -440,10 +528,10 @@ const M33TIntroSection = ({ onComplete }: { onComplete: () => void }) => {
         </div>
       </section>
 
-      {/* SECTION 4: EXPERIENCE IT (Transition to Demo) */}
-      <section ref={el => { sectionRefs.current[3] = el; }} style={{ minHeight: '100vh', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', padding: '64px 24px', position: 'relative', textAlign: 'center' }}>
+      {/* SECTION 5: EXPERIENCE IT (Transition to Demo) */}
+      <section ref={el => { sectionRefs.current[4] = el; }} style={{ minHeight: '100vh', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', padding: '64px 24px', position: 'relative' }}>
         <div style={{ position: 'absolute', top: '40%', left: '50%', transform: 'translate(-50%, -50%)', width: 500, height: 500, background: `radial-gradient(circle, ${GOLD}15 0%, transparent 70%)`, pointerEvents: 'none' }} />
-        <div style={{ maxWidth: 400, position: 'relative', zIndex: 10 }}>
+        <div style={{ maxWidth: 400, position: 'relative', zIndex: 10, textAlign: 'center' }}>
           <p style={{ color: GOLD, fontSize: 12, letterSpacing: '0.2em', textTransform: 'uppercase', marginBottom: 16 }}>Now...</p>
           <h2 style={{ fontFamily: 'Georgia, serif', fontSize: 36, fontWeight: 400, color: TEXT_PRIMARY, marginBottom: 32, lineHeight: 1.2 }}>
             Experience it yourself.
@@ -1008,10 +1096,57 @@ const DemoSection = ({ onComplete }: { onComplete: () => void }) => {
 // ============================================================================
 // PITCH SECTION (Gold Theme with WAIT Animation)
 // ============================================================================
-const PitchSection = ({ onComplete }: { onComplete: () => void }) => {
+const PitchSection = () => {
   const [scrollProgress, setScrollProgress] = useState(0);
   const containerRef = useRef<HTMLDivElement>(null);
   const [introAnimated, setIntroAnimated] = useState(false);
+  const [expandedFaq, setExpandedFaq] = useState<number | null>(null);
+  const [expandedTier, setExpandedTier] = useState<number | null>(null);
+
+  const packages = [
+    {
+      name: 'Essential',
+      price: '8,000',
+      tagline: 'VIP Digital Experience',
+      summary: 'Your VIPs get AI-powered networking before they arrive.',
+      summaryBullets: ['Personalized attendee profiles', 'Curated match recommendations', 'Conversation starters for each connection'],
+      description: 'M33T for your VIP attendees. AI-powered profiling, curated matches, conversation starters—delivered before they arrive.',
+      features: ['Branded VIP intake experience', 'AI-powered attendee profiling', '3-5 curated matches per attendee', 'Personalized conversation starters', 'Full VIP directory access', 'Post-event analytics'],
+      outcome: 'VIPs arrive knowing exactly who to meet',
+      highlighted: false,
+      badge: '',
+    },
+    {
+      name: 'Premium',
+      price: '12,000',
+      tagline: 'Full Digital Experience',
+      summary: 'Connect both VIPs and students on one powerful platform.',
+      summaryBullets: ['Everything in Essential', 'Two connected networks (VIP + Student)', 'Cross-network matching and discovery'],
+      description: 'Expand the network. M33T for both VIPs and students—two connected audiences, one powerful platform.',
+      features: ['Everything in Essential', 'Student attendee network (separate but connected)', 'Cross-network matching (VIP ↔ Student)', 'Expanded directory access', 'Network analytics dashboard', 'Priority support'],
+      outcome: 'Two audiences. One connected experience.',
+      highlighted: true,
+      badge: 'Most Popular',
+    },
+    {
+      name: 'Full Experience',
+      price: '20,000',
+      tagline: 'Full Experience + VIP Track',
+      summary: 'Digital platform plus dedicated VIP programming and facilitation.',
+      summaryBullets: ['Everything in Premium', 'Curated VIP programming track', '33 Strategies on-site coordination'],
+      description: 'The complete package. Digital platform for all, plus a dedicated VIP track with programming and facilitated networking.',
+      features: ['Everything in Premium', 'Curated VIP programming track', 'In-person facilitated networking sessions', 'Executive roundtables', 'Pre-conference VIP reception', '33 Strategies event coordination', 'Dedicated VIP concierge'],
+      outcome: 'A conference within a conference—designed for your VIPs',
+      highlighted: false,
+      badge: 'White Glove',
+    },
+  ];
+
+  const faqs = [
+    { q: 'How many VIPs can this support?', a: 'The app scales to any size. For in-person experiences, we recommend 50-150 VIPs for optimal connection quality.' },
+    { q: 'What data do you need?', a: 'Just your VIP list with names and emails. We handle all intake, profiling, and matching.' },
+    { q: 'How far in advance?', a: '6-8 weeks for Premium/Full Experience. Essential can deploy in 3 weeks.' },
+  ];
 
   useEffect(() => {
     setTimeout(() => setIntroAnimated(true), 100);
@@ -1031,29 +1166,16 @@ const PitchSection = ({ onComplete }: { onComplete: () => void }) => {
     }
   }, []);
 
-  const SectionContent = ({ level, headline, highlightText, bodyParagraphs, showButton }: { level: string; headline: string; highlightText: string; bodyParagraphs: string[]; showButton?: boolean }) => (
-    <div style={{ maxWidth: 440, margin: '0 auto', textAlign: 'left', position: 'relative', zIndex: 10 }}>
-      <p style={{ color: GOLD, fontSize: 12, fontWeight: 500, letterSpacing: '0.2em', textTransform: 'uppercase', marginBottom: 16 }}>{level}</p>
-      <h2 style={{ fontFamily: 'Georgia, serif', fontSize: 28, fontWeight: 400, lineHeight: 1.25, color: TEXT_PRIMARY, marginBottom: 24 }}>
-        {headline} <span style={{ color: GOLD }}>{highlightText}</span>
-      </h2>
-      <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
-        {bodyParagraphs.map((para, i) => (
-          <p key={i} style={{ fontSize: 16, lineHeight: 1.7, color: TEXT_SECONDARY, margin: 0 }}>{para}</p>
-        ))}
-      </div>
-      {showButton && (
-        <button onClick={onComplete} style={{ marginTop: 40, padding: '16px 32px', borderRadius: 14, border: 'none', background: GOLD, color: BG_PRIMARY, fontSize: 15, fontWeight: 600, cursor: 'pointer', boxShadow: `0 8px 24px rgba(212, 168, 75, 0.3)` }}>
-          See the packages →
-        </button>
-      )}
-    </div>
-  );
-
   return (
     <div ref={containerRef} style={{ height: '100vh', overflowY: 'auto', background: BG_PRIMARY, position: 'relative' }}>
       <style>{`
         @keyframes scrollBounce { 0%, 100% { transform: translateX(-50%) translateY(0); opacity: 1; } 50% { transform: translateX(-50%) translateY(12px); opacity: 0.5; } }
+        /* Dark theme scrollbar styling */
+        ::-webkit-scrollbar { width: 8px; }
+        ::-webkit-scrollbar-track { background: ${BG_PRIMARY}; }
+        ::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.15); border-radius: 4px; }
+        ::-webkit-scrollbar-thumb:hover { background: rgba(255,255,255,0.25); }
+        * { scrollbar-width: thin; scrollbar-color: rgba(255,255,255,0.15) ${BG_PRIMARY}; }
       `}</style>
 
       <div style={{ position: 'fixed', top: 0, left: 0, right: 0, height: 3, background: 'rgba(255,255,255,0.1)', zIndex: 100 }}>
@@ -1063,10 +1185,14 @@ const PitchSection = ({ onComplete }: { onComplete: () => void }) => {
       {/* WAIT Intro */}
       <section style={{ minHeight: '100vh', display: 'flex', flexDirection: 'column', justifyContent: 'center', alignItems: 'center', padding: '64px 24px', position: 'relative' }}>
         <div style={{ position: 'absolute', top: '30%', left: '50%', transform: 'translate(-50%, -50%)', width: 500, height: 500, pointerEvents: 'none', opacity: introAnimated ? 1 : 0, background: `radial-gradient(circle, ${GOLD}20 0%, transparent 70%)`, transition: 'all 1.5s ease' }} />
-        <div style={{ maxWidth: 380, textAlign: 'center', position: 'relative', zIndex: 10 }}>
+        <div style={{ maxWidth: 420, position: 'relative', zIndex: 10 }}>
           <p style={{ fontSize: 13, color: GOLD, letterSpacing: '0.15em', textTransform: 'uppercase', marginBottom: 16, opacity: introAnimated ? 1 : 0, transition: 'opacity 0.8s ease' }}>Wait...</p>
-          <h1 style={{ fontFamily: 'Georgia, serif', fontSize: 28, color: TEXT_PRIMARY, marginBottom: 20, lineHeight: 1.3, opacity: introAnimated ? 1 : 0, transform: introAnimated ? 'translateY(0)' : 'translateY(20px)', transition: 'all 0.8s ease 0.3s' }}>Now imagine every VIP at your conference having this experience.</h1>
-          <p style={{ fontSize: 16, color: TEXT_SECONDARY, lineHeight: 1.6, opacity: introAnimated ? 1 : 0, transform: introAnimated ? 'translateY(0)' : 'translateY(20px)', transition: 'all 0.8s ease 0.6s', margin: 0 }}>Pre-event intelligence. Curated connections. Conversations that actually matter.</p>
+          <h1 style={{ fontFamily: 'Georgia, serif', fontSize: 28, color: TEXT_PRIMARY, marginBottom: 24, lineHeight: 1.3, opacity: introAnimated ? 1 : 0, transform: introAnimated ? 'translateY(0)' : 'translateY(20px)', transition: 'all 0.8s ease 0.3s' }}>Now imagine every VIP at your conference having this<br/><span style={{ color: GOLD }}>elevated experience</span>.</h1>
+          <p style={{ fontSize: 16, color: TEXT_SECONDARY, lineHeight: 1.7, opacity: introAnimated ? 1 : 0, transform: introAnimated ? 'translateY(0)' : 'translateY(20px)', transition: 'all 0.8s ease 0.6s', marginBottom: 16 }}>They originally came out of goodwill—alumni who wanted to give back.</p>
+          <p style={{ fontSize: 16, color: TEXT_SECONDARY, lineHeight: 1.7, opacity: introAnimated ? 1 : 0, transform: introAnimated ? 'translateY(0)' : 'translateY(20px)', transition: 'all 0.8s ease 0.75s', marginBottom: 24 }}>We&apos;re going to help you surprise them this year by turning that goodwill into good <span style={{ color: GOLD, fontWeight: 600 }}>business</span>.</p>
+          <div style={{ background: `linear-gradient(135deg, ${GOLD} 0%, #c49a42 100%)`, borderRadius: 14, padding: '18px 24px', opacity: introAnimated ? 1 : 0, transform: introAnimated ? 'translateY(0)' : 'translateY(20px)', transition: 'all 0.8s ease 0.9s', boxShadow: `0 8px 32px rgba(212, 168, 75, 0.3)` }}>
+            <p style={{ fontSize: 16, color: BG_PRIMARY, lineHeight: 1.5, margin: 0, fontWeight: 600 }}>Next year? They&apos;ll be eager to come back—and they&apos;ll bring more VIPs with them.</p>
+          </div>
         </div>
         <div style={{ position: 'absolute', bottom: 40, left: '50%', transform: 'translateX(-50%)', textAlign: 'center', opacity: introAnimated ? 1 : 0, transition: 'opacity 0.8s ease 1.2s' }}>
           <p style={{ fontSize: 11, color: TEXT_MUTED, marginBottom: 8, letterSpacing: '0.1em' }}>Scroll to explore</p>
@@ -1076,113 +1202,137 @@ const PitchSection = ({ onComplete }: { onComplete: () => void }) => {
         </div>
       </section>
 
-      {/* Level 1 */}
-      <section style={{ minHeight: '100vh', display: 'flex', flexDirection: 'column', justifyContent: 'center', padding: '64px 24px', position: 'relative' }}>
-        <div style={{ position: 'absolute', top: '40%', left: '50%', transform: 'translate(-50%, -50%)', width: 400, height: 400, background: `radial-gradient(circle, ${GOLD}12 0%, transparent 70%)`, pointerEvents: 'none' }} />
-        <SectionContent level="Level 1: VIP Digital Experience" headline="Before the conference starts, your VIPs know" highlightText="exactly who to meet." bodyParagraphs={["M33T for your VIP attendees.", "AI-powered profiling, curated matches, conversation starters—all delivered digitally before they arrive.", "They come with purpose, not just a badge."]} />
+      {/* Header Slide - The Mission */}
+      <section style={{ minHeight: '100vh', display: 'flex', flexDirection: 'column', justifyContent: 'center', alignItems: 'center', padding: '64px 24px', position: 'relative' }}>
+        <div style={{ position: 'absolute', top: '50%', left: '50%', transform: 'translate(-50%, -50%)', width: 600, height: 600, pointerEvents: 'none', background: `radial-gradient(circle, ${GOLD}15 0%, transparent 60%)` }} />
+        <div style={{ maxWidth: 600, position: 'relative', zIndex: 10 }}>
+          {/* 33 Logo */}
+          <div style={{ width: 64, height: 64, borderRadius: 14, background: GOLD, display: 'flex', alignItems: 'center', justifyContent: 'center', marginBottom: 40, fontFamily: 'Georgia, serif', fontSize: 28, fontWeight: 700, color: BG_PRIMARY, boxShadow: `0 8px 32px rgba(212, 168, 75, 0.3)` }}>33</div>
+          <p style={{ fontSize: 12, fontWeight: 600, color: GOLD, letterSpacing: '0.2em', textTransform: 'uppercase', marginBottom: 24 }}>The Mission</p>
+          <h1 style={{ fontFamily: 'Georgia, serif', fontSize: 36, color: TEXT_PRIMARY, marginBottom: 0, lineHeight: 1.35, letterSpacing: '-0.01em' }}>
+            Let&apos;s co-create an experience these athletes, execs, and VIPs<br/><span style={{ color: GOLD }}>won&apos;t soon forget</span>.
+          </h1>
+        </div>
       </section>
 
-      {/* Level 2 */}
-      <section style={{ minHeight: '100vh', display: 'flex', flexDirection: 'column', justifyContent: 'center', padding: '64px 24px', position: 'relative' }}>
-        <div style={{ position: 'absolute', top: '40%', left: '50%', transform: 'translate(-50%, -50%)', width: 400, height: 400, background: `radial-gradient(circle, ${GOLD}12 0%, transparent 70%)`, pointerEvents: 'none' }} />
-        <SectionContent level="Level 2: Full Digital Experience" headline="Expand the network. Two audiences," highlightText="one connected platform." bodyParagraphs={["M33T for both VIPs AND student attendees—two separate but connected networks.", "VIPs can discover promising students.", "Students can connect with industry leaders.", "All still digital, but now everyone's in."]} />
-      </section>
-
-      {/* Level 3 */}
-      <section style={{ minHeight: '100vh', display: 'flex', flexDirection: 'column', justifyContent: 'center', padding: '64px 24px', position: 'relative' }}>
-        <div style={{ position: 'absolute', top: '40%', left: '50%', transform: 'translate(-50%, -50%)', width: 400, height: 400, background: `radial-gradient(circle, ${GOLD}12 0%, transparent 70%)`, pointerEvents: 'none' }} />
-        <SectionContent level="Level 3: Full Experience + VIP Track" headline="While students attend their sessions, your VIPs have" highlightText="their own curated experience." bodyParagraphs={["Everything in Level 2, plus a dedicated VIP programming track.", "Executive roundtables, curated content, and facilitated networking woven throughout.", "33 Strategies handles the planning—your VIPs feel like the priority they are."]} showButton={true} />
-      </section>
-    </div>
-  );
-};
-
-// ============================================================================
-// PROPOSAL SECTION (Gold Theme)
-// ============================================================================
-const ProposalSection = () => {
-  const [expandedFaq, setExpandedFaq] = useState<number | null>(null);
-  const [expandedTier, setExpandedTier] = useState<number | null>(1);
-
-  const packages = [
-    { name: 'Essential', price: '8,000', tagline: 'VIP Digital Experience', description: 'M33T for your VIP attendees. AI-powered profiling, curated matches, conversation starters—delivered before they arrive.', features: ['Branded VIP intake experience', 'AI-powered attendee profiling', '3-5 curated matches per attendee', 'Personalized conversation starters', 'Full VIP directory access', 'Post-event analytics'], outcome: 'VIPs arrive knowing exactly who to meet', highlighted: false },
-    { name: 'Premium', price: '12,000', tagline: 'Full Digital Experience', description: 'Expand the network. M33T for both VIPs and students—two connected audiences, one powerful platform.', features: ['Everything in Essential', 'Student attendee network (separate but connected)', 'Cross-network matching (VIP ↔ Student)', 'Expanded directory access', 'Network analytics dashboard', 'Priority support'], outcome: 'Two audiences. One connected experience.', highlighted: true, badge: 'Most Popular' },
-    { name: 'Full Experience', price: '20,000', tagline: 'Full Experience + VIP Track', description: 'The complete package. Digital platform for all, plus a dedicated VIP track with programming and facilitated networking.', features: ['Everything in Premium', 'Curated VIP programming track', 'In-person facilitated networking sessions', 'Executive roundtables', 'Pre-conference VIP reception', '33 Strategies event coordination', 'Dedicated VIP concierge'], outcome: 'A conference within a conference—designed for your VIPs', highlighted: false, badge: 'White Glove' },
-  ];
-
-  const faqs = [
-    { q: 'How many VIPs can this support?', a: 'The app scales to any size. For in-person experiences, we recommend 50-150 VIPs for optimal connection quality.' },
-    { q: 'What data do you need?', a: 'Just your VIP list with names and emails. We handle all intake, profiling, and matching.' },
-    { q: 'How far in advance?', a: '6-8 weeks for Premium/Full Experience. Essential can deploy in 3 weeks.' },
-  ];
-
-  return (
-    <div style={{ minHeight: '100%', background: BG_PRIMARY, overflowY: 'auto' }}>
-      {/* Header */}
-      <div style={{ padding: '48px 24px 40px', textAlign: 'center', background: `radial-gradient(ellipse at 50% 0%, ${GOLD}12 0%, transparent 60%)`, borderBottom: `1px solid rgba(255,255,255,0.05)` }}>
-        <div style={{ width: 48, height: 48, borderRadius: 10, background: GOLD, display: 'flex', alignItems: 'center', justifyContent: 'center', margin: '0 auto 20px', fontFamily: 'Georgia, serif', fontSize: 22, fontWeight: 700, color: BG_PRIMARY }}>33</div>
-        <p style={{ fontSize: 11, fontWeight: 600, color: GOLD, letterSpacing: '0.15em', textTransform: 'uppercase', marginBottom: 12 }}>Better Networking for WSBC</p>
-        <h1 style={{ fontFamily: 'Georgia, serif', fontSize: 26, color: TEXT_PRIMARY, marginBottom: 12, lineHeight: 1.3 }}>Make your VIPs feel like VIPs</h1>
-        <p style={{ fontSize: 14, color: TEXT_SECONDARY, maxWidth: 340, margin: '0 auto', lineHeight: 1.6 }}>Pre-event intelligence. Curated connections. A dedicated experience.</p>
-      </div>
-
-      {/* Packages */}
-      <div style={{ padding: '32px 20px' }}>
-        <h2 style={{ fontSize: 11, fontWeight: 600, color: TEXT_MUTED, letterSpacing: '0.15em', textTransform: 'uppercase', marginBottom: 20, textAlign: 'center' }}>Choose Your Experience</h2>
-        <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
-          {packages.map((pkg, i) => (
-            <div key={i} onClick={() => setExpandedTier(expandedTier === i ? null : i)} style={{ background: `linear-gradient(145deg, ${BG_SURFACE} 0%, ${BG_PRIMARY} 100%)`, borderRadius: 16, padding: expandedTier === i ? 24 : 20, border: `1px solid ${pkg.highlighted ? GOLD : 'rgba(255,255,255,0.08)'}`, position: 'relative', boxShadow: pkg.highlighted ? `0 0 40px rgba(212, 168, 75, 0.15)` : 'none', cursor: 'pointer', transition: 'all 0.3s ease' }}>
-              {pkg.badge && <div style={{ position: 'absolute', top: 12, right: 12, padding: '4px 10px', borderRadius: 12, background: pkg.highlighted ? GOLD : `${GOLD}30`, fontSize: 9, fontWeight: 700, color: pkg.highlighted ? BG_PRIMARY : GOLD, textTransform: 'uppercase' }}>{pkg.badge}</div>}
-              <div style={{ display: 'flex', alignItems: 'baseline', gap: 12, marginBottom: 4 }}>
-                <h3 style={{ fontSize: 18, fontWeight: 600, color: TEXT_PRIMARY, margin: 0 }}>{pkg.name}</h3>
-                <span style={{ fontSize: 12, color: TEXT_MUTED }}>{pkg.tagline}</span>
-              </div>
-              <p style={{ fontFamily: 'Georgia, serif', fontSize: 32, color: GOLD, marginBottom: 8 }}>${pkg.price}</p>
-              {expandedTier === i ? (
-                <>
-                  <p style={{ fontSize: 13, color: TEXT_SECONDARY, marginBottom: 16, lineHeight: 1.5 }}>{pkg.description}</p>
-                  <div style={{ background: `rgba(212, 168, 75, 0.1)`, border: `1px solid rgba(212, 168, 75, 0.3)`, borderRadius: 10, padding: '12px 14px', marginBottom: 16 }}>
-                    <p style={{ fontSize: 12, fontWeight: 600, color: GOLD, marginBottom: 2, margin: 0 }}>THE OUTCOME</p>
-                    <p style={{ fontFamily: 'Georgia, serif', fontSize: 14, color: TEXT_PRIMARY, fontStyle: 'italic', margin: 0 }}>{pkg.outcome}</p>
+      {/* Packages Section */}
+      <section style={{ padding: '32px 24px 48px', position: 'relative' }}>
+        <div style={{ maxWidth: 600, margin: '0 auto', position: 'relative', zIndex: 10 }}>
+          <p style={{ fontSize: 11, fontWeight: 600, color: GOLD, letterSpacing: '0.15em', textTransform: 'uppercase', marginBottom: 28 }}>Choose Your Package</p>
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
+            {packages.map((pkg, i) => (
+              <div
+                key={i}
+                style={{
+                  background: `linear-gradient(145deg, ${BG_SURFACE} 0%, ${BG_PRIMARY} 100%)`,
+                  borderRadius: 16,
+                  border: `1px solid ${pkg.highlighted ? GOLD : 'rgba(255,255,255,0.08)'}`,
+                  overflow: 'hidden',
+                  boxShadow: pkg.highlighted ? `0 0 30px rgba(212, 168, 75, 0.12)` : 'none',
+                }}
+              >
+                {/* Summary View - Always Visible */}
+                <div style={{ padding: '20px 22px' }}>
+                  {/* Header Row */}
+                  <div style={{ display: 'flex', alignItems: 'flex-start', gap: 16, marginBottom: 14 }}>
+                    <PackageIcon level={i + 1} size={44} />
+                    <div style={{ flex: 1 }}>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 4 }}>
+                        <h3 style={{ fontSize: 18, fontWeight: 600, color: TEXT_PRIMARY, margin: 0 }}>{pkg.name}</h3>
+                        {pkg.badge && (
+                          <span style={{ padding: '3px 10px', borderRadius: 10, background: pkg.highlighted ? GOLD : `${GOLD}30`, fontSize: 10, fontWeight: 700, color: pkg.highlighted ? BG_PRIMARY : GOLD, textTransform: 'uppercase' }}>{pkg.badge}</span>
+                        )}
+                      </div>
+                      <p style={{ fontSize: 13, color: TEXT_MUTED, margin: 0 }}>{pkg.tagline}</p>
+                    </div>
+                    <div style={{ textAlign: 'right' }}>
+                      <p style={{ fontFamily: 'Georgia, serif', fontSize: 26, color: GOLD, margin: 0 }}>${pkg.price}</p>
+                    </div>
                   </div>
-                  <div style={{ borderTop: `1px solid rgba(255,255,255,0.05)`, paddingTop: 16 }}>
-                    {pkg.features.map((f, j) => (
-                      <div key={j} style={{ display: 'flex', gap: 10, marginBottom: 10 }}>
-                        <span style={{ color: GOLD }}>✓</span>
-                        <span style={{ fontSize: 13, color: TEXT_SECONDARY }}>{f}</span>
+
+                  {/* Summary Text */}
+                  <p style={{ fontSize: 14, color: TEXT_SECONDARY, margin: '0 0 14px 0', lineHeight: 1.6 }}>{pkg.summary}</p>
+
+                  {/* Summary Bullets */}
+                  <div style={{ marginBottom: 14 }}>
+                    {pkg.summaryBullets.map((bullet, j) => (
+                      <div key={j} style={{ display: 'flex', gap: 10, marginBottom: 6 }}>
+                        <span style={{ color: GOLD, fontSize: 12 }}>•</span>
+                        <span style={{ fontSize: 13, color: TEXT_SECONDARY }}>{bullet}</span>
                       </div>
                     ))}
                   </div>
-                </>
-              ) : (
-                <p style={{ fontFamily: 'Georgia, serif', fontSize: 13, color: TEXT_MUTED, fontStyle: 'italic', margin: 0 }}>{pkg.outcome}</p>
-              )}
+
+                  {/* Expand Toggle */}
+                  <button
+                    onClick={() => setExpandedTier(expandedTier === i ? null : i)}
+                    style={{
+                      background: 'none',
+                      border: 'none',
+                      padding: 0,
+                      cursor: 'pointer',
+                      display: 'flex',
+                      alignItems: 'center',
+                      gap: 6,
+                      color: GOLD,
+                      fontSize: 12,
+                      fontWeight: 500,
+                    }}
+                  >
+                    {expandedTier === i ? 'Less details' : 'Full details'}
+                    <span style={{ transform: expandedTier === i ? 'rotate(180deg)' : 'rotate(0deg)', transition: 'transform 0.2s ease' }}>▼</span>
+                  </button>
+                </div>
+
+                {/* Expanded Details */}
+                {expandedTier === i && (
+                  <div style={{ padding: '0 22px 22px', borderTop: `1px solid rgba(255,255,255,0.05)` }}>
+                    <div style={{ background: `rgba(212, 168, 75, 0.1)`, border: `1px solid rgba(212, 168, 75, 0.25)`, borderRadius: 10, padding: '12px 14px', margin: '16px 0' }}>
+                      <p style={{ fontSize: 10, fontWeight: 600, color: GOLD, marginBottom: 4, margin: 0, letterSpacing: '0.1em' }}>THE OUTCOME</p>
+                      <p style={{ fontFamily: 'Georgia, serif', fontSize: 14, color: TEXT_PRIMARY, fontStyle: 'italic', margin: 0 }}>{pkg.outcome}</p>
+                    </div>
+                    <p style={{ fontSize: 11, fontWeight: 600, color: TEXT_MUTED, letterSpacing: '0.1em', marginBottom: 10, textTransform: 'uppercase' }}>Full Feature List</p>
+                    <div>
+                      {pkg.features.map((f, j) => (
+                        <div key={j} style={{ display: 'flex', gap: 10, marginBottom: 8 }}>
+                          <span style={{ color: GOLD, fontSize: 12 }}>✓</span>
+                          <span style={{ fontSize: 13, color: TEXT_SECONDARY }}>{f}</span>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                )}
+              </div>
+            ))}
+          </div>
+        </div>
+      </section>
+
+      {/* FAQs Section */}
+      <section style={{ padding: '48px 24px', position: 'relative' }}>
+        <div style={{ maxWidth: 600, margin: '0 auto' }}>
+          <p style={{ fontSize: 11, fontWeight: 600, color: TEXT_MUTED, letterSpacing: '0.15em', textTransform: 'uppercase', marginBottom: 20 }}>Questions</p>
+          {faqs.map((faq, i) => (
+            <div key={i} style={{ borderBottom: `1px solid rgba(255,255,255,0.05)`, paddingBottom: 16, marginBottom: 16 }}>
+              <button onClick={() => setExpandedFaq(expandedFaq === i ? null : i)} style={{ width: '100%', display: 'flex', justifyContent: 'space-between', alignItems: 'center', background: 'none', border: 'none', padding: 0, cursor: 'pointer', textAlign: 'left' }}>
+                <span style={{ fontSize: 14, fontWeight: 500, color: TEXT_PRIMARY }}>{faq.q}</span>
+                <span style={{ color: TEXT_MUTED, transform: expandedFaq === i ? 'rotate(180deg)' : 'rotate(0deg)', transition: 'transform 0.2s ease', fontSize: 12 }}>▼</span>
+              </button>
+              {expandedFaq === i && <p style={{ fontSize: 13, color: TEXT_SECONDARY, marginTop: 12, lineHeight: 1.6 }}>{faq.a}</p>}
             </div>
           ))}
         </div>
-      </div>
+      </section>
 
-      {/* FAQs */}
-      <div style={{ padding: '0 20px 32px' }}>
-        <h2 style={{ fontSize: 11, fontWeight: 600, color: TEXT_MUTED, letterSpacing: '0.15em', textTransform: 'uppercase', marginBottom: 16 }}>Questions</h2>
-        {faqs.map((faq, i) => (
-          <div key={i} style={{ borderBottom: `1px solid rgba(255,255,255,0.05)`, paddingBottom: 16, marginBottom: 16 }}>
-            <button onClick={() => setExpandedFaq(expandedFaq === i ? null : i)} style={{ width: '100%', display: 'flex', justifyContent: 'space-between', alignItems: 'center', background: 'none', border: 'none', padding: 0, cursor: 'pointer', textAlign: 'left' }}>
-              <span style={{ fontSize: 14, fontWeight: 500, color: TEXT_PRIMARY }}>{faq.q}</span>
-              <span style={{ color: TEXT_MUTED, transform: expandedFaq === i ? 'rotate(180deg)' : 'rotate(0deg)', transition: 'transform 0.2s ease', fontSize: 12 }}>▼</span>
-            </button>
-            {expandedFaq === i && <p style={{ fontSize: 13, color: TEXT_SECONDARY, marginTop: 12, lineHeight: 1.6, margin: 0 }}>{faq.a}</p>}
-          </div>
-        ))}
-      </div>
-
-      {/* CTA */}
-      <div style={{ padding: '24px 20px 40px', textAlign: 'center', background: `radial-gradient(ellipse at 50% 100%, ${GOLD}10 0%, transparent 60%)` }}>
-        <h2 style={{ fontFamily: 'Georgia, serif', fontSize: 22, color: TEXT_PRIMARY, marginBottom: 12 }}>Ready to elevate the VIP experience?</h2>
-        <p style={{ fontSize: 13, color: TEXT_SECONDARY, marginBottom: 24 }}>Let&apos;s design something that makes your top attendees feel valued.</p>
-        <button style={{ padding: '16px 44px', borderRadius: 14, border: 'none', background: GOLD, color: BG_PRIMARY, fontSize: 16, fontWeight: 600, cursor: 'pointer', marginBottom: 16, boxShadow: `0 8px 24px rgba(212, 168, 75, 0.25)` }}>Schedule a Call</button>
-        <p style={{ fontSize: 12, color: TEXT_MUTED, margin: 0 }}>or email <span style={{ color: GOLD }}>beems@33strategies.com</span></p>
-      </div>
+      {/* Final CTA */}
+      <section style={{ padding: '32px 20px 64px', textAlign: 'center', background: `radial-gradient(ellipse at 50% 100%, ${GOLD}08 0%, transparent 60%)` }}>
+        <div style={{ maxWidth: 400, margin: '0 auto' }}>
+          <h2 style={{ fontFamily: 'Georgia, serif', fontSize: 24, color: TEXT_PRIMARY, marginBottom: 12 }}>Ready to elevate the VIP experience?</h2>
+          <p style={{ fontSize: 14, color: TEXT_SECONDARY, marginBottom: 28, lineHeight: 1.6 }}>Let&apos;s design something that makes your top attendees feel valued.</p>
+          <button style={{ padding: '16px 44px', borderRadius: 14, border: 'none', background: GOLD, color: BG_PRIMARY, fontSize: 16, fontWeight: 600, cursor: 'pointer', marginBottom: 16, boxShadow: `0 8px 24px rgba(212, 168, 75, 0.25)` }}>Schedule a Call</button>
+          <p style={{ fontSize: 12, color: TEXT_MUTED, margin: 0 }}>or email <span style={{ color: GOLD }}>emily@33strategies.com</span></p>
+        </div>
+      </section>
 
       {/* Footer */}
       <div style={{ padding: 20, borderTop: `1px solid rgba(255,255,255,0.05)`, textAlign: 'center' }}>
@@ -1198,6 +1348,11 @@ const ProposalSection = () => {
 export default function WSBCFinalProposal() {
   const [phase, setPhase] = useState<Phase>('intro');
   const [demoVisible, setDemoVisible] = useState(false);
+
+  // Scroll to top on phase change
+  useEffect(() => {
+    window.scrollTo(0, 0);
+  }, [phase]);
 
   // Handle demo fade-in
   useEffect(() => {
@@ -1224,11 +1379,7 @@ export default function WSBCFinalProposal() {
       )}
 
       {phase === 'pitch' && (
-        <PitchSection onComplete={() => setPhase('proposal')} />
-      )}
-
-      {phase === 'proposal' && (
-        <ProposalSection />
+        <PitchSection />
       )}
     </div>
   );

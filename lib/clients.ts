@@ -8,6 +8,7 @@ export interface ContentItem {
   description?: string;
   addedOn?: string;      // ISO date string (YYYY-MM-DD) - when first published
   lastUpdated?: string;  // ISO date string (YYYY-MM-DD) - when last modified
+  tagOverride?: string;  // Optional custom tag to display instead of type label
   component: ComponentType;
 }
 
@@ -90,6 +91,7 @@ export const clients: Record<string, ClientEntry> = {
         title: 'WSBC VIP Experience Proposal',
         description: 'Interactive proposal for the Wisconsin Sports Business Conference VIP experience',
         addedOn: '2024-12-27',
+        tagOverride: 'DEMO + PROPOSAL',
         component: WSBCFinalProposal,
       },
     ],

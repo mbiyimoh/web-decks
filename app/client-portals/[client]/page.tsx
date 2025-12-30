@@ -43,6 +43,7 @@ export default async function ClientPortalPage({ params, searchParams }: Props) 
       description: item.description,
       addedOn: item.addedOn,
       lastUpdated: item.lastUpdated,
+      tagOverride: item.tagOverride,
     })),
   };
 

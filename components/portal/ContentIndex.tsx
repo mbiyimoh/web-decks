@@ -16,6 +16,7 @@ interface ContentItemData {
   description?: string;
   addedOn?: string;
   lastUpdated?: string;
+  tagOverride?: string;
 }
 
 // Format date string (YYYY-MM-DD) to readable format (Dec 24, 2024)
@@ -86,7 +87,7 @@ function ContentTile({
                 border: isNewest ? `1px solid rgba(212, 165, 74, 0.3)` : '1px solid rgba(255, 255, 255, 0.1)',
               }}
             >
-              {typeLabels[item.type]}
+              {item.tagOverride || typeLabels[item.type]}
             </span>
 
             {/* Title */}

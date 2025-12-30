@@ -1121,6 +1121,7 @@ export default function PLYAProposal(): JSX.Element {
   const navigateTo = (mode: ViewMode) => {
     setViewMode(mode);
     window.history.pushState(null, '', MODE_TO_HASH[mode]);
+    window.scrollTo(0, 0);
   };
 
   if (viewMode === 'intro') {

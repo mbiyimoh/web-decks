@@ -6,18 +6,31 @@ Password-protected client portals for investor presentations and proposals, buil
 
 ## Features
 
-- Client portal system with per-client password protection
+- **Client portal system** with per-client password protection
+- **Learning platform** with NextAuth.js authentication (Google SSO + email/password)
 - Full-screen scrollable presentations with smooth Framer Motion animations
-- Session management using iron-session (7-day sessions)
+- Session management using iron-session (client portals) and NextAuth (learning platform)
 - Responsive design with Tailwind CSS
 - Deployed on Railway with health checks
 
 ## Client Portal Architecture
 
+### Client Portals (iron-session)
+
 Each client gets their own password-protected portal:
 
 - `/client-portals/tradeblock` - Tradeblock portal (AI Inflection deck)
-- `/client-portals/plya` - PLYA portal (Project proposal)
+- `/client-portals/plya` - PLYA portal (proposals)
+- `/client-portals/wsbc` - WSBC portal (VIP Experience proposals)
+
+### Learning Platform (NextAuth.js)
+
+Internal training platform at `/learning`:
+
+- Google SSO for @33strategies.ai users
+- Email/password fallback authentication
+- Course catalog with scrollytelling deck modules
+- localStorage-based progress tracking
 
 ## Local Development
 
@@ -32,15 +45,19 @@ Each client gets their own password-protected portal:
    ```
 
 3. Edit `.env.local` with your values:
-   ```
+   ```bash
+   # Client portal passwords
    TRADEBLOCK_PASSWORD=your_tradeblock_password
    PLYA_PASSWORD=your_plya_password
-   SESSION_SECRET=your_64_char_hex_secret
-   ```
+   WSBC_PASSWORD=your_wsbc_password
+   SESSION_SECRET=your_64_char_hex_secret  # openssl rand -hex 32
 
-   Generate a session secret:
-   ```bash
-   openssl rand -hex 32
+   # Learning platform (NextAuth.js)
+   NEXTAUTH_SECRET=your_nextauth_secret    # openssl rand -hex 32
+   NEXTAUTH_URL=http://localhost:3033
+   GOOGLE_CLIENT_ID=your_google_client_id
+   GOOGLE_CLIENT_SECRET=your_google_client_secret
+   LEARNING_PASSWORD=your_learning_password
    ```
 
 4. Run development server:
@@ -48,7 +65,9 @@ Each client gets their own password-protected portal:
    npm run dev
    ```
 
-5. Open [http://localhost:3000](http://localhost:3000)
+5. Open [http://localhost:3033](http://localhost:3033)
+
+   **Note:** Dev server runs on port **3033** (configured in `package.json`)
 
 ## Deployment to Railway
 
@@ -58,9 +77,20 @@ Each client gets their own password-protected portal:
 2. Create new project in [Railway](https://railway.app)
 3. Connect your GitHub repository
 4. Set environment variables:
-   - `TRADEBLOCK_PASSWORD` - Password for Tradeblock portal
-   - `PLYA_PASSWORD` - Password for PLYA portal
-   - `SESSION_SECRET` - 64-character hex secret
+   ```bash
+   # Client portals
+   TRADEBLOCK_PASSWORD=...
+   PLYA_PASSWORD=...
+   WSBC_PASSWORD=...
+   SESSION_SECRET=...  # openssl rand -hex 32
+
+   # Learning platform
+   NEXTAUTH_SECRET=...        # openssl rand -hex 32
+   NEXTAUTH_URL=https://your-domain.railway.app
+   GOOGLE_CLIENT_ID=...
+   GOOGLE_CLIENT_SECRET=...
+   LEARNING_PASSWORD=...
+   ```
 
 ### Critical Configuration
 
@@ -98,32 +128,65 @@ If you see 502 errors but logs show "Ready":
 web-decks/
 ├── app/
 │   ├── api/
-│   │   ├── auth/[client]/  # Per-client auth API
-│   │   └── health/         # Railway health check
+│   │   ├── auth/[...nextauth]/   # NextAuth API routes (learning platform)
+│   │   ├── client-auth/[client]/ # Per-client auth API (portals)
+│   │   └── health/               # Railway health check
 │   ├── client-portals/
-│   │   ├── [client]/       # Client portal pages
-│   │   └── [client]/[slug] # Content pages
-│   ├── layout.tsx          # Root layout with fonts
-│   └── page.tsx            # Landing page
+│   │   ├── [client]/             # Client portal pages
+│   │   └── [client]/[slug]       # Content pages
+│   ├── learning/                 # Learning platform
+│   │   ├── ai-workflow/          # Course modules
+│   │   └── components/           # Auth, course cards
+│   ├── layout.tsx                # Root layout with fonts
+│   └── page.tsx                  # Landing page
 ├── components/
-│   ├── clients/            # Client-specific content
-│   │   ├── tradeblock/     # Tradeblock presentations
-│   │   └── plya/           # PLYA proposals
-│   ├── landing/            # Landing page components
-│   └── portal/             # Portal UI (PasswordGate, ContentIndex)
+│   ├── clients/                  # Client-specific content
+│   │   ├── tradeblock/           # Tradeblock presentations
+│   │   ├── plya/                 # PLYA proposals
+│   │   └── wsbc/                 # WSBC proposals
+│   ├── deck/                     # Shared deck components (Section, RevealText, etc.)
+│   ├── landing/                  # Landing page components
+│   └── portal/                   # Portal UI (PasswordGate, ContentIndex)
 ├── lib/
-│   ├── clients.ts          # Client registry
-│   └── session.ts          # iron-session configuration
-├── middleware.ts           # Security headers
-└── railway.toml            # Railway deployment config
+│   ├── auth.ts                   # NextAuth configuration
+│   ├── auth-types.ts             # NextAuth type extensions
+│   ├── clients.ts                # Client portal registry
+│   ├── courses.ts                # Learning platform course registry
+│   ├── email-allowlist.ts        # @33strategies.ai domain validation
+│   ├── progress.ts               # Learning progress tracking
+│   └── session.ts                # iron-session configuration
+├── docs/developer-guides/
+│   └── learning-module-components.md  # Deck component library guide
+├── middleware.ts                 # Security headers + auth checks
+└── railway.toml                  # Railway deployment config
 ```
 
 ## Key Files
 
 | File | Purpose |
 |------|---------|
-| `lib/clients.ts` | Client registry with content definitions |
-| `lib/session.ts` | Session options with per-client validation |
-| `app/api/auth/[client]/route.ts` | Per-client authentication |
-| `components/portal/PasswordGate.tsx` | Inline password form |
+| `lib/clients.ts` | Client portal registry |
+| `lib/courses.ts` | Learning platform course registry |
+| `lib/session.ts` | iron-session config (client portals) |
+| `lib/auth.ts` | NextAuth config (learning platform) |
+| `app/api/client-auth/[client]/route.ts` | Client portal authentication |
+| `app/api/auth/[...nextauth]/route.ts` | NextAuth API routes |
+| `components/deck/` | Shared deck component library |
 | `railway.toml` | Railway deployment configuration |
+
+## Critical Gotchas
+
+### API Route Conflict (IMPORTANT)
+**Problem:** NextAuth requires `/api/auth/[...nextauth]` but client portals originally used `/api/auth/[client]`. The `[client]` dynamic route intercepts NextAuth requests.
+
+**Solution:** Client portal auth moved to `/api/client-auth/[client]`. If you add new dynamic routes under `/api/auth/`, they will conflict with NextAuth.
+
+### Port Configuration
+- **Local dev:** Port 3033 (configured in `package.json`)
+- **Railway:** Uses `$PORT` environment variable (usually 8080)
+- Start command MUST include `-p $PORT` flag
+
+### Environment Variable Naming
+- **Client portals:** Use `SESSION_SECRET`
+- **Learning platform:** Use `NEXTAUTH_SECRET` (not `AUTH_SECRET`)
+- Both require 32-character hex: `openssl rand -hex 32`

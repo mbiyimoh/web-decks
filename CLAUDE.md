@@ -877,3 +877,138 @@ NOT just `next start` (won't bind correctly)
 - [Railway Healthchecks](https://docs.railway.com/guides/healthchecks)
 - [Railway Config as Code](https://docs.railway.com/reference/config-as-code)
 - [Application Failed to Respond](https://docs.railway.com/reference/errors/application-failed-to-respond)
+
+---
+
+## Learning Platform
+
+The learning platform (`learn.33strategies.ai`) provides internal training through scrollytelling deck modules.
+
+### Architecture
+
+```
+app/learning/
+├── page.tsx                      # Dashboard with CourseCard tiles
+├── layout.tsx                    # Learning section layout
+├── components/
+│   ├── AuthGate.tsx              # NextAuth login form
+│   ├── LogoutButton.tsx          # Session logout
+│   ├── CourseCard.tsx            # Course catalog tile
+│   ├── ModuleCard.tsx            # Module list item
+│   └── ModuleCompleteButton.tsx  # Progress marking
+│
+└── ai-workflow/                  # "33 Strategies AI Workflow" course
+    ├── page.tsx                  # Course landing with module list
+    ├── [module]/page.tsx         # Dynamic route for modules
+    ├── getting-started/
+    │   └── GettingStartedDeck.tsx
+    ├── claude-code-workflow/
+    │   └── ClaudeCodeWorkflowDeck.tsx
+    ├── existing-codebases/
+    │   └── ExistingCodebasesDeck.tsx
+    └── orchestration-system/
+        └── OrchestrationSystemDeck.tsx
+```
+
+### Authentication
+
+Uses NextAuth.js v5 (beta) with:
+- **Google OAuth**: Primary SSO for `@33strategies.ai` users
+- **Credentials**: Email/password fallback with bcrypt
+- **Domain restriction**: Only `@33strategies.ai` emails accepted
+
+**Required environment variables:**
+```bash
+NEXTAUTH_SECRET=<openssl rand -hex 32>
+NEXTAUTH_URL=https://learn.33strategies.ai  # or http://localhost:3033 for local
+GOOGLE_CLIENT_ID=<Google OAuth client ID>
+GOOGLE_CLIENT_SECRET=<Google OAuth client secret>
+LEARNING_PASSWORD=<password for email/password fallback>
+```
+
+**Key files:**
+- `lib/auth.ts` - NextAuth configuration
+- `lib/email-allowlist.ts` - Domain validation
+- `lib/auth-types.ts` - TypeScript extensions
+
+### Shared Deck Components
+
+Located in `components/deck/`:
+
+| Component | Purpose |
+|-----------|---------|
+| `Section` | Full-viewport scroll section |
+| `RevealText` | Fade-in animation wrapper |
+| `SectionLabel` | Gold uppercase section label |
+| `Card` | Styled content card |
+| `CodeBlock` | Syntax-highlighted code |
+| `ProgressBar` | Scroll progress indicator |
+| `NavDots` | Side navigation (desktop) |
+
+See `docs/developer-guides/learning-module-components.md` for full documentation.
+
+### Progress Tracking
+
+Uses localStorage with `lib/progress.ts`:
+
+```typescript
+import { markModuleCompleted, isModuleCompleted, getCompletedCount } from '@/lib/progress';
+
+// Mark module as complete
+markModuleCompleted('ai-workflow', 'getting-started');
+
+// Check completion status
+const done = isModuleCompleted('ai-workflow', 'getting-started');
+
+// Get count for course
+const count = getCompletedCount('ai-workflow');
+```
+
+**Storage key pattern:** `33s-learning-progress`
+**Data structure:** `{ completed: ["courseId/moduleSlug", ...] }`
+
+### Course Registry
+
+Defined in `lib/courses.ts`:
+
+```typescript
+export const COURSES = [
+  {
+    id: 'ai-workflow',
+    title: '33 Strategies AI Workflow',
+    subtitle: 'For Builders',
+    modules: [
+      { slug: 'getting-started', title: '...', order: 1 },
+      // ...
+    ],
+  },
+];
+
+// Lookup helpers
+getCourse('ai-workflow');
+getModule('ai-workflow', 'getting-started');
+```
+
+### Adding a New Module
+
+1. Create directory: `app/learning/ai-workflow/new-module/`
+2. Create deck: `NewModuleDeck.tsx` using shared components
+3. Register in `[module]/page.tsx` dynamic imports
+4. Add to `lib/courses.ts` modules array
+
+### Critical Gotcha: API Route Conflict
+
+**Problem:** NextAuth requires `/api/auth/[...nextauth]` for all authentication routes (signin, callback, session, etc.). Any dynamic routes under `/api/auth/` will intercept these requests.
+
+**Why it happened:** Client portals originally used `/api/auth/[client]` for authentication. The `[client]` dynamic segment has higher priority than `[...nextauth]` catch-all, causing NextAuth requests to return 405 errors.
+
+**Solution:** Client portal auth moved to `/api/client-auth/[client]`.
+
+**Rule:** Never add dynamic routes under `/api/auth/` - they will conflict with NextAuth. Use a different base path like `/api/client-auth/`, `/api/session/`, etc.
+
+### Testing Authentication Locally
+
+1. Copy `.env.example` to `.env`
+2. Set `NEXTAUTH_SECRET`, `GOOGLE_CLIENT_ID`, `GOOGLE_CLIENT_SECRET`, `LEARNING_PASSWORD`
+3. Configure Google OAuth with `http://localhost:3033/api/auth/callback/google`
+4. Run `npm run dev` and visit `http://localhost:3033/learning`
