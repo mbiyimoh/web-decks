@@ -1170,12 +1170,6 @@ const PitchSection = () => {
     <div ref={containerRef} style={{ height: '100vh', overflowY: 'auto', background: BG_PRIMARY, position: 'relative' }}>
       <style>{`
         @keyframes scrollBounce { 0%, 100% { transform: translateX(-50%) translateY(0); opacity: 1; } 50% { transform: translateX(-50%) translateY(12px); opacity: 0.5; } }
-        /* Dark theme scrollbar styling */
-        ::-webkit-scrollbar { width: 8px; }
-        ::-webkit-scrollbar-track { background: ${BG_PRIMARY}; }
-        ::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.15); border-radius: 4px; }
-        ::-webkit-scrollbar-thumb:hover { background: rgba(255,255,255,0.25); }
-        * { scrollbar-width: thin; scrollbar-color: rgba(255,255,255,0.15) ${BG_PRIMARY}; }
       `}</style>
 
       <div style={{ position: 'fixed', top: 0, left: 0, right: 0, height: 3, background: 'rgba(255,255,255,0.1)', zIndex: 100 }}>
@@ -1365,6 +1359,15 @@ export default function WSBCFinalProposal() {
 
   return (
     <div style={{ background: BG_PRIMARY, minHeight: '100vh', color: TEXT_PRIMARY }}>
+      {/* Global dark theme scrollbar styling */}
+      <style>{`
+        ::-webkit-scrollbar { width: 8px; height: 8px; }
+        ::-webkit-scrollbar-track { background: #0a0a0f; }
+        ::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.15); border-radius: 4px; }
+        ::-webkit-scrollbar-thumb:hover { background: rgba(255,255,255,0.25); }
+        * { scrollbar-width: thin; scrollbar-color: rgba(255,255,255,0.15) #0a0a0f; }
+        html, body { scrollbar-width: thin; scrollbar-color: rgba(255,255,255,0.15) #0a0a0f; }
+      `}</style>
       {phase === 'intro' && (
         <M33TIntroSection onComplete={() => setPhase('demo')} />
       )}

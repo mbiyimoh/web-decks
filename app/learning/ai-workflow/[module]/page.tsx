@@ -29,6 +29,11 @@ export default async function ModulePage({ params }: Props) {
     notFound();
   }
 
+  // Redirect if module is locked (prevents direct URL access)
+  if (module.locked) {
+    redirect('/learning/ai-workflow');
+  }
+
   const DeckComponent = moduleComponents[moduleSlug];
 
   // Placeholder while deck components are being migrated
