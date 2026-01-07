@@ -17,12 +17,12 @@ interface Props {
 }
 
 export default async function ModulePage({ params }: Props) {
-  const session = await auth();
-  if (!session?.user) {
-    redirect('/learning');
-  }
-
   const { module: moduleSlug } = await params;
+  const session = await auth();
+
+  if (!session?.user) {
+    redirect(`/auth/signin?returnTo=/learning/ai-workflow/${moduleSlug}`);
+  }
   const module = getModule('ai-workflow', moduleSlug);
 
   if (!module) {

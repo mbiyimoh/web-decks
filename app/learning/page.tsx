@@ -1,6 +1,6 @@
 import { auth } from '@/lib/auth';
+import { redirect } from 'next/navigation';
 import { getAllCourses, getTotalEstimatedTime } from '@/lib/courses';
-import { AuthGate } from './components/AuthGate';
 import { CourseCard } from './components/CourseCard';
 import { LogoutButton } from './components/LogoutButton';
 
@@ -8,7 +8,7 @@ export default async function LearningDashboard() {
   const session = await auth();
 
   if (!session?.user) {
-    return <AuthGate />;
+    redirect('/auth/signin?returnTo=/learning');
   }
 
   const courses = getAllCourses();

@@ -25,3 +25,5 @@ tsconfig.tsbuildinfo
 # Quick checks (ephemeral tests)
 .quick-checks/
 test-results/
+
+/lib/generated/prisma

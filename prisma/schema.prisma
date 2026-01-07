@@ -1,0 +1,264 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+// Looking for ways to speed up your queries, or scale easily with your serverless or edge functions?
+// Try Prisma Accelerate: https://pris.ly/cli/accelerate-init
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+// ============================================================================
+// CLARITY CANVAS MODELS
+// ============================================================================
+
+model ClarityProfile {
+  id        String   @id @default(cuid())
+  userId    String   @unique // NextAuth user.id - enforces 1:1 ownership
+  name      String
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  sections   ProfileSection[]
+  personas   Persona[]
+  brainDumps PersonaBrainDump[]
+
+  @@index([userId])
+}
+
+model ProfileSection {
+  id        String  @id @default(cuid())
+  profileId String
+  key       String // "individual", "role", "organization", "goals", "network", "projects"
+  name      String // Display name
+  icon      String // Emoji icon
+  order     Int // Display order (1-6)
+  score     Int     @default(0) // 0-100 calculated score
+  summary   String? // AI-generated summary
+
+  subsections ProfileSubsection[]
+  profile     ClarityProfile      @relation(fields: [profileId], references: [id], onDelete: Cascade)
+
+  @@unique([profileId, key])
+  @@index([profileId])
+}
+
+model ProfileSubsection {
+  id        String  @id @default(cuid())
+  sectionId String
+  key       String // e.g., "background", "thinking_style"
+  name      String // Display name
+  order     Int // Display order within section
+  score     Int     @default(0) // 0-100 calculated score
+  summary   String? // AI-generated summary
+
+  fields  ProfileField[]
+  section ProfileSection @relation(fields: [sectionId], references: [id], onDelete: Cascade)
+
+  @@unique([sectionId, key])
+  @@index([sectionId])
+}
+
+model ProfileField {
+  id           String @id @default(cuid())
+  subsectionId String
+  key          String // e.g., "career", "decision_making"
+  name         String // Display name
+
+  // Content
+  summary     String? // Short display version (max ~100 chars)
+  fullContext String? @db.Text // Complete captured context
+
+  // Scoring
+  score                Int     @default(0) // 0-100 completeness
+  confidence           Float   @default(1.0) // 0-1 user-stated confidence
+  flaggedForValidation Boolean @default(false) // User marked "not sure"
+
+  // Temporal
+  lastUpdated DateTime @default(now()) @updatedAt
+
+  sources    FieldSource[]
+  subsection ProfileSubsection @relation(fields: [subsectionId], references: [id], onDelete: Cascade)
+
+  @@unique([subsectionId, key])
+  @@index([subsectionId])
+}
+
+model FieldSource {
+  id             String     @id @default(cuid())
+  fieldId        String
+  type           SourceType
+  rawContent     String     @db.Text // Original input verbatim
+  extractedAt    DateTime   @default(now())
+  questionId     String? // If from interview question
+  userConfidence Float      @default(1.0) // 0-1 user-stated at capture time
+
+  field ProfileField @relation(fields: [fieldId], references: [id], onDelete: Cascade)
+
+  @@index([fieldId])
+}
+
+enum SourceType {
+  VOICE
+  TEXT
+  QUESTION
+}
+
+// ============================================================================
+// CLARITY MODULES - Generic module infrastructure
+// ============================================================================
+
+model ClarityModule {
+  id               String   @id @default(cuid())
+  slug             String   @unique
+  name             String
+  description      String
+  icon             String // Emoji or icon identifier
+  estimatedMinutes Int
+  enrichesSections String[] // Which profile sections this module enriches
+  isActive         Boolean  @default(true)
+  sortOrder        Int      @default(0)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+// ============================================================================
+// PERSONA SHARPENER - Module-specific models
+// ============================================================================
+
+model PersonaBrainDump {
+  id        String         @id @default(cuid())
+  profileId String
+  profile   ClarityProfile @relation(fields: [profileId], references: [id], onDelete: Cascade)
+
+  // Input
+  inputType       String // "voice" | "text"
+  rawTranscript   String   @db.Text
+  audioBlobUrl    String? // S3/R2 URL if voice input
+  durationSeconds Int? // Voice recording duration
+
+  // Extraction Output (immutable snapshot)
+  extractedData   Json // Full extraction response from GPT
+  personaCount    Int // 1-3
+  overallContext  Json // { productDescription, marketContext, keyThemes }
+
+  // Generated Questions (batch pre-generated per persona)
+  customizedQuestions Json // { [personaId]: CustomizedQuestion[] }
+
+  // Metadata
+  createdAt    DateTime @default(now())
+  processingMs Int? // Total extraction time in ms
+
+  // Relations - personas created from this brain dump
+  personas Persona[]
+
+  @@index([profileId])
+}
+
+model Persona {
+  id        String         @id @default(cuid())
+  profileId String
+  profile   ClarityProfile @relation(fields: [profileId], references: [id], onDelete: Cascade)
+
+  // Link to brain dump (optional - manual personas won't have this)
+  brainDumpId String?
+  brainDump   PersonaBrainDump? @relation(fields: [brainDumpId], references: [id], onDelete: Cascade)
+
+  // Extraction metadata (populated from brain dump if exists)
+  extractionConfidence Float? // 0-1 overall confidence from extraction
+  skippedQuestionIds   String[] // Questions auto-populated from brain dump
+
+  name      String? // Auto-generated archetype name
+  isPrimary Boolean @default(true)
+
+  // Structured fields (JSON for flexibility)
+  demographics Json? // { ageRange, lifestyle, techSavviness }
+  jobs         Json? // { functional, emotional, social }
+  goals        Json? // { priorities, successDefinition }
+  frustrations Json? // { pastFailures, dealbreakers, currentWorkaround }
+  behaviors    Json? // { decisionStyle, usageTime, timeAvailable, discoveryChannels, influences }
+  antiPatterns String[]
+  quote        String?
+
+  // Computed scores (updated after each response)
+  clarityOverall      Int @default(0)
+  clarityIdentity     Int @default(0)
+  clarityGoals        Int @default(0)
+  clarityFrustrations Int @default(0)
+  clarityEmotional    Int @default(0)
+  clarityBehaviors    Int @default(0)
+
+  // Tracking
+  totalAssumptions Int @default(0)
+  avgConfidence    Int @default(0)
+
+  responses Response[]
+  sessions  SharpenerSession[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([profileId])
+  @@index([brainDumpId])
+}
+
+model Response {
+  id        String           @id @default(cuid())
+  personaId String
+  persona   Persona          @relation(fields: [personaId], references: [id], onDelete: Cascade)
+  sessionId String
+  session   SharpenerSession @relation(fields: [sessionId], references: [id], onDelete: Cascade)
+
+  questionId String // e.g., 'age-range', 'lifestyle'
+  field      String // e.g., 'demographics.ageRange'
+
+  // The answer
+  value Json // Flexible: string, number, string[], object
+
+  // Metadata
+  isUnsure          Boolean @default(false)
+  confidence        Int     @default(50) // 0-100
+  additionalContext String?
+  contextSource     String? // 'text' | null (voice deferred)
+
+  // Tagging
+  responseType   String // 'assumption'
+  respondentId   String // User ID
+  respondentRole String // 'founder'
+  respondentName String?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([personaId])
+  @@index([sessionId])
+  @@index([questionId])
+}
+
+model SharpenerSession {
+  id        String  @id @default(cuid())
+  personaId String
+  persona   Persona @relation(fields: [personaId], references: [id], onDelete: Cascade)
+
+  sessionType String // 'sharpen'
+  status      String @default("in_progress") // 'in_progress' | 'completed' | 'abandoned'
+
+  // Progress tracking
+  lastQuestionIndex Int @default(0)
+  questionsAnswered Int @default(0)
+  questionsSkipped  Int @default(0)
+  questionsUnsure   Int @default(0)
+
+  startedAt   DateTime  @default(now())
+  completedAt DateTime?
+
+  responses Response[]
+
+  @@index([personaId])
+}

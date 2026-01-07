@@ -5,4 +5,4 @@ export { Card } from './Card';
 export { CodeBlock } from './CodeBlock';
 export { ProgressBar } from './ProgressBar';
 export { NavDots } from './NavDots';
-export { VideoCommentary, VideoCommentaryGrid } from './VideoCommentary';
+export { VideoCommentary, VideoCommentaryCompact, VideoCommentaryGrid } from './VideoCommentary';

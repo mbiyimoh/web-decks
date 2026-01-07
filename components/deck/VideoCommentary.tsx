@@ -394,6 +394,180 @@ export function VideoCommentary({
 }
 
 /**
+ * VideoCommentaryCompact - Compact horizontal video card for inline use
+ *
+ * Takes up minimal vertical space while scrolling, expands to modal on click.
+ *
+ * @example
+ * <VideoCommentaryCompact
+ *   id="quick-tip"
+ *   title="The Single Most Important Habit"
+ *   duration="1:30"
+ *   topic="pro-tip"
+ * />
+ */
+export function VideoCommentaryCompact({
+  id,
+  title,
+  description,
+  duration,
+  topic,
+  video,
+  className = '',
+}: VideoCommentaryProps) {
+  const [isPlaying, setIsPlaying] = useState(false);
+  const videoRef = useRef<HTMLVideoElement>(null);
+  const iframeRef = useRef<HTMLIFrameElement>(null);
+
+  const topicConfig = TOPIC_CONFIG[topic];
+  const videoUrl = getVideoUrl(video);
+  const isPlaceholder = !video || !videoUrl;
+
+  const handlePlay = () => {
+    if (isPlaceholder) return;
+    setIsPlaying(true);
+  };
+
+  const handleClose = useCallback(() => {
+    setIsPlaying(false);
+    if (videoRef.current) {
+      videoRef.current.pause();
+      videoRef.current.currentTime = 0;
+    }
+  }, []);
+
+  // Handle Escape key to close modal
+  useEffect(() => {
+    if (!isPlaying) return;
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') handleClose();
+    };
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, [isPlaying, handleClose]);
+
+  return (
+    <>
+      {/* Compact Card */}
+      <div
+        className={`
+          group flex items-center gap-4 p-3
+          bg-[#0d0d12] border border-white/[0.06] rounded-xl
+          transition-all duration-200
+          ${!isPlaceholder ? 'cursor-pointer hover:border-white/[0.12] hover:bg-[#0f0f14]' : 'opacity-60'}
+          ${className}
+        `}
+        onClick={handlePlay}
+      >
+        {/* Play Button */}
+        <div className={`
+          flex-shrink-0 w-10 h-10 rounded-lg
+          ${isPlaceholder ? 'bg-zinc-800/50 border border-zinc-700/50' : `${topicConfig.bgColor} ${topicConfig.borderColor} border`}
+          flex items-center justify-center
+          transition-transform duration-200
+          ${!isPlaceholder ? 'group-hover:scale-105' : ''}
+        `}>
+          {isPlaceholder ? (
+            <svg className="w-4 h-4 text-zinc-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M15 10l4.553-2.276A1 1 0 0121 8.618v6.764a1 1 0 01-1.447.894L15 14M5 18h8a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v8a2 2 0 002 2z" />
+            </svg>
+          ) : (
+            <svg className={`w-4 h-4 ${topicConfig.color} ml-0.5`} fill="currentColor" viewBox="0 0 24 24">
+              <path d="M8 5v14l11-7z" />
+            </svg>
+          )}
+        </div>
+
+        {/* Content */}
+        <div className="flex-1 min-w-0">
+          <div className="flex items-center gap-2 mb-0.5">
+            <span className="text-xs">{topicConfig.icon}</span>
+            <span className={`text-xs font-medium ${isPlaceholder ? 'text-zinc-600' : topicConfig.color}`}>
+              {topicConfig.label}
+            </span>
+          </div>
+          <h4 className={`font-medium text-sm truncate ${isPlaceholder ? 'text-zinc-500' : 'text-white group-hover:text-[#d4a54a]'} transition-colors`}>
+            {title}
+          </h4>
+        </div>
+
+        {/* Duration / Status */}
+        <div className="flex-shrink-0">
+          {isPlaceholder ? (
+            <span className="text-zinc-600 text-xs">Coming soon</span>
+          ) : (
+            <span className="text-zinc-500 text-xs font-mono">{duration}</span>
+          )}
+        </div>
+      </div>
+
+      {/* Video Modal - same as full component */}
+      <AnimatePresence>
+        {isPlaying && videoUrl && (
+          <motion.div
+            className="fixed inset-0 z-50 flex items-center justify-center p-4 md:p-8"
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            onClick={handleClose}
+          >
+            <div className="absolute inset-0 bg-black/90 backdrop-blur-sm" />
+            <motion.div
+              className="relative w-full max-w-4xl aspect-video bg-black rounded-xl overflow-hidden shadow-2xl"
+              initial={{ scale: 0.9, opacity: 0 }}
+              animate={{ scale: 1, opacity: 1 }}
+              exit={{ scale: 0.9, opacity: 0 }}
+              transition={{ type: 'spring', damping: 25, stiffness: 300 }}
+              onClick={(e) => e.stopPropagation()}
+            >
+              <button
+                onClick={handleClose}
+                className="absolute top-4 right-4 z-10 w-10 h-10 rounded-full bg-black/50 border border-white/10 flex items-center justify-center text-white hover:bg-black/70 transition-colors"
+              >
+                <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                </svg>
+              </button>
+
+              {video?.provider === 'bunny' ? (
+                <iframe
+                  ref={iframeRef}
+                  src={`${videoUrl}?autoplay=true`}
+                  className="w-full h-full"
+                  allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+                  allowFullScreen
+                />
+              ) : video?.provider === 'self-hosted' ? (
+                <video
+                  ref={videoRef}
+                  src={videoUrl}
+                  className="w-full h-full"
+                  controls
+                  autoPlay
+                  playsInline
+                />
+              ) : video?.provider === 'mux' ? (
+                <div className="flex items-center justify-center h-full text-zinc-400">
+                  <p>For Mux videos, install @mux/mux-player-react</p>
+                </div>
+              ) : null}
+
+              <div className="absolute bottom-0 left-0 right-0 p-4 bg-gradient-to-t from-black/80 to-transparent">
+                <div className="flex items-center gap-2 mb-1">
+                  <span className={`text-sm ${topicConfig.color}`}>{topicConfig.icon}</span>
+                  <span className={`text-xs font-medium ${topicConfig.color}`}>{topicConfig.label}</span>
+                </div>
+                <h3 className="text-white font-semibold">{title}</h3>
+              </div>
+            </motion.div>
+          </motion.div>
+        )}
+      </AnimatePresence>
+    </>
+  );
+}
+
+/**
  * VideoCommentaryGrid - Display multiple videos in a responsive grid
  */
 interface VideoCommentaryGridProps {

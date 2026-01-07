@@ -880,6 +880,25 @@ NOT just `next start` (won't bind correctly)
 
 ---
 
+## Clarity Canvas
+
+The Clarity Canvas is an interactive platform for building customer clarity through structured modules.
+
+### Key Documentation
+
+- **Developer Guides:**
+  - `docs/developer-guides/learning-module-components.md` - Shared deck components
+  - `docs/developer-guides/openai-structured-outputs-gotchas.md` - OpenAI Zod schema constraints
+
+- **Persona Sharpener Module:**
+  - `docs/clarity-canvas/clarity-modules-and-artifacts/persona-sharpener/customized-questions-pattern.md` - **Critical:** Two-tier question system (base vs customized)
+  - `docs/clarity-canvas/clarity-modules-and-artifacts/persona-sharpener/persona-sharpener-handoff.md` - Module architecture
+  - `docs/clarity-canvas/clarity-modules-and-artifacts/persona-sharpener/voice-text-extraction-pattern.md` - Brain dump processing
+
+**Most Common Gotcha:** When displaying question text in the Persona Sharpener questionnaire UI, always use `currentCustomizedQuestion?.text` (contextualized) NOT `currentQuestion.question` (generic). See customized-questions-pattern.md for full details.
+
+---
+
 ## Learning Platform
 
 The learning platform (`learn.33strategies.ai`) provides internal training through scrollytelling deck modules.

@@ -4,7 +4,11 @@ import { useState, FormEvent } from 'react';
 import { signIn } from 'next-auth/react';
 import { motion } from 'framer-motion';
 
-export function AuthGate() {
+interface AuthGateProps {
+  returnTo?: string;
+}
+
+export function AuthGate({ returnTo = '/learning' }: AuthGateProps) {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [error, setError] = useState('');
@@ -12,7 +16,7 @@ export function AuthGate() {
   const [showEmailForm, setShowEmailForm] = useState(false);
 
   const handleGoogleSignIn = () => {
-    signIn('google', { callbackUrl: '/learning' });
+    signIn('google', { callbackUrl: returnTo });
   };
 
   const handleEmailSignIn = async (e: FormEvent) => {
@@ -30,7 +34,7 @@ export function AuthGate() {
       if (result?.error) {
         setError('Invalid email or password. Access is restricted to @33strategies.ai emails.');
       } else {
-        window.location.href = '/learning';
+        window.location.href = returnTo;
       }
     } catch {
       setError('Connection error. Please try again.');
@@ -52,10 +56,10 @@ export function AuthGate() {
             33 Strategies
           </p>
           <h1 className="text-3xl font-bold text-[#f5f5f5] font-display">
-            Learning Platform
+            Sign In
           </h1>
           <p className="text-[#888888] text-sm mt-2">
-            Sign in with your @33strategies.ai email
+            Continue with your @33strategies.ai account
           </p>
         </div>
 

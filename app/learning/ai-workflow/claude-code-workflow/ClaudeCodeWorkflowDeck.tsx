@@ -2,7 +2,7 @@
 
 import React, { useRef, useEffect, useState, createContext, useContext, useCallback } from 'react';
 import { motion, useScroll, useTransform, useInView, AnimatePresence } from 'framer-motion';
-import { Section, RevealText, SectionLabel, Card, CodeBlock, ProgressBar, NavDots, VideoCommentary, VideoCommentaryGrid } from '@/components/deck';
+import { Section, RevealText, SectionLabel, Card, CodeBlock, ProgressBar, NavDots, VideoCommentaryCompact } from '@/components/deck';
 import { ModuleCompleteButton } from '../../components/ModuleCompleteButton';
 
 // ============================================================================
@@ -796,14 +796,6 @@ export default function ClaudeCodeWorkflowDeck() {
   return (
     <DocumentViewerProvider>
       <div className="bg-[#0a0a0f] text-white min-h-screen font-sans">
-        <style>{`
-          html, body { background-color: #0a0a0f; }
-          .text-gold { color: #d4a54a; }
-          .bg-gold { background-color: #d4a54a; }
-          .border-gold { border-color: #d4a54a; }
-          .glow-gold { box-shadow: 0 0 80px rgba(212, 165, 74, 0.15); }
-          .font-display { font-family: 'Playfair Display', Georgia, serif; }
-        `}</style>
 
         <ProgressBar />
         <NavDots sections={sections} activeSection={activeSection} />
@@ -898,7 +890,7 @@ export default function ClaudeCodeWorkflowDeck() {
           {/* Video Commentary: Understanding the Core Insight */}
           <RevealText delay={0.4}>
             <div className="mt-8">
-              <VideoCommentary
+              <VideoCommentaryCompact
                 id="philosophy-core-insight"
                 title="Why Input Quality Matters More Than Model Quality"
                 description="A quick walkthrough of how I think about this principle in practice — with real examples of great plans executed by 'lesser' models."
@@ -924,32 +916,89 @@ export default function ClaudeCodeWorkflowDeck() {
           </RevealText>
 
           <RevealText delay={0.15}>
-            <p className="text-xl text-zinc-400 mb-12 max-w-3xl">
-              Every frustrating AI output traces back to missing context. Not model limitations — information gaps.
+            <p className="text-xl text-zinc-400 mb-8 max-w-3xl">
+              You have specific ideas in your head about what you want to build. If you don't specify them, the AI has to guess.
             </p>
           </RevealText>
 
-          {/* Comparison Cards */}
+          {/* Vision vs AI Guess Visualization */}
           <RevealText delay={0.2}>
-            <div className="grid md:grid-cols-2 gap-6 mb-12">
-              {/* Frustration 1 */}
+            <div className="grid md:grid-cols-2 gap-6 mb-8">
+              {/* Your Vision */}
+              <div className="bg-[#0d0d12] border border-green-500/20 rounded-xl p-6">
+                <div className="flex items-center gap-2 mb-4">
+                  <div className="w-2 h-2 rounded-full bg-green-400" />
+                  <h4 className="text-green-400 font-semibold text-sm uppercase tracking-wider">Your Vision</h4>
+                  <span className="text-zinc-600 text-xs">(in your head)</span>
+                </div>
+                <ul className="space-y-3">
+                  <li className="flex items-start gap-3">
+                    <span className="text-green-400 mt-0.5">✓</span>
+                    <span className="text-zinc-300 text-sm">"It'll plug into my existing auth system"</span>
+                  </li>
+                  <li className="flex items-start gap-3">
+                    <span className="text-green-400 mt-0.5">✓</span>
+                    <span className="text-zinc-300 text-sm">"Use the same component patterns as everywhere else"</span>
+                  </li>
+                  <li className="flex items-start gap-3">
+                    <span className="text-green-400 mt-0.5">✓</span>
+                    <span className="text-zinc-300 text-sm">"Handle errors like we always do in this codebase"</span>
+                  </li>
+                </ul>
+              </div>
+
+              {/* AI's Best Guess */}
+              <div className="bg-[#0d0d12] border border-red-500/20 rounded-xl p-6">
+                <div className="flex items-center gap-2 mb-4">
+                  <div className="w-2 h-2 rounded-full bg-red-400" />
+                  <h4 className="text-red-400 font-semibold text-sm uppercase tracking-wider">AI's Best Guess</h4>
+                  <span className="text-zinc-600 text-xs">(without context)</span>
+                </div>
+                <ul className="space-y-3">
+                  <li className="flex items-start gap-3">
+                    <span className="text-red-400 mt-0.5">✗</span>
+                    <span className="text-zinc-400 text-sm">Creates new auth from scratch using different library</span>
+                  </li>
+                  <li className="flex items-start gap-3">
+                    <span className="text-red-400 mt-0.5">✗</span>
+                    <span className="text-zinc-400 text-sm">Invents new patterns that don't match your codebase</span>
+                  </li>
+                  <li className="flex items-start gap-3">
+                    <span className="text-red-400 mt-0.5">✗</span>
+                    <span className="text-zinc-400 text-sm">Uses generic error handling you'll have to rewrite</span>
+                  </li>
+                </ul>
+              </div>
+            </div>
+          </RevealText>
+
+          {/* The Gap */}
+          <RevealText delay={0.25}>
+            <div className="text-center mb-8">
+              <p className="text-zinc-500 text-sm">
+                The gap between these two columns? That's <span className="text-[#d4a54a]">the specificity problem</span>.
+              </p>
+            </div>
+          </RevealText>
+
+          {/* Frustration Examples */}
+          <RevealText delay={0.3}>
+            <div className="grid md:grid-cols-2 gap-6 mb-8">
               <Card>
                 <div className="space-y-4">
                   <p className="text-red-400 font-medium">"Why did it hardcode this value?"</p>
                   <div className="h-px bg-zinc-800" />
                   <p className="text-zinc-400 text-sm">
-                    <span className="text-zinc-300">Because you never told it</span> you wanted that to be configurable, or pointed it at your config patterns.
+                    <span className="text-zinc-300">Because you never told it</span> you wanted that to be configurable.
                   </p>
                 </div>
               </Card>
-
-              {/* Frustration 2 */}
               <Card>
                 <div className="space-y-4">
                   <p className="text-red-400 font-medium">"Why create a new function when one exists?"</p>
                   <div className="h-px bg-zinc-800" />
                   <p className="text-zinc-400 text-sm">
-                    <span className="text-zinc-300">Because you never pointed it</span> at your existing utility functions or established patterns.
+                    <span className="text-zinc-300">Because you never pointed it</span> at your existing utilities.
                   </p>
                 </div>
               </Card>
@@ -957,7 +1006,7 @@ export default function ClaudeCodeWorkflowDeck() {
           </RevealText>
 
           {/* Reframe Callout */}
-          <RevealText delay={0.25}>
+          <RevealText delay={0.35}>
             <Card highlight>
               <p className="text-zinc-300 text-center">
                 <span className="text-[#d4a54a]">The spec-based workflow solves this</span> by doing all the groundwork to make everything explicit ahead of time — presenting the plan at each step so nothing gets left to chance.
@@ -1078,22 +1127,22 @@ export default function ClaudeCodeWorkflowDeck() {
           {/* Video Commentary: Building Your CLAUDE.md */}
           <RevealText delay={0.35}>
             <div className="mt-8">
-              <VideoCommentaryGrid columns={2}>
-                <VideoCommentary
+              <div className="space-y-3">
+                <VideoCommentaryCompact
                   id="claude-md-walkthrough"
                   title="Building Your CLAUDE.md From Scratch"
                   description="Watch me set up a CLAUDE.md for a new project — what to include, what to skip, and how to iterate on it."
                   duration="3:20"
                   topic="walkthrough"
                 />
-                <VideoCommentary
+                <VideoCommentaryCompact
                   id="reference-docs-tips"
                   title="Reference Docs That Actually Get Used"
                   description="Pro tips on structuring your reference docs so Claude actually reads and applies them."
                   duration="1:45"
                   topic="pro-tip"
                 />
-              </VideoCommentaryGrid>
+              </div>
             </div>
           </RevealText>
         </div>
@@ -1231,7 +1280,7 @@ export default function ClaudeCodeWorkflowDeck() {
           {/* Video Commentary: Crafting the Ideation Prompt */}
           <RevealText delay={0.35}>
             <div className="mt-8">
-              <VideoCommentary
+              <VideoCommentaryCompact
                 id="ideate-prompt-tips"
                 title="Crafting the Initial Ideation Prompt"
                 description="What to include in your /spec:ideate prompt, what to leave out, and how to guide the research in the right direction."
@@ -1721,7 +1770,7 @@ export async function authenticateUser(
           {/* Video Commentary: Debugging in Practice */}
           <RevealText delay={0.3}>
             <div className="mt-8">
-              <VideoCommentary
+              <VideoCommentaryCompact
                 id="debugging-in-practice"
                 title="Debugging Decision Tree in Action"
                 description="A real example of diagnosing an issue and choosing the right debug approach — including when I got it wrong the first time."
@@ -1837,7 +1886,7 @@ export async function authenticateUser(
           {/* Video Commentary: Setting Up Hooks */}
           <RevealText delay={0.3}>
             <div className="mt-8">
-              <VideoCommentary
+              <VideoCommentaryCompact
                 id="hooks-setup"
                 title="Setting Up Your First Stop Hook"
                 description="A quick walkthrough of configuring hooks in Claude Code — including when to enable/disable them for different workflows."

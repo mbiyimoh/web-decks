@@ -9,7 +9,7 @@ export default async function AIWorkflowCourse() {
   const session = await auth();
 
   if (!session?.user) {
-    redirect('/learning');
+    redirect('/auth/signin?returnTo=/learning/ai-workflow');
   }
 
   const course = getCourse('ai-workflow');
