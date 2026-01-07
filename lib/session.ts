@@ -2,7 +2,8 @@ import { SessionOptions } from 'iron-session';
 
 export interface SessionData {
   isLoggedIn: boolean;
-  clientId?: string; // Which client portal is authenticated
+  clientId?: string;      // Which client portal is authenticated
+  strategistId?: string;  // Which strategist portal is authenticated
 }
 
 export const defaultSession: SessionData = {
@@ -40,4 +41,15 @@ export function isSessionValidForClient(
 ): boolean {
   // Case-insensitive comparison - session stores lowercase clientId
   return session.isLoggedIn === true && session.clientId === clientId.toLowerCase();
+}
+
+/**
+ * Check if session is valid for a specific strategist
+ */
+export function isSessionValidForStrategist(
+  session: SessionData,
+  strategistId: string
+): boolean {
+  // Case-insensitive comparison - session stores lowercase strategistId
+  return session.isLoggedIn === true && session.strategistId === strategistId.toLowerCase();
 }

@@ -12,9 +12,10 @@ interface PasswordGateProps {
   clientId: string;
   clientName: string;
   returnTo?: string;
+  portalType?: 'client' | 'strategist';
 }
 
-export default function PasswordGate({ clientId, clientName, returnTo }: PasswordGateProps) {
+export default function PasswordGate({ clientId, clientName, returnTo, portalType = 'client' }: PasswordGateProps) {
   const [password, setPassword] = useState('');
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
@@ -26,7 +27,8 @@ export default function PasswordGate({ clientId, clientName, returnTo }: Passwor
     setLoading(true);
 
     try {
-      const response = await fetch(`/api/client-auth/${clientId}`, {
+      const authPath = portalType === 'strategist' ? 'strategist-auth' : 'client-auth';
+      const response = await fetch(`/api/${authPath}/${clientId}`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ password }),
@@ -66,7 +68,7 @@ export default function PasswordGate({ clientId, clientName, returnTo }: Passwor
             className="uppercase tracking-[0.2em] text-xs mb-3 font-mono"
             style={{ color: GOLD }}
           >
-            Client Portal
+            {portalType === 'strategist' ? 'Strategist Portal' : 'Client Portal'}
           </p>
           <h1 className="text-3xl md:text-4xl text-white font-display">
             {clientName}

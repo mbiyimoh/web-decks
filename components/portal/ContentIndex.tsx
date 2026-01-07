@@ -34,6 +34,7 @@ interface ClientData {
 
 interface ContentIndexProps {
   client: ClientData;
+  portalType?: 'client' | 'strategist';
 }
 
 const typeLabels: Record<ContentItemData['type'], string> = {
@@ -47,13 +48,16 @@ function ContentTile({
   item,
   clientId,
   index,
-  isNewest
+  isNewest,
+  portalType = 'client'
 }: {
   item: ContentItemData;
   clientId: string;
   index: number;
   isNewest: boolean;
+  portalType?: 'client' | 'strategist';
 }) {
+  const basePath = portalType === 'strategist' ? 'strategist-portals' : 'client-portals';
   return (
     <motion.div
       key={item.slug}
@@ -62,7 +66,7 @@ function ContentTile({
       transition={{ duration: 0.4, delay: index * 0.1 }}
     >
       <Link
-        href={`/client-portals/${clientId}/${item.slug}`}
+        href={`/${basePath}/${clientId}/${item.slug}`}
         className="block rounded-xl p-6 transition-all duration-300 group relative"
         style={{
           background: isNewest
@@ -148,7 +152,7 @@ function ContentTile({
   );
 }
 
-export default function ContentIndex({ client }: ContentIndexProps) {
+export default function ContentIndex({ client, portalType = 'client' }: ContentIndexProps) {
   return (
     <div
       className="min-h-screen px-6 py-12"
@@ -166,7 +170,7 @@ export default function ContentIndex({ client }: ContentIndexProps) {
               className="uppercase tracking-[0.2em] text-xs mb-3 font-mono"
               style={{ color: GOLD }}
             >
-              Client Portal
+              {portalType === 'strategist' ? 'Strategist Portal' : 'Client Portal'}
             </p>
             <h1 className="text-4xl md:text-5xl font-display text-white">
               {client.name}
@@ -191,6 +195,7 @@ export default function ContentIndex({ client }: ContentIndexProps) {
                   clientId={client.id}
                   index={index}
                   isNewest={index === 0}
+                  portalType={portalType}
                 />
               ))}
           </div>
