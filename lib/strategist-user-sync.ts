@@ -1,40 +1,44 @@
 import { prisma } from '@/lib/prisma';
 
 /**
- * Ensure a User record exists for a client portal user.
+ * Ensure a User record exists for a strategist portal user.
  * Uses upsert for atomic operation, with fallback for email-based lookup.
  *
- * authId format: "client-portal:{email}" to distinguish from NextAuth users.
+ * authId format: "strategist-portal:{email}" to distinguish from other auth types.
+ * Strategists are treated as TEAM_MEMBER users.
  */
-export async function ensureClientUser(
+export async function ensureStrategistUser(
   email: string,
-  clientId: string
+  strategistId: string
 ): Promise<{ id: string; email: string }> {
   const normalizedEmail = email.toLowerCase();
-  const authId = `client-portal:${normalizedEmail}`;
+  const authId = `strategist-portal:${normalizedEmail}`;
 
   try {
     // Try upsert first (atomic, handles race conditions)
     const user = await prisma.user.upsert({
       where: { authId },
       update: {
-        clientPortalId: clientId,
-        userType: 'CLIENT',
+        userType: 'TEAM_MEMBER',
       },
       create: {
         authId,
         email: normalizedEmail,
         name: null,
-        userType: 'CLIENT',
-        clientPortalId: clientId,
+        userType: 'TEAM_MEMBER',
       },
     });
 
-    console.log(`[ensureClientUser] User synced: ${email} for ${clientId}`);
+    console.log(
+      `[ensureStrategistUser] User synced: ${email} for strategist ${strategistId}`
+    );
     return { id: user.id, email: user.email };
   } catch (error) {
     // If upsert fails (e.g., email exists with different authId), try email lookup
-    console.warn(`[ensureClientUser] Upsert failed, trying email lookup:`, error);
+    console.warn(
+      `[ensureStrategistUser] Upsert failed, trying email lookup:`,
+      error
+    );
 
     try {
       const existingByEmail = await prisma.user.findUnique({
@@ -42,23 +46,22 @@ export async function ensureClientUser(
       });
 
       if (existingByEmail) {
-        // Update to new authId format
+        // Update to strategist-portal authId format
         const updated = await prisma.user.update({
           where: { id: existingByEmail.id },
           data: {
             authId,
-            clientPortalId: clientId,
-            userType: 'CLIENT',
+            userType: 'TEAM_MEMBER',
           },
         });
-        console.log(`[ensureClientUser] Migrated existing user: ${email}`);
+        console.log(`[ensureStrategistUser] Migrated existing user: ${email}`);
         return { id: updated.id, email: updated.email };
       }
     } catch (fallbackError) {
-      console.error(`[ensureClientUser] Fallback failed:`, fallbackError);
+      console.error(`[ensureStrategistUser] Fallback failed:`, fallbackError);
     }
 
-    console.error(`[ensureClientUser] Failed for ${email}:`, error);
+    console.error(`[ensureStrategistUser] Failed for ${email}:`, error);
     throw new Error(
       `Failed to create or update user record for ${email}. Please contact support.`
     );

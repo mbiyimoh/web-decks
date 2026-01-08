@@ -28,11 +28,12 @@ export async function getUnifiedSession(): Promise<UnifiedSession | null> {
         authSource: 'nextauth',
       };
     }
-  } catch {
-    // NextAuth not available or errored - continue to iron-session
+  } catch (error) {
+    // Log NextAuth errors for debugging but continue to iron-session
+    console.warn('[getUnifiedSession] NextAuth check failed:', error);
   }
 
-  // Try client portal session
+  // Try client/strategist portal session (iron-session)
   try {
     const ironSession = await getIronSession<SessionData>(
       await cookies(),
@@ -46,8 +47,9 @@ export async function getUnifiedSession(): Promise<UnifiedSession | null> {
         authSource: 'client-portal',
       };
     }
-  } catch {
-    // Iron session not available or errored
+  } catch (error) {
+    // Log iron-session errors for debugging
+    console.warn('[getUnifiedSession] Iron session check failed:', error);
   }
 
   return null;

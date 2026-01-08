@@ -1,26 +1,10 @@
 import { cookies } from 'next/headers';
 import { getIronSession } from 'iron-session';
 import { NextResponse } from 'next/server';
-import { timingSafeEqual } from 'crypto';
 import { getSessionOptions, SessionData } from '@/lib/session';
 import { getClient, getClientPassword, getClientEmail } from '@/lib/clients';
 import { ensureClientUser } from '@/lib/client-user-sync';
-
-// Constant-time string comparison to prevent timing attacks
-function secureCompare(a: string, b: string): boolean {
-  try {
-    const bufA = Buffer.from(a);
-    const bufB = Buffer.from(b);
-    if (bufA.length !== bufB.length) {
-      // Compare against self to maintain constant time
-      timingSafeEqual(bufA, bufA);
-      return false;
-    }
-    return timingSafeEqual(bufA, bufB);
-  } catch {
-    return false;
-  }
-}
+import { secureCompare } from '@/lib/auth-utils';
 
 interface Props {
   params: Promise<{ client: string }>;
@@ -37,8 +21,16 @@ export async function POST(request: Request, { params }: Props) {
   const expectedPassword = getClientPassword(clientId);
   const expectedEmail = getClientEmail(clientId);
 
-  if (!expectedPassword || !expectedEmail) {
-    console.error(`Missing auth config for client: ${clientId}`);
+  // Validate expected values exist and are non-empty
+  if (
+    !expectedPassword ||
+    !expectedEmail ||
+    expectedPassword.trim().length === 0 ||
+    expectedEmail.trim().length === 0
+  ) {
+    console.error(
+      `Invalid auth config for client: ${clientId} - empty or missing email/password`
+    );
     return NextResponse.json(
       { error: 'Server configuration error' },
       { status: 500 }
@@ -48,9 +40,22 @@ export async function POST(request: Request, { params }: Props) {
   try {
     const { email, password } = await request.json();
 
+    // Validate non-empty inputs
+    if (
+      !email ||
+      !password ||
+      email.trim().length === 0 ||
+      password.trim().length === 0
+    ) {
+      return NextResponse.json(
+        { error: 'Email and password are required' },
+        { status: 400 }
+      );
+    }
+
     // Validate both email and password
-    const emailMatch = email?.toLowerCase() === expectedEmail.toLowerCase();
-    const passwordMatch = secureCompare(password || '', expectedPassword);
+    const emailMatch = email.toLowerCase() === expectedEmail.toLowerCase();
+    const passwordMatch = secureCompare(password, expectedPassword);
 
     if (emailMatch && passwordMatch) {
       // Create or update User record in database

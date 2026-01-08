@@ -1,6 +1,27 @@
+import { timingSafeEqual } from 'crypto';
+
 /**
  * Utility functions for authentication flows
  */
+
+/**
+ * Constant-time string comparison to prevent timing attacks.
+ * Always returns false if lengths don't match (after constant-time self-comparison).
+ */
+export function secureCompare(a: string, b: string): boolean {
+  try {
+    const bufA = Buffer.from(a);
+    const bufB = Buffer.from(b);
+    if (bufA.length !== bufB.length) {
+      // Compare against self to maintain constant time
+      timingSafeEqual(bufA, bufA);
+      return false;
+    }
+    return timingSafeEqual(bufA, bufB);
+  } catch {
+    return false;
+  }
+}
 
 /**
  * Validates and sanitizes the returnTo parameter to prevent open redirects.
