@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { auth } from '@/lib/auth';
 import { prisma } from '@/lib/prisma';
+import { ensureUserFromUnifiedSession } from '@/lib/user-sync';
 import { generateObject } from 'ai';
 import { openai } from '@ai-sdk/openai';
 import { brainDumpExtractionSchema } from '@/lib/clarity-canvas/extraction-schema';
@@ -17,9 +17,8 @@ interface ExtractRequestBody {
 export async function POST(
   request: NextRequest
 ): Promise<NextResponse<BrainDumpResponse | { error: string }>> {
-  const session = await auth();
-
-  if (!session?.user?.id) {
+  const user = await ensureUserFromUnifiedSession();
+  if (!user) {
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
   }
 
@@ -32,8 +31,8 @@ export async function POST(
     }
 
     // Get user's profile
-    const profile = await prisma.clarityProfile.findUnique({
-      where: { userId: session.user.id },
+    const profile = await prisma.clarityProfile.findFirst({
+      where: { userRecordId: user.id },
       include: {
         sections: {
           include: {
@@ -107,8 +106,8 @@ export async function POST(
     await Promise.all(updatePromises);
 
     // Fetch updated profile
-    const updatedProfile = await prisma.clarityProfile.findUnique({
-      where: { userId: session.user.id },
+    const updatedProfile = await prisma.clarityProfile.findFirst({
+      where: { userRecordId: user.id },
       include: {
         sections: {
           orderBy: { order: 'asc' },

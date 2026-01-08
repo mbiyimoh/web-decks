@@ -4,6 +4,9 @@ export interface SessionData {
   isLoggedIn: boolean;
   clientId?: string;      // Which client portal is authenticated
   strategistId?: string;  // Which strategist portal is authenticated
+  // User info for client portal users (enables Clarity Canvas access)
+  userId?: string;        // Database User.id
+  userEmail?: string;     // For display/verification
 }
 
 export const defaultSession: SessionData = {

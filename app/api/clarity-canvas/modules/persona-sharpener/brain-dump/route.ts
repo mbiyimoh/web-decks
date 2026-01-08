@@ -1,8 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { auth } from '@/lib/auth';
 import prisma from '@/lib/prisma';
 import { createMinimalProfile } from '@/lib/clarity-canvas/seed-profile';
-import { ensureUser } from '@/lib/user-sync';
+import { ensureUserFromUnifiedSession } from '@/lib/user-sync';
 import OpenAI from 'openai';
 import { zodResponseFormat } from 'openai/helpers/zod';
 import { Prisma } from '@prisma/client';
@@ -54,8 +53,8 @@ export async function POST(request: NextRequest) {
 
   try {
     // Auth check
-    const session = await auth();
-    if (!session?.user?.id) {
+    const user = await ensureUserFromUnifiedSession();
+    if (!user) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
@@ -85,23 +84,17 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // Ensure user record exists (creates if needed, links orphaned profiles)
-    const user = await ensureUser(session);
-
-    // Verify profile belongs to user using dual lookup
+    // Verify profile belongs to user
     let profile = await prisma.clarityProfile.findFirst({
       where: {
         id: profileId,
-        OR: [
-          { userRecordId: user.id },
-          { userId: session.user.id },
-        ],
+        userRecordId: user.id,
       },
     });
 
     if (!profile) {
       // Auto-create minimal profile if needed
-      profile = await createMinimalProfile(user, session.user.id);
+      profile = await createMinimalProfile(user, user.authId);
     }
 
     // Step 1: Extract personas from transcript

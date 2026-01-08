@@ -1,7 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { auth } from '@/lib/auth';
 import prisma from '@/lib/prisma';
-import { ensureUser } from '@/lib/user-sync';
+import { ensureUserFromUnifiedSession } from '@/lib/user-sync';
 import {
   getQuestionById,
   getTotalQuestions,
@@ -27,26 +26,19 @@ interface RouteContext {
 // GET - Fetch all responses for persona
 export async function GET(request: NextRequest, context: RouteContext) {
   try {
-    const session = await auth();
-    if (!session?.user?.id) {
+    // Get user from unified session (NextAuth or client portal)
+    const user = await ensureUserFromUnifiedSession();
+    if (!user) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
     const { personaId } = await context.params;
 
-    // Ensure user record exists
-    const user = await ensureUser(session);
-
-    // Find persona using dual lookup (new userRecordId OR legacy userId)
+    // Find persona by user record ID
     const persona = await prisma.persona.findFirst({
       where: {
         id: personaId,
-        profile: {
-          OR: [
-            { userRecordId: user.id },
-            { userId: session.user.id },
-          ],
-        },
+        profile: { userRecordId: user.id },
       },
       include: { responses: true },
     });
@@ -68,8 +60,9 @@ export async function GET(request: NextRequest, context: RouteContext) {
 // POST - Submit a response
 export async function POST(request: NextRequest, context: RouteContext) {
   try {
-    const session = await auth();
-    if (!session?.user?.id) {
+    // Get user from unified session (NextAuth or client portal)
+    const user = await ensureUserFromUnifiedSession();
+    if (!user) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
@@ -103,19 +96,11 @@ export async function POST(request: NextRequest, context: RouteContext) {
       );
     }
 
-    // Ensure user record exists
-    const user = await ensureUser(session);
-
-    // Verify persona belongs to user using dual lookup (new userRecordId OR legacy userId)
+    // Verify persona belongs to user by user record ID
     const persona = await prisma.persona.findFirst({
       where: {
         id: personaId,
-        profile: {
-          OR: [
-            { userRecordId: user.id },
-            { userId: session.user.id },
-          ],
-        },
+        profile: { userRecordId: user.id },
       },
       include: { responses: true },
     });
@@ -160,9 +145,9 @@ export async function POST(request: NextRequest, context: RouteContext) {
           additionalContext,
           contextSource,
           responseType: 'assumption',
-          respondentId: session.user.id,
+          respondentId: user.authId,
           respondentRole: 'founder',
-          respondentName: session.user.name || null,
+          respondentName: user.name || null,
         },
       });
     }

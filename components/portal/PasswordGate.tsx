@@ -16,6 +16,7 @@ interface PasswordGateProps {
 }
 
 export default function PasswordGate({ clientId, clientName, returnTo, portalType = 'client' }: PasswordGateProps) {
+  const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
@@ -31,7 +32,7 @@ export default function PasswordGate({ clientId, clientName, returnTo, portalTyp
       const response = await fetch(`/api/${authPath}/${clientId}`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ password }),
+        body: JSON.stringify({ email, password }),
       });
 
       if (response.ok) {
@@ -78,10 +79,10 @@ export default function PasswordGate({ clientId, clientName, returnTo, portalTyp
         <form onSubmit={handleSubmit} className="space-y-4">
           <div>
             <input
-              type="password"
-              value={password}
-              onChange={(e) => setPassword(e.target.value)}
-              placeholder="Enter password"
+              type="email"
+              value={email}
+              onChange={(e) => setEmail(e.target.value)}
+              placeholder="Enter email"
               className="w-full px-4 py-3 rounded-xl text-white font-body focus:outline-none transition-colors"
               style={{
                 background: 'rgba(255, 255, 255, 0.03)',
@@ -98,6 +99,27 @@ export default function PasswordGate({ clientId, clientName, returnTo, portalTyp
             />
           </div>
 
+          <div>
+            <input
+              type="password"
+              value={password}
+              onChange={(e) => setPassword(e.target.value)}
+              placeholder="Enter password"
+              className="w-full px-4 py-3 rounded-xl text-white font-body focus:outline-none transition-colors"
+              style={{
+                background: 'rgba(255, 255, 255, 0.03)',
+                border: '1px solid rgba(255, 255, 255, 0.08)',
+              }}
+              onFocus={(e) => {
+                e.target.style.borderColor = GOLD;
+              }}
+              onBlur={(e) => {
+                e.target.style.borderColor = 'rgba(255, 255, 255, 0.08)';
+              }}
+              disabled={loading}
+            />
+          </div>
+
           {error && (
             <motion.p
               initial={{ opacity: 0 }}
@@ -110,7 +132,7 @@ export default function PasswordGate({ clientId, clientName, returnTo, portalTyp
 
           <button
             type="submit"
-            disabled={loading || !password}
+            disabled={loading || !email || !password}
             className="w-full px-4 py-3 font-medium font-body rounded-xl transition-all disabled:opacity-50 disabled:cursor-not-allowed"
             style={{
               background: GOLD,

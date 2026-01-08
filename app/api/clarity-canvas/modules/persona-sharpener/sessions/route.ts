@@ -1,13 +1,13 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { auth } from '@/lib/auth';
 import prisma from '@/lib/prisma';
-import { ensureUser } from '@/lib/user-sync';
+import { ensureUserFromUnifiedSession } from '@/lib/user-sync';
 
 // POST - Create new session
 export async function POST(request: NextRequest) {
   try {
-    const session = await auth();
-    if (!session?.user?.id) {
+    // Get user from unified session (NextAuth or client portal)
+    const user = await ensureUserFromUnifiedSession();
+    if (!user) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
@@ -20,19 +20,11 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // Ensure user record exists
-    const user = await ensureUser(session);
-
-    // Verify persona belongs to user using dual lookup
+    // Verify persona belongs to user by user record ID
     const persona = await prisma.persona.findFirst({
       where: {
         id: personaId,
-        profile: {
-          OR: [
-            { userRecordId: user.id },
-            { userId: session.user.id },
-          ],
-        },
+        profile: { userRecordId: user.id },
       },
     });
 

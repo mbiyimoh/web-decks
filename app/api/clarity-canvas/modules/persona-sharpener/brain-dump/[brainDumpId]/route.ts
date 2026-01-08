@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { auth } from '@/lib/auth';
 import prisma from '@/lib/prisma';
+import { ensureUserFromUnifiedSession } from '@/lib/user-sync';
 
 interface RouteContext {
   params: Promise<{ brainDumpId: string }>;
@@ -17,8 +17,8 @@ interface RouteContext {
  */
 export async function DELETE(request: NextRequest, context: RouteContext) {
   try {
-    const session = await auth();
-    if (!session?.user?.id) {
+    const user = await ensureUserFromUnifiedSession();
+    if (!user) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
@@ -29,7 +29,7 @@ export async function DELETE(request: NextRequest, context: RouteContext) {
       where: {
         id: brainDumpId,
         profile: {
-          userId: session.user.id,
+          userRecordId: user.id,
         },
       },
       include: {

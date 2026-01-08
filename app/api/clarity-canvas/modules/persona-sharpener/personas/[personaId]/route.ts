@@ -1,7 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { auth } from '@/lib/auth';
 import prisma from '@/lib/prisma';
-import { ensureUser } from '@/lib/user-sync';
+import { ensureUserFromUnifiedSession } from '@/lib/user-sync';
 import {
   resolveArchetype,
   generateSummary,
@@ -29,15 +28,13 @@ export async function GET(
   { params }: { params: Promise<{ personaId: string }> }
 ) {
   try {
-    const session = await auth();
-    if (!session?.user?.id) {
+    // Get user from unified session (NextAuth or client portal)
+    const user = await ensureUserFromUnifiedSession();
+    if (!user) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
     const { personaId } = await params;
-
-    // Ensure user record exists
-    const user = await ensureUser(session);
 
     // Fetch persona with responses
     const persona = await prisma.persona.findUnique({
@@ -52,13 +49,10 @@ export async function GET(
       return NextResponse.json({ error: 'Persona not found' }, { status: 404 });
     }
 
-    // Verify user owns this persona using dual lookup (new userRecordId OR legacy userId)
-    const hasAccess =
-      persona.profile.userRecordId === user.id ||
-      persona.profile.userId === session.user.id;
-    if (!hasAccess) {
+    // Verify user owns this persona by user record ID
+    if (persona.profile.userRecordId !== user.id) {
       console.warn(
-        `Unauthorized persona access attempt: user=${session.user.id}, persona=${personaId}`
+        `Unauthorized persona access attempt: user=${user.id}, persona=${personaId}`
       );
       return NextResponse.json(
         { error: 'You do not have permission to access this persona' },

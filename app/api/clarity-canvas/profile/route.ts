@@ -1,8 +1,7 @@
 import { NextResponse } from 'next/server';
-import { auth } from '@/lib/auth';
 import { prisma } from '@/lib/prisma';
 import { seedProfileForUser, initializeCanvasStructure } from '@/lib/clarity-canvas/seed-profile';
-import { ensureUser } from '@/lib/user-sync';
+import { ensureUserFromUnifiedSession } from '@/lib/user-sync';
 import { calculateAllScores } from '@/lib/clarity-canvas/scoring';
 import type { ProfileApiResponse, CreateProfileResponse, ProfileWithSections } from '@/lib/clarity-canvas/types';
 
@@ -30,23 +29,16 @@ const profileInclude = {
  * Retrieve the current user's Clarity Canvas profile with all nested data and scores
  */
 export async function GET(): Promise<NextResponse<ProfileApiResponse | { error: string }>> {
-  const session = await auth();
+  // Get user from unified session (NextAuth or client portal)
+  const user = await ensureUserFromUnifiedSession();
 
-  if (!session?.user?.id) {
+  if (!user) {
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
   }
 
-  // Ensure user record exists
-  const user = await ensureUser(session);
-
-  // Find profile using dual lookup
+  // Find profile by user record ID
   const profile = await prisma.clarityProfile.findFirst({
-    where: {
-      OR: [
-        { userRecordId: user.id },
-        { userId: session.user.id },
-      ],
-    },
+    where: { userRecordId: user.id },
     include: profileInclude,
   });
 
@@ -70,23 +62,16 @@ export async function GET(): Promise<NextResponse<ProfileApiResponse | { error: 
  * This is for explicit Clarity Canvas access - creates full canvas structure.
  */
 export async function POST(): Promise<NextResponse<CreateProfileResponse | { error: string }>> {
-  const session = await auth();
+  // Get user from unified session (NextAuth or client portal)
+  const user = await ensureUserFromUnifiedSession();
 
-  if (!session?.user?.id) {
+  if (!user) {
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
   }
 
-  // Ensure user record exists
-  const user = await ensureUser(session);
-
-  // Check if profile exists using dual lookup
+  // Check if profile exists by user record ID
   const existing = await prisma.clarityProfile.findFirst({
-    where: {
-      OR: [
-        { userRecordId: user.id },
-        { userId: session.user.id },
-      ],
-    },
+    where: { userRecordId: user.id },
     include: profileInclude,
   });
 
@@ -114,8 +99,8 @@ export async function POST(): Promise<NextResponse<CreateProfileResponse | { err
 
   // Create new profile with full structure (this is explicit canvas access)
   const profile = await seedProfileForUser(
-    session.user.id,
-    session.user.name || session.user.email || 'User'
+    user.authId,
+    user.name || user.email || 'User'
   );
 
   // Link to user record

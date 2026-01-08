@@ -16,6 +16,7 @@ export interface ClientEntry {
   id: string;
   name: string;
   passwordEnvVar: string;
+  emailEnvVar: string;  // e.g., 'PLYA_EMAIL' - required for User creation
   content: ContentItem[];
 }
 
@@ -45,6 +46,7 @@ export const clients: Record<string, ClientEntry> = {
     id: 'tradeblock',
     name: 'Tradeblock',
     passwordEnvVar: 'TRADEBLOCK_PASSWORD',
+    emailEnvVar: 'TRADEBLOCK_EMAIL',
     content: [
       {
         slug: 'ai-inflection',
@@ -61,6 +63,7 @@ export const clients: Record<string, ClientEntry> = {
     id: 'plya',
     name: 'PLYA',
     passwordEnvVar: 'PLYA_PASSWORD',
+    emailEnvVar: 'PLYA_EMAIL',
     content: [
       {
         slug: 'project-proposal',
@@ -84,6 +87,7 @@ export const clients: Record<string, ClientEntry> = {
     id: 'wsbc',
     name: 'WSBC',
     passwordEnvVar: 'WSBC_PASSWORD',
+    emailEnvVar: 'WSBC_EMAIL',
     content: [
       {
         slug: 'final-proposal',
@@ -116,6 +120,12 @@ export function getClientPassword(clientId: string): string | undefined {
   const client = getClient(clientId);
   if (!client) return undefined;
   return process.env[client.passwordEnvVar];
+}
+
+export function getClientEmail(clientId: string): string | undefined {
+  const client = getClient(clientId);
+  if (!client) return undefined;
+  return process.env[client.emailEnvVar];
 }
 
 export function getAllClientIds(): string[] {

@@ -3,7 +3,8 @@ import { getIronSession } from 'iron-session';
 import { NextResponse } from 'next/server';
 import { timingSafeEqual } from 'crypto';
 import { getSessionOptions, SessionData } from '@/lib/session';
-import { getClient, getClientPassword } from '@/lib/clients';
+import { getClient, getClientPassword, getClientEmail } from '@/lib/clients';
+import { ensureClientUser } from '@/lib/client-user-sync';
 
 // Constant-time string comparison to prevent timing attacks
 function secureCompare(a: string, b: string): boolean {
@@ -34,8 +35,10 @@ export async function POST(request: Request, { params }: Props) {
   }
 
   const expectedPassword = getClientPassword(clientId);
-  if (!expectedPassword) {
-    console.error(`Missing password env var: ${client.passwordEnvVar}`);
+  const expectedEmail = getClientEmail(clientId);
+
+  if (!expectedPassword || !expectedEmail) {
+    console.error(`Missing auth config for client: ${clientId}`);
     return NextResponse.json(
       { error: 'Server configuration error' },
       { status: 500 }
@@ -43,20 +46,30 @@ export async function POST(request: Request, { params }: Props) {
   }
 
   try {
-    const { password } = await request.json();
+    const { email, password } = await request.json();
 
-    if (secureCompare(password, expectedPassword)) {
+    // Validate both email and password
+    const emailMatch = email?.toLowerCase() === expectedEmail.toLowerCase();
+    const passwordMatch = secureCompare(password || '', expectedPassword);
+
+    if (emailMatch && passwordMatch) {
+      // Create or update User record in database
+      const user = await ensureClientUser(email, clientId);
+
       const session = await getIronSession<SessionData>(
         await cookies(),
         getSessionOptions()
       );
       session.isLoggedIn = true;
-      session.clientId = clientId.toLowerCase(); // Normalize to lowercase
+      session.clientId = clientId.toLowerCase();
+      session.userId = user.id;
+      session.userEmail = user.email;
       await session.save();
+
       return NextResponse.json({ success: true });
     }
 
-    return NextResponse.json({ error: 'Invalid password' }, { status: 401 });
+    return NextResponse.json({ error: 'Invalid credentials' }, { status: 401 });
   } catch {
     return NextResponse.json({ error: 'Invalid request' }, { status: 400 });
   }

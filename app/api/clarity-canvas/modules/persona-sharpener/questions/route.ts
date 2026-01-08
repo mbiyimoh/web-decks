@@ -1,11 +1,11 @@
 import { NextResponse } from 'next/server';
-import { auth } from '@/lib/auth';
+import { ensureUserFromUnifiedSession } from '@/lib/user-sync';
 import { questionSequence } from '@/lib/clarity-canvas/modules/persona-sharpener/questions';
 
 export async function GET() {
   try {
-    const session = await auth();
-    if (!session?.user?.id) {
+    const user = await ensureUserFromUnifiedSession();
+    if (!user) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 

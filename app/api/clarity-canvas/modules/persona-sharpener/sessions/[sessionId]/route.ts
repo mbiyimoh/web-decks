@@ -1,7 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { auth } from '@/lib/auth';
 import prisma from '@/lib/prisma';
-import { ensureUser } from '@/lib/user-sync';
+import { ensureUserFromUnifiedSession } from '@/lib/user-sync';
 import {
   resolveArchetype,
   generateSummary,
@@ -24,8 +23,9 @@ interface RouteContext {
  */
 export async function GET(request: NextRequest, context: RouteContext) {
   try {
-    const authSession = await auth();
-    if (!authSession?.user?.id) {
+    // Get user from unified session (NextAuth or client portal)
+    const user = await ensureUserFromUnifiedSession();
+    if (!user) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
@@ -51,14 +51,8 @@ export async function GET(request: NextRequest, context: RouteContext) {
       return NextResponse.json({ error: 'Session not found' }, { status: 404 });
     }
 
-    // Ensure user record exists
-    const user = await ensureUser(authSession);
-
-    // Verify user owns this session using dual lookup (new userRecordId OR legacy userId)
-    const hasAccess =
-      sharpenerSession.persona.profile.userRecordId === user.id ||
-      sharpenerSession.persona.profile.userId === authSession.user.id;
-    if (!hasAccess) {
+    // Verify user owns this session by user record ID
+    if (sharpenerSession.persona.profile.userRecordId !== user.id) {
       return NextResponse.json(
         { error: 'You do not have permission to access this session' },
         { status: 403 }

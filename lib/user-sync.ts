@@ -1,5 +1,8 @@
 import { prisma } from '@/lib/prisma';
 import type { Session } from 'next-auth';
+import type { User } from '@prisma/client';
+import { auth } from '@/lib/auth';
+import { getUnifiedSession } from '@/lib/client-session-bridge';
 
 export type UserType = 'TEAM_MEMBER' | 'CLIENT' | 'POTENTIAL_CLIENT';
 
@@ -104,4 +107,31 @@ export async function getUserWithProfile(authId: string) {
       clarityProfile: true,
     },
   });
+}
+
+/**
+ * Get or create User from unified session (NextAuth or client portal).
+ * This is the primary entry point for routes that need to support both auth systems.
+ *
+ * - For NextAuth users: Creates/updates User record via ensureUser()
+ * - For client portal users: Returns existing User record (created at login)
+ *
+ * Returns null if not authenticated via either method.
+ */
+export async function ensureUserFromUnifiedSession(): Promise<User | null> {
+  const unified = await getUnifiedSession();
+  if (!unified) return null;
+
+  if (unified.authSource === 'client-portal') {
+    // Client portal users already have User record created at login
+    return prisma.user.findUnique({ where: { id: unified.userId } });
+  }
+
+  // NextAuth users - get full session and ensure User record
+  const nextAuthSession = await auth();
+  if (nextAuthSession) {
+    return ensureUser(nextAuthSession);
+  }
+
+  return null;
 }

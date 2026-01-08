@@ -1,7 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { auth } from '@/lib/auth';
 import { prisma } from '@/lib/prisma';
-import { ensureUser } from '@/lib/user-sync';
+import { ensureUserFromUnifiedSession } from '@/lib/user-sync';
 import {
   INTERVIEW_QUESTIONS,
   mapQuestionResponseToFields,
@@ -37,9 +36,8 @@ export async function GET(): Promise<NextResponse<{ questions: typeof INTERVIEW_
 export async function POST(
   request: NextRequest
 ): Promise<NextResponse<QuestionsApiResponse | { error: string }>> {
-  const session = await auth();
-
-  if (!session?.user?.id) {
+  const user = await ensureUserFromUnifiedSession();
+  if (!user) {
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
   }
 
@@ -57,17 +55,9 @@ export async function POST(
       return NextResponse.json({ error: 'Invalid questionId' }, { status: 400 });
     }
 
-    // Ensure user record exists
-    const user = await ensureUser(session);
-
-    // Get user's profile using dual lookup (new userRecordId OR legacy userId)
+    // Get user's profile
     const profile = await prisma.clarityProfile.findFirst({
-      where: {
-        OR: [
-          { userRecordId: user.id },
-          { userId: session.user.id },
-        ],
-      },
+      where: { userRecordId: user.id },
       include: {
         sections: {
           include: {

@@ -1,8 +1,7 @@
 import { NextResponse } from 'next/server';
-import { auth } from '@/lib/auth';
 import prisma from '@/lib/prisma';
 import { createMinimalProfile } from '@/lib/clarity-canvas/seed-profile';
-import { ensureUser } from '@/lib/user-sync';
+import { ensureUserFromUnifiedSession } from '@/lib/user-sync';
 import type { BrainDumpProject } from '@/lib/clarity-canvas/modules/persona-sharpener/types';
 
 // Helper to include full persona and brain dump data
@@ -32,28 +31,21 @@ const profileInclude = {
 // GET - Fetch persona for current user's profile, including all brain dump projects
 export async function GET() {
   try {
-    const session = await auth();
-    if (!session?.user?.id) {
+    // Get user from unified session (NextAuth or client portal)
+    const user = await ensureUserFromUnifiedSession();
+    if (!user) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
-    // Ensure user record exists (creates if needed, links orphaned profiles)
-    const user = await ensureUser(session);
-
-    // Find profile using dual lookup (new userRecordId OR legacy userId)
+    // Find profile by user record ID
     let profile = await prisma.clarityProfile.findFirst({
-      where: {
-        OR: [
-          { userRecordId: user.id },      // New way (linked to User table)
-          { userId: session.user.id },     // Legacy way (during transition)
-        ],
-      },
+      where: { userRecordId: user.id },
       include: profileInclude,
     });
 
     if (!profile) {
       // Create minimal profile for new users (no canvas sections seeded)
-      const newProfile = await createMinimalProfile(user, session.user.id);
+      const newProfile = await createMinimalProfile(user, user.authId);
       // Re-fetch with personas included
       profile = await prisma.clarityProfile.findUnique({
         where: { id: newProfile.id },
@@ -135,27 +127,20 @@ export async function GET() {
 // POST - Create new persona
 export async function POST() {
   try {
-    const session = await auth();
-    if (!session?.user?.id) {
+    // Get user from unified session (NextAuth or client portal)
+    const user = await ensureUserFromUnifiedSession();
+    if (!user) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
-    // Ensure user record exists (creates if needed, links orphaned profiles)
-    const user = await ensureUser(session);
-
-    // Find profile using dual lookup (new userRecordId OR legacy userId)
+    // Find profile by user record ID
     let profile = await prisma.clarityProfile.findFirst({
-      where: {
-        OR: [
-          { userRecordId: user.id },
-          { userId: session.user.id },
-        ],
-      },
+      where: { userRecordId: user.id },
     });
 
     if (!profile) {
       // Create minimal profile for new users
-      profile = await createMinimalProfile(user, session.user.id);
+      profile = await createMinimalProfile(user, user.authId);
     }
 
     // Check if persona already exists

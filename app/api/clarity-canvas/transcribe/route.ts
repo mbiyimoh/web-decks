@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { auth } from '@/lib/auth';
+import { ensureUserFromUnifiedSession } from '@/lib/user-sync';
 import OpenAI from 'openai';
 
 function getOpenAIClient() {
@@ -17,9 +17,8 @@ export interface TranscriptionResponse {
 export async function POST(
   request: NextRequest
 ): Promise<NextResponse<TranscriptionResponse | { error: string }>> {
-  const session = await auth();
-
-  if (!session?.user?.id) {
+  const user = await ensureUserFromUnifiedSession();
+  if (!user) {
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
   }
 

@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { auth } from '@/lib/auth';
 import prisma from '@/lib/prisma';
+import { ensureUserFromUnifiedSession } from '@/lib/user-sync';
 import { questionSequence } from '@/lib/clarity-canvas/modules/persona-sharpener/questions';
 import type {
   CustomizedQuestion,
@@ -36,8 +36,8 @@ interface RouteParams {
  */
 export async function GET(request: NextRequest, { params }: RouteParams) {
   try {
-    const session = await auth();
-    if (!session?.user?.id) {
+    const user = await ensureUserFromUnifiedSession();
+    if (!user) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
@@ -58,7 +58,7 @@ export async function GET(request: NextRequest, { params }: RouteParams) {
     }
 
     // Verify ownership
-    if (persona.profile.userId !== session.user.id) {
+    if (persona.profile.userRecordId !== user.id) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 403 });
     }
 
