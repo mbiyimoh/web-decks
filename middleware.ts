@@ -1,11 +1,12 @@
 import { NextResponse } from 'next/server';
 import type { NextRequest } from 'next/server';
 
-// Middleware adds security headers - auth is handled in page components
-// Note: request param required by Next.js middleware signature
+// Middleware adds security headers and passes pathname for returnTo handling
 export function middleware(request: NextRequest) {
-  void request; // Required by Next.js middleware API
   const response = NextResponse.next();
+
+  // Pass the current pathname to layouts for proper returnTo handling
+  response.headers.set('x-pathname', request.nextUrl.pathname);
 
   // Security headers
   response.headers.set('X-Frame-Options', 'DENY');

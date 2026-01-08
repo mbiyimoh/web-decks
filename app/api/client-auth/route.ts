@@ -12,7 +12,11 @@ import { secureCompare } from '@/lib/auth-utils';
  */
 export async function POST(request: Request) {
   try {
-    const { email, password } = await request.json();
+    console.log('[client-auth] Starting authentication...');
+    const body = await request.json();
+    console.log('[client-auth] Request body parsed:', { hasEmail: !!body?.email, hasPassword: !!body?.password });
+
+    const { email, password } = body;
 
     // Validate non-empty inputs
     if (
@@ -21,6 +25,7 @@ export async function POST(request: Request) {
       email.trim().length === 0 ||
       password.trim().length === 0
     ) {
+      console.log('[client-auth] Validation failed: empty email or password');
       return NextResponse.json(
         { error: 'Email and password are required' },
         { status: 400 }
@@ -28,14 +33,18 @@ export async function POST(request: Request) {
     }
 
     const normalizedEmail = email.toLowerCase().trim();
+    console.log('[client-auth] Checking credentials for:', normalizedEmail);
 
     // Check credentials against all clients
     const clientIds = getAllClientIds();
+    console.log('[client-auth] Checking against clients:', clientIds);
     let matchedClientId: string | null = null;
 
     for (const clientId of clientIds) {
       const expectedEmail = getClientEmail(clientId);
       const expectedPassword = getClientPassword(clientId);
+
+      console.log(`[client-auth] Client ${clientId}: hasEmail=${!!expectedEmail}, hasPassword=${!!expectedPassword}`);
 
       // Skip clients with missing/empty config
       if (
@@ -44,11 +53,13 @@ export async function POST(request: Request) {
         expectedEmail.trim().length === 0 ||
         expectedPassword.trim().length === 0
       ) {
+        console.log(`[client-auth] Skipping ${clientId}: missing config`);
         continue;
       }
 
       const emailMatch = normalizedEmail === expectedEmail.toLowerCase().trim();
       const passwordMatch = secureCompare(password, expectedPassword);
+      console.log(`[client-auth] Client ${clientId}: emailMatch=${emailMatch}, passwordMatch=${passwordMatch}`);
 
       if (emailMatch && passwordMatch) {
         matchedClientId = clientId;
@@ -57,8 +68,10 @@ export async function POST(request: Request) {
     }
 
     if (matchedClientId) {
+      console.log('[client-auth] Matched client:', matchedClientId);
       // Create or update User record in database
       const user = await ensureClientUser(email, matchedClientId);
+      console.log('[client-auth] User ensured:', user.id);
 
       const session = await getIronSession<SessionData>(
         await cookies(),
@@ -69,13 +82,16 @@ export async function POST(request: Request) {
       session.userId = user.id;
       session.userEmail = user.email;
       await session.save();
+      console.log('[client-auth] Session saved, success');
 
       return NextResponse.json({ success: true });
     }
 
+    console.log('[client-auth] No match found, returning invalid credentials');
     // Generic error - don't reveal whether email exists
     return NextResponse.json({ error: 'Invalid credentials' }, { status: 401 });
-  } catch {
+  } catch (error) {
+    console.error('[client-auth] ERROR:', error);
     return NextResponse.json({ error: 'Invalid request' }, { status: 400 });
   }
 }
