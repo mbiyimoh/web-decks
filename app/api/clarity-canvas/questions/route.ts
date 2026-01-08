@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { auth } from '@/lib/auth';
 import { prisma } from '@/lib/prisma';
+import { ensureUser } from '@/lib/user-sync';
 import {
   INTERVIEW_QUESTIONS,
   mapQuestionResponseToFields,
@@ -56,9 +57,17 @@ export async function POST(
       return NextResponse.json({ error: 'Invalid questionId' }, { status: 400 });
     }
 
-    // Get user's profile
-    const profile = await prisma.clarityProfile.findUnique({
-      where: { userId: session.user.id },
+    // Ensure user record exists
+    const user = await ensureUser(session);
+
+    // Get user's profile using dual lookup (new userRecordId OR legacy userId)
+    const profile = await prisma.clarityProfile.findFirst({
+      where: {
+        OR: [
+          { userRecordId: user.id },
+          { userId: session.user.id },
+        ],
+      },
       include: {
         sections: {
           include: {
@@ -125,9 +134,9 @@ export async function POST(
 
     await Promise.all(updates);
 
-    // Fetch updated profile with all relations
+    // Fetch updated profile with all relations using profile.id for precision
     const updatedProfile = await prisma.clarityProfile.findUnique({
-      where: { userId: session.user.id },
+      where: { id: profile.id },
       include: {
         sections: {
           orderBy: { order: 'asc' },

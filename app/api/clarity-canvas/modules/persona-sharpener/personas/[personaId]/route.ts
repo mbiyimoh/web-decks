@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { auth } from '@/lib/auth';
 import prisma from '@/lib/prisma';
+import { ensureUser } from '@/lib/user-sync';
 import {
   resolveArchetype,
   generateSummary,
@@ -35,6 +36,9 @@ export async function GET(
 
     const { personaId } = await params;
 
+    // Ensure user record exists
+    const user = await ensureUser(session);
+
     // Fetch persona with responses
     const persona = await prisma.persona.findUnique({
       where: { id: personaId },
@@ -48,8 +52,11 @@ export async function GET(
       return NextResponse.json({ error: 'Persona not found' }, { status: 404 });
     }
 
-    // Verify user owns this persona
-    if (persona.profile.userId !== session.user.id) {
+    // Verify user owns this persona using dual lookup (new userRecordId OR legacy userId)
+    const hasAccess =
+      persona.profile.userRecordId === user.id ||
+      persona.profile.userId === session.user.id;
+    if (!hasAccess) {
       console.warn(
         `Unauthorized persona access attempt: user=${session.user.id}, persona=${personaId}`
       );

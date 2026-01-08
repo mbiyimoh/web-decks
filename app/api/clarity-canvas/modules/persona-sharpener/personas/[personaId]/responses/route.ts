@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { auth } from '@/lib/auth';
 import prisma from '@/lib/prisma';
+import { ensureUser } from '@/lib/user-sync';
 import {
   getQuestionById,
   getTotalQuestions,
@@ -33,10 +34,19 @@ export async function GET(request: NextRequest, context: RouteContext) {
 
     const { personaId } = await context.params;
 
+    // Ensure user record exists
+    const user = await ensureUser(session);
+
+    // Find persona using dual lookup (new userRecordId OR legacy userId)
     const persona = await prisma.persona.findFirst({
       where: {
         id: personaId,
-        profile: { userId: session.user.id },
+        profile: {
+          OR: [
+            { userRecordId: user.id },
+            { userId: session.user.id },
+          ],
+        },
       },
       include: { responses: true },
     });
@@ -93,11 +103,19 @@ export async function POST(request: NextRequest, context: RouteContext) {
       );
     }
 
-    // Verify persona belongs to user
+    // Ensure user record exists
+    const user = await ensureUser(session);
+
+    // Verify persona belongs to user using dual lookup (new userRecordId OR legacy userId)
     const persona = await prisma.persona.findFirst({
       where: {
         id: personaId,
-        profile: { userId: session.user.id },
+        profile: {
+          OR: [
+            { userRecordId: user.id },
+            { userId: session.user.id },
+          ],
+        },
       },
       include: { responses: true },
     });

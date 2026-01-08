@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { auth } from '@/lib/auth';
 import prisma from '@/lib/prisma';
+import { ensureUser } from '@/lib/user-sync';
 import {
   resolveArchetype,
   generateSummary,
@@ -50,8 +51,14 @@ export async function GET(request: NextRequest, context: RouteContext) {
       return NextResponse.json({ error: 'Session not found' }, { status: 404 });
     }
 
-    // Verify user owns this session
-    if (sharpenerSession.persona.profile.userId !== authSession.user.id) {
+    // Ensure user record exists
+    const user = await ensureUser(authSession);
+
+    // Verify user owns this session using dual lookup (new userRecordId OR legacy userId)
+    const hasAccess =
+      sharpenerSession.persona.profile.userRecordId === user.id ||
+      sharpenerSession.persona.profile.userId === authSession.user.id;
+    if (!hasAccess) {
       return NextResponse.json(
         { error: 'You do not have permission to access this session' },
         { status: 403 }
