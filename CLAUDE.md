@@ -376,6 +376,53 @@ Required for authentication to work locally:
 
 ---
 
+## Database
+
+This project uses **Supabase PostgreSQL** for all database needs (Clarity Canvas, Persona Sharpener, etc.).
+
+**Project:** `33-strategies-website-and-portals`
+**Dashboard:** https://supabase.com/dashboard/project/skimccdltdnzsvrfdaek
+
+### Connection
+
+Database access is via Prisma ORM. The connection string is set via `DATABASE_URL` environment variable.
+
+```bash
+# Format (pooler connection for serverless)
+DATABASE_URL="postgresql://postgres.[project-ref]:[password]@aws-0-[region].pooler.supabase.com:6543/postgres"
+```
+
+### Prisma Commands
+
+```bash
+# Generate Prisma client after schema changes
+npx prisma generate
+
+# Create and apply migrations
+npx prisma migrate dev --name <migration-name>
+
+# Push schema changes without migration (dev only)
+npx prisma db push
+
+# Open Prisma Studio (database GUI)
+npx prisma studio
+
+# Reset database (DESTRUCTIVE - dev only)
+npx prisma migrate reset
+```
+
+### Schema Location
+
+Database schema is defined in `prisma/schema.prisma`. Key models:
+- `ClarityProfile` - User's clarity canvas profile
+- `ProfileSection`, `ProfileSubsection`, `ProfileField` - Nested profile structure
+- `Persona`, `PersonaBrainDump`, `PersonaSession` - Persona Sharpener data
+- `User`, `Account`, `Session` - NextAuth authentication
+
+**Important:** Always run `npx prisma generate` after pulling schema changes.
+
+---
+
 ## Deployment
 
 Each deck can be deployed independently or as part of a multi-deck site.

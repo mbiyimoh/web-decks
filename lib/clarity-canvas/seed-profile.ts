@@ -161,3 +161,86 @@ export async function getProfileStats(userId: string): Promise<{
     sourceCount,
   };
 }
+
+/**
+ * Create a minimal ClarityProfile for a user (no sections seeded).
+ * Used by Persona Sharpener and other modules that don't need full canvas.
+ *
+ * @param user - User record from ensureUser()
+ * @param authId - Legacy authId for backward compatibility
+ */
+export async function createMinimalProfile(user: {
+  id: string;
+  name: string | null;
+}, authId: string) {
+  return prisma.clarityProfile.create({
+    data: {
+      userId: authId,          // Legacy field (for backward compat during transition)
+      userRecordId: user.id,   // New field (links to User table)
+      name: user.name || 'User',
+      isCanvasInitialized: false,
+    },
+  });
+}
+
+/**
+ * Initialize the full canvas structure for a profile.
+ * Idempotent - safe to call multiple times.
+ *
+ * Call this when user explicitly enters Clarity Canvas for the first time.
+ */
+export async function initializeCanvasStructure(profileId: string) {
+  const profile = await prisma.clarityProfile.findUnique({
+    where: { id: profileId },
+  });
+
+  if (!profile || profile.isCanvasInitialized) {
+    return profile;
+  }
+
+  // Create all sections/subsections/fields in a transaction
+  await prisma.$transaction(async (tx) => {
+    for (const [sectionKey, section] of Object.entries(PROFILE_STRUCTURE)) {
+      const createdSection = await tx.profileSection.create({
+        data: {
+          profileId,
+          key: sectionKey,
+          name: section.name,
+          icon: section.icon,
+          order: section.order,
+        },
+      });
+
+      for (const [subsectionKey, subsection] of Object.entries(section.subsections)) {
+        const createdSubsection = await tx.profileSubsection.create({
+          data: {
+            sectionId: createdSection.id,
+            key: subsectionKey,
+            name: subsection.name,
+            order: subsection.order,
+          },
+        });
+
+        for (const fieldKey of subsection.fields) {
+          await tx.profileField.create({
+            data: {
+              subsectionId: createdSubsection.id,
+              key: fieldKey,
+              name: FIELD_DISPLAY_NAMES[fieldKey] || formatFieldKey(fieldKey),
+            },
+          });
+        }
+      }
+    }
+
+    await tx.clarityProfile.update({
+      where: { id: profileId },
+      data: { isCanvasInitialized: true },
+    });
+  });
+
+  return prisma.clarityProfile.findUnique({
+    where: { id: profileId },
+    include: { sections: { include: { subsections: { include: { fields: true } } } } },
+  });
+}

@@ -1,8 +1,33 @@
 import { NextResponse } from 'next/server';
 import { auth } from '@/lib/auth';
 import prisma from '@/lib/prisma';
-import { seedProfileForUser } from '@/lib/clarity-canvas/seed-profile';
+import { createMinimalProfile } from '@/lib/clarity-canvas/seed-profile';
+import { ensureUser } from '@/lib/user-sync';
 import type { BrainDumpProject } from '@/lib/clarity-canvas/modules/persona-sharpener/types';
+
+// Helper to include full persona and brain dump data
+const profileInclude = {
+  personas: {
+    include: {
+      sessions: {
+        orderBy: { startedAt: 'desc' as const },
+      },
+      responses: true,
+    },
+  },
+  brainDumps: {
+    orderBy: { createdAt: 'desc' as const },
+    include: {
+      personas: {
+        include: {
+          sessions: {
+            orderBy: { startedAt: 'desc' as const },
+          },
+        },
+      },
+    },
+  },
+};
 
 // GET - Fetch persona for current user's profile, including all brain dump projects
 export async function GET() {
@@ -12,64 +37,27 @@ export async function GET() {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
-    // Ensure profile exists (create if needed)
-    let profile = await prisma.clarityProfile.findUnique({
-      where: { userId: session.user.id },
-      include: {
-        personas: {
-          include: {
-            sessions: {
-              orderBy: { startedAt: 'desc' },
-            },
-            responses: true,
-          },
-        },
-        brainDumps: {
-          orderBy: { createdAt: 'desc' },
-          include: {
-            personas: {
-              include: {
-                sessions: {
-                  orderBy: { startedAt: 'desc' },
-                },
-              },
-            },
-          },
-        },
+    // Ensure user record exists (creates if needed, links orphaned profiles)
+    const user = await ensureUser(session);
+
+    // Find profile using dual lookup (new userRecordId OR legacy userId)
+    let profile = await prisma.clarityProfile.findFirst({
+      where: {
+        OR: [
+          { userRecordId: user.id },      // New way (linked to User table)
+          { userId: session.user.id },     // Legacy way (during transition)
+        ],
       },
+      include: profileInclude,
     });
 
     if (!profile) {
-      // Auto-create profile for new users
-      const newProfile = await seedProfileForUser(
-        session.user.id,
-        session.user.name || session.user.email || 'User'
-      );
+      // Create minimal profile for new users (no canvas sections seeded)
+      const newProfile = await createMinimalProfile(user, session.user.id);
       // Re-fetch with personas included
       profile = await prisma.clarityProfile.findUnique({
         where: { id: newProfile.id },
-        include: {
-          personas: {
-            include: {
-              sessions: {
-                orderBy: { startedAt: 'desc' },
-              },
-              responses: true,
-            },
-          },
-          brainDumps: {
-            orderBy: { createdAt: 'desc' },
-            include: {
-              personas: {
-                include: {
-                  sessions: {
-                    orderBy: { startedAt: 'desc' },
-                  },
-                },
-              },
-            },
-          },
-        },
+        include: profileInclude,
       });
     }
 
@@ -152,17 +140,22 @@ export async function POST() {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
-    // Ensure profile exists (create if needed)
-    let profile = await prisma.clarityProfile.findUnique({
-      where: { userId: session.user.id },
+    // Ensure user record exists (creates if needed, links orphaned profiles)
+    const user = await ensureUser(session);
+
+    // Find profile using dual lookup (new userRecordId OR legacy userId)
+    let profile = await prisma.clarityProfile.findFirst({
+      where: {
+        OR: [
+          { userRecordId: user.id },
+          { userId: session.user.id },
+        ],
+      },
     });
 
     if (!profile) {
-      // Auto-create profile for new users
-      profile = await seedProfileForUser(
-        session.user.id,
-        session.user.name || session.user.email || 'User'
-      );
+      // Create minimal profile for new users
+      profile = await createMinimalProfile(user, session.user.id);
     }
 
     // Check if persona already exists

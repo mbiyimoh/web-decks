@@ -22,7 +22,7 @@ Clarity Canvas is a multi-modal context extraction system that builds rich user 
 
 ### Task 1.1: Install Dependencies and Configure Prisma
 
-**Description:** Set up Prisma ORM with Neon PostgreSQL and install all required packages
+**Description:** Set up Prisma ORM with Supabase PostgreSQL and install all required packages
 **Size:** Medium
 **Priority:** Critical (blocks everything)
 **Dependencies:** None
@@ -202,7 +202,7 @@ npx prisma generate
 - [ ] Cascade deletes configured for all child relations
 - [ ] Indexes on foreign keys for query performance
 - [ ] Unique constraints prevent duplicate sections/fields per parent
-- [ ] Migration runs successfully against Neon database
+- [ ] Migration runs successfully against Supabase database
 - [ ] `npx prisma studio` shows correct schema structure
 
 ---

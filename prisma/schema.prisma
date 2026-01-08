@@ -14,13 +14,59 @@ datasource db {
 }
 
 // ============================================================================
+// USER MANAGEMENT
+// ============================================================================
+
+model User {
+  id String @id @default(cuid())
+
+  // Auth linkage - the ID from NextAuth JWT (email for credentials, OAuth ID for Google)
+  authId String @unique
+
+  // Profile info - sourced from NextAuth session (authoritative)
+  email String  @unique
+  name  String?
+  image String?
+
+  // Classification
+  userType UserType @default(TEAM_MEMBER)
+
+  // Client portal linkage (nullable - only set for client users, future use)
+  clientPortalId String? // e.g., "tradeblock", "plya", "wsbc"
+
+  // Timestamps
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  // Relations
+  clarityProfile ClarityProfile?
+}
+
+enum UserType {
+  TEAM_MEMBER // @33strategies.ai email
+  CLIENT // Linked to active client portal
+  POTENTIAL_CLIENT // External user granted access via allowlist
+}
+
+// ============================================================================
 // CLARITY CANVAS MODELS
 // ============================================================================
 
 model ClarityProfile {
-  id        String   @id @default(cuid())
-  userId    String   @unique // NextAuth user.id - enforces 1:1 ownership
-  name      String
+  id String @id @default(cuid())
+
+  // TRANSITION: Keep existing userId (authId) during migration
+  userId String @unique // Legacy: stores authId directly
+
+  // NEW: Add userRecordId to link to User table
+  userRecordId String? @unique
+  user         User?   @relation(fields: [userRecordId], references: [id], onDelete: Cascade)
+
+  name String
+
+  // NEW: Track whether full canvas structure has been seeded
+  isCanvasInitialized Boolean @default(true) // true for existing profiles
+
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
@@ -29,6 +75,7 @@ model ClarityProfile {
   brainDumps PersonaBrainDump[]
 
   @@index([userId])
+  @@index([userRecordId])
 }
 
 model ProfileSection {
@@ -139,14 +186,14 @@ model PersonaBrainDump {
 
   // Input
   inputType       String // "voice" | "text"
-  rawTranscript   String   @db.Text
+  rawTranscript   String  @db.Text
   audioBlobUrl    String? // S3/R2 URL if voice input
   durationSeconds Int? // Voice recording duration
 
   // Extraction Output (immutable snapshot)
-  extractedData   Json // Full extraction response from GPT
-  personaCount    Int // 1-3
-  overallContext  Json // { productDescription, marketContext, keyThemes }
+  extractedData  Json // Full extraction response from GPT
+  personaCount   Int // 1-3
+  overallContext Json // { productDescription, marketContext, keyThemes }
 
   // Generated Questions (batch pre-generated per persona)
   customizedQuestions Json // { [personaId]: CustomizedQuestion[] }

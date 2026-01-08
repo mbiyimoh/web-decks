@@ -19,7 +19,7 @@ Implement the core Clarity Canvas experience as part of the 33 Strategies websit
 - The cross-product integration vision (Better Contacts, document sharing tools) is **future scope** - we're building the foundational profile system that will later integrate
 - Users will access Clarity Canvas via the learning platform authentication (NextAuth with Google OAuth for @33strategies.ai domain users initially)
 - Voice input will require modern browser support (Chrome, Edge, Safari - no IE11)
-- PostgreSQL database (via Neon) will be the persistence layer
+- PostgreSQL database (via Supabase) will be the persistence layer
 - This builds on the existing design system (33 Strategies gold accent, dark editorial aesthetic)
 
 ### Out of Scope (for initial implementation)
@@ -189,7 +189,7 @@ Field Updates + Score Recalculation → Enriched Profile Display
 
 | Component | Recommendation | Rationale |
 |-----------|----------------|-----------|
-| **Database** | Neon PostgreSQL + Prisma | Serverless, Railway compatible, excellent DX |
+| **Database** | Supabase PostgreSQL + Prisma | Serverless, Railway compatible, excellent DX |
 | **AI Extraction** | GPT-4o-mini via Vercel AI SDK | Cost-effective, fast, structured output support |
 | **Voice Capture** | MediaRecorder API + react-speech-recognition | Browser-native, good UX |
 | **Transcription** | OpenAI Whisper API | Highest quality, reasonable cost |
@@ -255,7 +255,7 @@ This delivers the signature "Clarity Canvas" experience users will remember (voi
 ### RELEASE 1: Core Builder Experience
 
 #### Phase 1.1: Foundation Infrastructure (Est. 8-12 hours)
-- [ ] Set up Prisma with Neon PostgreSQL
+- [ ] Set up Prisma with Supabase PostgreSQL
 - [ ] Create database schema (ClarityProfile, ProfileSection, ProfileSubsection, ProfileField, FieldSource)
 - [ ] Seed initial profile structure (6 sections, subsections, field definitions)
 - [ ] Create basic API routes skeleton

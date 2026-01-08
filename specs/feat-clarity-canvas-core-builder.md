@@ -96,7 +96,7 @@ Clarity Canvas systematically captures user context through multiple modalities 
 
 | Service | Purpose | Environment Variable |
 |---------|---------|---------------------|
-| Neon PostgreSQL | Database | `DATABASE_URL` |
+| Supabase PostgreSQL | Database | `DATABASE_URL` |
 | OpenAI API | Whisper transcription + GPT extraction | `OPENAI_API_KEY` |
 
 ### Documentation Links
@@ -1295,7 +1295,7 @@ export function createMockOpenAI() {
 Add to `.env.example`:
 
 ```env
-# Clarity Canvas Database (Neon PostgreSQL)
+# Clarity Canvas Database (Supabase PostgreSQL)
 DATABASE_URL="postgresql://username:password@host:5432/database?sslmode=require"
 
 # OpenAI API for transcription and extraction
@@ -1305,7 +1305,7 @@ OPENAI_API_KEY="sk-..."
 ## Implementation Phases
 
 ### Phase 1.1: Foundation Infrastructure
-- Set up Prisma with Neon PostgreSQL connection
+- Set up Prisma with Supabase PostgreSQL connection
 - Create database schema (all models)
 - Run migrations
 - Create profile seed script
