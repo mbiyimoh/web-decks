@@ -1,4 +1,4 @@
-import { auth } from '@/lib/auth';
+import { getUnifiedSession } from '@/lib/client-session-bridge';
 import { redirect, notFound } from 'next/navigation';
 import { getModule } from '@/lib/courses';
 import dynamic from 'next/dynamic';
@@ -18,9 +18,9 @@ interface Props {
 
 export default async function ModulePage({ params }: Props) {
   const { module: moduleSlug } = await params;
-  const session = await auth();
+  const session = await getUnifiedSession();
 
-  if (!session?.user) {
+  if (!session) {
     redirect(`/auth/signin?returnTo=/learning/ai-workflow/${moduleSlug}`);
   }
   const module = getModule('ai-workflow', moduleSlug);

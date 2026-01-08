@@ -1,4 +1,4 @@
-import { auth } from '@/lib/auth';
+import { getUnifiedSession } from '@/lib/client-session-bridge';
 import { redirect } from 'next/navigation';
 
 export const metadata = {
@@ -11,9 +11,9 @@ export default async function ClarityCanvasLayout({
 }: {
   children: React.ReactNode;
 }) {
-  const session = await auth();
+  const session = await getUnifiedSession();
 
-  if (!session?.user) {
+  if (!session) {
     redirect('/auth/signin?returnTo=/clarity-canvas');
   }
 

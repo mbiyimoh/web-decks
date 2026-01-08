@@ -1,5 +1,4 @@
 import { redirect } from 'next/navigation';
-import { auth } from '@/lib/auth';
 import { getUnifiedSession } from '@/lib/client-session-bridge';
 import { validateReturnTo } from '@/lib/auth-utils';
 import { getClientList } from '@/lib/clients';
@@ -29,15 +28,9 @@ export default async function SignInPage({ searchParams }: SignInPageProps) {
   // Validate and sanitize returnTo to prevent open redirects
   const destination = validateReturnTo(returnTo);
 
-  // Check both NextAuth and client portal sessions
-  const unifiedSession = await getUnifiedSession();
-  if (unifiedSession) {
-    redirect(destination);
-  }
-
-  // Also check NextAuth directly for SSO users
-  const nextAuthSession = await auth();
-  if (nextAuthSession?.user) {
+  // Single unified check - handles both NextAuth and client portal sessions
+  const session = await getUnifiedSession();
+  if (session) {
     redirect(destination);
   }
 

@@ -1,4 +1,4 @@
-import { auth } from '@/lib/auth';
+import { getUnifiedSession } from '@/lib/client-session-bridge';
 import { redirect } from 'next/navigation';
 import { getCourse, getTotalEstimatedTime } from '@/lib/courses';
 import { ModuleCard } from '../components/ModuleCard';
@@ -6,9 +6,9 @@ import { LogoutButton } from '../components/LogoutButton';
 import Link from 'next/link';
 
 export default async function AIWorkflowCourse() {
-  const session = await auth();
+  const session = await getUnifiedSession();
 
-  if (!session?.user) {
+  if (!session) {
     redirect('/auth/signin?returnTo=/learning/ai-workflow');
   }
 

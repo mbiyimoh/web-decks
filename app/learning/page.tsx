@@ -1,13 +1,13 @@
-import { auth } from '@/lib/auth';
+import { getUnifiedSession } from '@/lib/client-session-bridge';
 import { redirect } from 'next/navigation';
 import { getAllCourses, getTotalEstimatedTime } from '@/lib/courses';
 import { CourseCard } from './components/CourseCard';
 import { LogoutButton } from './components/LogoutButton';
 
 export default async function LearningDashboard() {
-  const session = await auth();
+  const session = await getUnifiedSession();
 
-  if (!session?.user) {
+  if (!session) {
     redirect('/auth/signin?returnTo=/learning');
   }
 
@@ -27,7 +27,7 @@ export default async function LearningDashboard() {
             Learning Platform
           </h1>
           <p className="text-[#888888] mt-2">
-            Welcome back, {session.user.name || session.user.email}
+            Welcome back, {session.userEmail}
           </p>
         </header>
 
