@@ -1,9 +1,13 @@
-import { auth } from '@/lib/auth';
+import { getUnifiedSession } from '@/lib/client-session-bridge';
 import { ClarityCanvasClient } from './ClarityCanvasClient';
 
 export default async function ClarityCanvasPage() {
   // Auth is checked in layout.tsx, but we need user data
-  const session = await auth();
+  const session = await getUnifiedSession();
 
-  return <ClarityCanvasClient user={session?.user || {}} />;
+  const user = session
+    ? { id: session.userId, email: session.userEmail }
+    : {};
+
+  return <ClarityCanvasClient user={user} />;
 }

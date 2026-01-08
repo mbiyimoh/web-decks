@@ -1,13 +1,19 @@
 import { redirect } from 'next/navigation';
-import { auth } from '@/lib/auth';
+import { getUnifiedSession } from '@/lib/client-session-bridge';
 import { ModulesIndexClient } from './ModulesIndexClient';
 
 export default async function ModulesPage() {
-  const session = await auth();
+  const session = await getUnifiedSession();
 
-  if (!session?.user) {
+  if (!session) {
     redirect('/auth/signin?returnTo=/clarity-canvas/modules');
   }
 
-  return <ModulesIndexClient user={session.user} />;
+  // Convert unified session to user object format expected by client
+  const user = {
+    id: session.userId,
+    email: session.userEmail,
+  };
+
+  return <ModulesIndexClient user={user} />;
 }

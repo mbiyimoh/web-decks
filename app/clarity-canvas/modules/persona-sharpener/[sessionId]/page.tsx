@@ -1,5 +1,5 @@
 import { redirect } from 'next/navigation';
-import { auth } from '@/lib/auth';
+import { getUnifiedSession } from '@/lib/client-session-bridge';
 import { PersonaSharpenerSession } from './PersonaSharpenerSession';
 import { PersonaSharpenerErrorBoundary } from '../ErrorBoundary';
 
@@ -8,18 +8,24 @@ interface PageProps {
 }
 
 export default async function SessionPage({ params }: PageProps) {
-  const session = await auth();
+  const session = await getUnifiedSession();
   const { sessionId } = await params;
 
-  if (!session?.user) {
+  if (!session) {
     redirect(
       `/auth/signin?returnTo=/clarity-canvas/modules/persona-sharpener/${sessionId}`
     );
   }
 
+  // Convert unified session to user object format expected by client
+  const user = {
+    id: session.userId,
+    email: session.userEmail,
+  };
+
   return (
     <PersonaSharpenerErrorBoundary>
-      <PersonaSharpenerSession user={session.user} sessionId={sessionId} />
+      <PersonaSharpenerSession user={user} sessionId={sessionId} />
     </PersonaSharpenerErrorBoundary>
   );
 }

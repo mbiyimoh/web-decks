@@ -1,5 +1,5 @@
 import { redirect } from 'next/navigation';
-import { auth } from '@/lib/auth';
+import { getUnifiedSession } from '@/lib/client-session-bridge';
 import { InterviewClient } from './InterviewClient';
 
 export const metadata = {
@@ -8,10 +8,10 @@ export const metadata = {
 };
 
 export default async function InterviewPage() {
-  const session = await auth();
+  const session = await getUnifiedSession();
 
-  if (!session?.user) {
-    redirect('/auth/signin?callbackUrl=/clarity-canvas/interview');
+  if (!session) {
+    redirect('/auth/signin?returnTo=/clarity-canvas/interview');
   }
 
   return <InterviewClient />;
