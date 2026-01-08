@@ -1,7 +1,6 @@
 import { redirect } from 'next/navigation';
 import { getUnifiedSession } from '@/lib/client-session-bridge';
 import { validateReturnTo } from '@/lib/auth-utils';
-import { getClientList } from '@/lib/clients';
 import { UnifiedAuthGate } from './UnifiedAuthGate';
 
 interface SignInPageProps {
@@ -13,7 +12,7 @@ interface SignInPageProps {
  *
  * Supports two user types:
  * 1. Team Members - Google OAuth or @33strategies.ai email/password
- * 2. Clients - Select organization + email/password
+ * 2. Clients - Email/password (checked against all configured clients)
  *
  * All protected areas redirect here with a returnTo param:
  * - /learning → /auth/signin?returnTo=/learning
@@ -34,8 +33,5 @@ export default async function SignInPage({ searchParams }: SignInPageProps) {
     redirect(destination);
   }
 
-  // Get client list for the client selector
-  const clients = getClientList();
-
-  return <UnifiedAuthGate returnTo={destination} clients={clients} />;
+  return <UnifiedAuthGate returnTo={destination} />;
 }

@@ -9,10 +9,9 @@ type UserRole = 'team' | 'client' | null;
 
 interface UnifiedAuthGateProps {
   returnTo: string;
-  clients: Array<{ id: string; name: string }>;
 }
 
-export function UnifiedAuthGate({ returnTo, clients }: UnifiedAuthGateProps) {
+export function UnifiedAuthGate({ returnTo }: UnifiedAuthGateProps) {
   const router = useRouter();
   const [role, setRole] = useState<UserRole>(null);
 
@@ -21,8 +20,7 @@ export function UnifiedAuthGate({ returnTo, clients }: UnifiedAuthGateProps) {
   const [teamEmail, setTeamEmail] = useState('');
   const [teamPassword, setTeamPassword] = useState('');
 
-  // Client state
-  const [selectedClient, setSelectedClient] = useState('');
+  // Client state - just email and password, no org selector
   const [clientEmail, setClientEmail] = useState('');
   const [clientPassword, setClientPassword] = useState('');
 
@@ -64,7 +62,8 @@ export function UnifiedAuthGate({ returnTo, clients }: UnifiedAuthGateProps) {
     setLoading(true);
 
     try {
-      const response = await fetch(`/api/client-auth/${selectedClient}`, {
+      // Use unified client auth endpoint - checks all clients
+      const response = await fetch('/api/client-auth', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
@@ -95,7 +94,6 @@ export function UnifiedAuthGate({ returnTo, clients }: UnifiedAuthGateProps) {
     setShowEmailForm(false);
     setTeamEmail('');
     setTeamPassword('');
-    setSelectedClient('');
     setClientEmail('');
     setClientPassword('');
   };
@@ -333,7 +331,7 @@ export function UnifiedAuthGate({ returnTo, clients }: UnifiedAuthGateProps) {
             </motion.div>
           )}
 
-          {/* Client Flow */}
+          {/* Client Flow - Simple email/password, no org selector */}
           {role === 'client' && (
             <motion.div
               key="client-flow"
@@ -344,50 +342,6 @@ export function UnifiedAuthGate({ returnTo, clients }: UnifiedAuthGateProps) {
               className="space-y-4"
             >
               <form onSubmit={handleClientSignIn} className="space-y-4">
-                {/* Client Selector */}
-                <div className="relative">
-                  <select
-                    value={selectedClient}
-                    onChange={(e) => setSelectedClient(e.target.value)}
-                    className="
-                      w-full px-4 py-3
-                      bg-[#111114] border border-white/[0.08] rounded-xl
-                      text-[#f5f5f5]
-                      focus:outline-none focus:border-white/[0.12]
-                      transition-colors appearance-none cursor-pointer
-                    "
-                    disabled={loading}
-                  >
-                    <option value="" className="bg-[#111114]">
-                      Select your organization
-                    </option>
-                    {clients.map((client) => (
-                      <option
-                        key={client.id}
-                        value={client.id}
-                        className="bg-[#111114]"
-                      >
-                        {client.name}
-                      </option>
-                    ))}
-                  </select>
-                  <div className="absolute right-4 top-1/2 -translate-y-1/2 pointer-events-none">
-                    <svg
-                      className="w-4 h-4 text-[#555555]"
-                      fill="none"
-                      viewBox="0 0 24 24"
-                      stroke="currentColor"
-                    >
-                      <path
-                        strokeLinecap="round"
-                        strokeLinejoin="round"
-                        strokeWidth={2}
-                        d="M19 9l-7 7-7-7"
-                      />
-                    </svg>
-                  </div>
-                </div>
-
                 <input
                   type="email"
                   value={clientEmail}
@@ -430,9 +384,7 @@ export function UnifiedAuthGate({ returnTo, clients }: UnifiedAuthGateProps) {
 
                 <button
                   type="submit"
-                  disabled={
-                    loading || !selectedClient || !clientEmail || !clientPassword
-                  }
+                  disabled={loading || !clientEmail || !clientPassword}
                   className="
                     w-full px-4 py-3
                     bg-[#d4a54a] text-black font-medium rounded-xl
