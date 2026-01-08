@@ -131,14 +131,3 @@ export function getClientEmail(clientId: string): string | undefined {
 export function getAllClientIds(): string[] {
   return Object.keys(clients);
 }
-
-/**
- * Get list of clients for display in auth selector.
- * Only returns non-sensitive info (id, name).
- */
-export function getClientList(): Array<{ id: string; name: string }> {
-  return Object.values(clients).map((client) => ({
-    id: client.id,
-    name: client.name,
-  }));
-}
