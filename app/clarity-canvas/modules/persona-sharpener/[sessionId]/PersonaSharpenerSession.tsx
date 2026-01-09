@@ -216,12 +216,12 @@ export function PersonaSharpenerSession({ user, sessionId }: Props) {
     loadSession();
   }, [sessionId]);
 
-  const resetQuestionState = () => {
+  const resetQuestionState = (showSkipConfirm = false) => {
     setCurrentValue(null);
     setIsUnsure(false);
     setConfidence(50);
     setAdditionalContext('');
-    setShowSkipConfirmation(false);
+    setShowSkipConfirmation(showSkipConfirm);
   };
 
   // Submit current response and move to next question
@@ -277,13 +277,10 @@ export function PersonaSharpenerSession({ user, sessionId }: Props) {
       // Move to next question or complete
       if (currentQuestionIndex < totalQuestions - 1) {
         const nextIndex = currentQuestionIndex + 1;
-        setCurrentQuestionIndex(nextIndex);
-        resetQuestionState();
+        const nextIsSkipped = !!(activeQuestions && activeQuestions[nextIndex]?.isSkipped);
 
-        // Check if next question should show skip confirmation
-        if (activeQuestions && activeQuestions[nextIndex]?.isSkipped) {
-          setShowSkipConfirmation(true);
-        }
+        setCurrentQuestionIndex(nextIndex);
+        resetQuestionState(nextIsSkipped);
       } else {
         // Session complete - show completion view first, then redirect
         setLoadState('completed');
@@ -317,10 +314,8 @@ export function PersonaSharpenerSession({ user, sessionId }: Props) {
         setAdditionalContext(prevResponse.additionalContext || '');
         setShowSkipConfirmation(false);
       } else {
-        resetQuestionState();
-        if (activeQuestions && activeQuestions[prevIndex]?.isSkipped) {
-          setShowSkipConfirmation(true);
-        }
+        const prevIsSkipped = !!(activeQuestions && activeQuestions[prevIndex]?.isSkipped);
+        resetQuestionState(prevIsSkipped);
       }
     }
   };
@@ -387,12 +382,10 @@ export function PersonaSharpenerSession({ user, sessionId }: Props) {
 
       if (currentQuestionIndex < totalQuestions - 1) {
         const nextIndex = currentQuestionIndex + 1;
-        setCurrentQuestionIndex(nextIndex);
-        resetQuestionState();
+        const nextIsSkipped = !!(activeQuestions && activeQuestions[nextIndex]?.isSkipped);
 
-        if (activeQuestions && activeQuestions[nextIndex]?.isSkipped) {
-          setShowSkipConfirmation(true);
-        }
+        setCurrentQuestionIndex(nextIndex);
+        resetQuestionState(nextIsSkipped);
       } else {
         // Session complete - show completion view first, then redirect
         setLoadState('completed');
@@ -410,6 +403,33 @@ export function PersonaSharpenerSession({ user, sessionId }: Props) {
 
   const handleSkipEdit = () => {
     setShowSkipConfirmation(false);
+  };
+
+  // Handle switching to a persona that doesn't have a session yet
+  const handleSwitchToPersona = async (targetPersonaId: string) => {
+    setIsLoading(true);
+    try {
+      // Create a new session for this persona
+      const sessionResponse = await fetch(
+        '/api/clarity-canvas/modules/persona-sharpener/sessions',
+        {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ personaId: targetPersonaId }),
+        }
+      );
+
+      if (!sessionResponse.ok) {
+        throw new Error('Failed to create session');
+      }
+
+      const { session } = await sessionResponse.json();
+      router.push(`/clarity-canvas/modules/persona-sharpener/${session.id}`);
+    } catch (err) {
+      console.error('Error switching to persona:', err);
+      setError('Failed to switch persona. Please try again.');
+      setIsLoading(false);
+    }
   };
 
   // Update persona preview client-side
@@ -670,19 +690,21 @@ export function PersonaSharpenerSession({ user, sessionId }: Props) {
                 <button
                   key={p.id}
                   onClick={() => {
-                    if (p.sessionId && !p.isCurrent) {
+                    if (p.isCurrent) return;
+                    if (p.sessionId) {
                       router.push(`/clarity-canvas/modules/persona-sharpener/${p.sessionId}`);
+                    } else {
+                      // Create a new session for this persona
+                      handleSwitchToPersona(p.id);
                     }
                   }}
-                  disabled={p.isCurrent || !p.sessionId}
+                  disabled={p.isCurrent || isLoading}
                   className={`px-3 py-1.5 rounded-full text-xs font-medium transition-colors ${
                     p.isCurrent
                       ? 'bg-[#D4A84B] text-black'
                       : p.isComplete
                       ? 'bg-green-500/20 text-green-400 hover:bg-green-500/30'
-                      : p.sessionId
-                      ? 'bg-zinc-800 text-zinc-400 hover:bg-zinc-700 hover:text-white'
-                      : 'bg-zinc-900 text-zinc-600 cursor-not-allowed'
+                      : 'bg-zinc-800 text-zinc-400 hover:bg-zinc-700 hover:text-white'
                   }`}
                   title={p.name || `Persona ${idx + 1}`}
                 >

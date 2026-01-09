@@ -222,7 +222,7 @@ export async function POST(request: NextRequest, context: RouteContext) {
         clarityEmotional: clarity.emotional,
         clarityBehaviors: clarity.behaviors,
         avgConfidence,
-        totalAssumptions: allResponses.filter((r) => !r.isUnsure).length,
+        totalAssumptions: allResponses.filter((r) => r.isUnsure).length,
         ...personaFieldUpdates,
       },
     });
