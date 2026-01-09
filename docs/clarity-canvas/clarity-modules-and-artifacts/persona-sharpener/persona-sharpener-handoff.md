@@ -499,6 +499,76 @@ function calculateAlignment(field: string, responses: Response[]): number | null
 
 ---
 
+## IMPLEMENTATION GOTCHAS
+
+### Critical: Always Calculate Metrics from Response Records
+
+**Problem**: The `Persona` table has a `totalAssumptions` field, but it can become stale if not properly updated. Early implementations read this field directly, causing incorrect "X unsure answers" displays.
+
+**Solution**: Always calculate `unsureCount` (and similar metrics) from the actual `Response` records at query time:
+
+```typescript
+// ✅ CORRECT: Calculate from responses
+const unsureCount = responses.filter((r) => r.isUnsure).length;
+
+// ❌ WRONG: Read from stale database field
+const unsureCount = persona.totalAssumptions ?? 0;
+```
+
+**Affected API endpoints**:
+- `GET /api/.../personas/[personaId]` - Must calculate from `persona.responses`
+- `GET /api/.../sessions/[sessionId]` - Must calculate from `persona.responses` (ALL responses, not filtered by session)
+
+**Key insight**: The `totalAssumptions` field is written during response submission but should never be read - it's effectively dead code. Consider removing it in a future migration.
+
+### Session Endpoint Response Filtering
+
+**Problem**: When fetching session data, the query originally filtered `persona.responses` by `sessionId`, which caused `unsureCount` to only reflect the current session's unsure answers, not the persona-level total.
+
+**Solution**: Fetch ALL responses for persona-level metrics:
+
+```typescript
+// ✅ CORRECT: Fetch all responses for persona-level metrics
+include: {
+  persona: {
+    include: {
+      profile: true,
+      responses: true,  // No filter - all responses across all sessions
+    },
+  },
+  responses: true,  // Session-specific responses for the response map
+},
+
+// ❌ WRONG: Filters to only this session's responses
+include: {
+  persona: {
+    include: {
+      responses: { where: { sessionId } },  // Lost responses from other sessions
+    },
+  },
+},
+```
+
+### Welcome Screen: Clickable Personas
+
+**Problem**: Personas without sessions were rendered as static `<div>` elements with "Not started" text, making them impossible to click.
+
+**Solution**: Personas without sessions should render as `<button>` elements that call a handler to create a session on-the-fly:
+
+```tsx
+// ✅ CORRECT: Clickable button that creates session
+<button onClick={() => onStartPersona(p.id)}>
+  {p.name} → Start
+</button>
+
+// ❌ WRONG: Static div with no interaction
+<div>{p.name} - Not started</div>
+```
+
+The handler (`handleStartPersona`) creates a new session via `POST /api/.../sessions` and navigates to it.
+
+---
+
 ## UI COMPONENTS (From Prototypes)
 
 ### Question Meta Wrapper
