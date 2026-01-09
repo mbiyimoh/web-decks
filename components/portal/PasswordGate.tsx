@@ -28,8 +28,9 @@ export default function PasswordGate({ clientId, clientName, returnTo, portalTyp
     setLoading(true);
 
     try {
+      // Unified auth endpoints check credentials against all clients
       const authPath = portalType === 'strategist' ? 'strategist-auth' : 'client-auth';
-      const response = await fetch(`/api/${authPath}/${clientId}`, {
+      const response = await fetch(`/api/${authPath}`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ email, password }),
