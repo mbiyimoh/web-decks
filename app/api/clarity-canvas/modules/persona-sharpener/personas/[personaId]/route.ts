@@ -143,7 +143,7 @@ export async function GET(
         ...categoryScores,
       },
       avgConfidence: persona.avgConfidence ?? avgConfidence,
-      unsureCount: persona.totalAssumptions ?? unsureCount,
+      unsureCount, // Always use calculated count from responses, not stale db field
     };
 
     // Use shared functions to generate archetype and summary

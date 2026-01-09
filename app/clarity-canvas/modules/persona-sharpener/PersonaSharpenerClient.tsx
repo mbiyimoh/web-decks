@@ -397,6 +397,7 @@ export function PersonaSharpenerClient({ user }: Props) {
             onRequestDelete={(id) => setDeleteConfirmId(id)}
             onCancelDelete={() => setDeleteConfirmId(null)}
             onConfirmDelete={handleDeleteProject}
+            onStartPersona={handleStartPersona}
           />
         )}
 
@@ -466,6 +467,7 @@ function WelcomeScreen({
   onRequestDelete,
   onCancelDelete,
   onConfirmDelete,
+  onStartPersona,
 }: {
   onStart: () => void;
   isLoading: boolean;
@@ -481,6 +483,7 @@ function WelcomeScreen({
   onRequestDelete?: (id: string) => void;
   onCancelDelete?: () => void;
   onConfirmDelete?: (id: string) => void;
+  onStartPersona?: (personaId: string) => void;
 }) {
   return (
     <motion.div
@@ -626,19 +629,21 @@ function WelcomeScreen({
                           )}
                         </Link>
                       ) : (
-                        <div
+                        <button
                           key={p.id}
-                          className={`flex items-center justify-between px-4 py-2.5 rounded-lg ${
+                          onClick={() => onStartPersona?.(p.id)}
+                          disabled={isLoading}
+                          className={`w-full flex items-center justify-between px-4 py-2.5 rounded-lg transition-colors ${
                             p.isComplete
                               ? 'bg-green-500/20 border border-green-500/30'
-                              : 'bg-zinc-800/50 border border-zinc-700/50'
-                          }`}
+                              : 'bg-zinc-800/50 border border-zinc-700/50 hover:bg-zinc-700/50 hover:border-zinc-600/50'
+                          } disabled:opacity-50`}
                         >
                           <span className={p.isComplete ? 'text-green-300' : 'text-zinc-300'}>
                             {p.name || 'Persona'}
                           </span>
-                          <span className="text-zinc-500 text-sm">Not started</span>
-                        </div>
+                          <span className="text-[#D4A84B] text-sm font-medium">Start →</span>
+                        </button>
                       );
                     })}
                   </div>

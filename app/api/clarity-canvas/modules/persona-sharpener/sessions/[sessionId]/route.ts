@@ -103,7 +103,7 @@ export async function GET(request: NextRequest, context: RouteContext) {
         behaviors: persona.clarityBehaviors ?? 0,
       },
       avgConfidence: persona.avgConfidence ?? 0,
-      unsureCount: persona.totalAssumptions ?? 0,
+      unsureCount: persona.responses.filter((r) => r.isUnsure).length, // Always calculate from responses
     };
 
     // Use shared functions to generate archetype and summary
