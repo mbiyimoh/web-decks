@@ -31,19 +31,18 @@ export async function GET(request: NextRequest, context: RouteContext) {
 
     const { sessionId } = await context.params;
 
-    // Fetch session with persona and responses
+    // Fetch session with persona and ALL responses (not filtered by session)
+    // to calculate persona-level metrics like unsureCount across all sessions
     const sharpenerSession = await prisma.sharpenerSession.findUnique({
       where: { id: sessionId },
       include: {
         persona: {
           include: {
             profile: true,
-            responses: {
-              where: { sessionId },
-            },
+            responses: true, // All responses for persona-level metrics
           },
         },
-        responses: true,
+        responses: true, // Session-specific responses for the response map
       },
     });
 
