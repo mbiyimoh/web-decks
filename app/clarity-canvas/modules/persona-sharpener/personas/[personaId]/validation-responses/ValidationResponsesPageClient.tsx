@@ -19,7 +19,7 @@ interface Props {
 
 export function ValidationResponsesPageClient({ personaId }: Props) {
   const router = useRouter();
-  const [responses, setResponses] = useState<Record<string, ValidationResponseByQuestion> | null>(null);
+  const [responses, setResponses] = useState<Record<string, ValidationResponseByQuestion>>({});
   const [personaName, setPersonaName] = useState<string>('');
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -32,15 +32,25 @@ export function ValidationResponsesPageClient({ personaId }: Props) {
         );
 
         if (!response.ok) {
-          throw new Error('Failed to fetch validation responses');
+          // Try to get specific error message from API
+          let errorMessage = 'Failed to fetch validation responses';
+          try {
+            const errorData = await response.json();
+            if (errorData.error) {
+              errorMessage = errorData.error;
+            }
+          } catch {
+            // If parsing fails, use generic message
+          }
+          throw new Error(errorMessage);
         }
 
         const data = await response.json();
-        setResponses(data.responsesByQuestion);
-        setPersonaName(data.personaName);
+        setResponses(data.responsesByQuestion || {});
+        setPersonaName(data.personaName || '');
       } catch (err) {
         console.error('Error fetching validation responses:', err);
-        setError('Failed to load validation responses. Please try again.');
+        setError(err instanceof Error ? err.message : 'Failed to load validation responses. Please try again.');
       } finally {
         setIsLoading(false);
       }
@@ -95,7 +105,7 @@ export function ValidationResponsesPageClient({ personaId }: Props) {
               Try again
             </button>
           </div>
-        ) : responses ? (
+        ) : (
           <motion.div
             initial={{ opacity: 0, y: 10 }}
             animate={{ opacity: 1, y: 0 }}
@@ -103,7 +113,7 @@ export function ValidationResponsesPageClient({ personaId }: Props) {
           >
             <ValidationByQuestionView responses={responses} />
           </motion.div>
-        ) : null}
+        )}
       </div>
     </div>
   );

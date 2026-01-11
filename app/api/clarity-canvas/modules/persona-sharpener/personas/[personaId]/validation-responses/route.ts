@@ -72,6 +72,7 @@ export async function GET(
     if (!persona.validationLink) {
       return NextResponse.json({
         view,
+        personaName: persona.name || 'Unknown Persona',
         totalSessions: 0,
         totalResponses: 0,
         sessions: [],
@@ -174,10 +175,11 @@ export async function GET(
 
       return NextResponse.json({
         view: 'by-question',
+        personaName: persona.name || 'Unknown Persona',
         totalSessions: persona.validationLink.totalSessions,
         totalResponses: persona.validationLink.totalResponses,
         sessions: sessionSummaries,
-        responses: responsesByQuestion,
+        responsesByQuestion: responsesByQuestion,
       });
     } else {
       // Group responses by session
@@ -224,10 +226,11 @@ export async function GET(
 
       return NextResponse.json({
         view: 'by-session',
+        personaName: persona.name || 'Unknown Persona',
         totalSessions: persona.validationLink.totalSessions,
         totalResponses: persona.validationLink.totalResponses,
         sessions: sessionSummaries,
-        responses: responsesBySession,
+        responsesBySession: responsesBySession,
       });
     }
   } catch (error) {
