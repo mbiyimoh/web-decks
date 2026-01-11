@@ -34,11 +34,18 @@ export const customizedQuestionSchema = z.object({
     .nullable()
     .describe('If skipping, the pre-populated value from brain dump'),
 
-  // Contextualized version
+  // Contextualized version (for founder questionnaire - second person to founder)
   contextualizedText: z
     .string()
     .describe(
-      'Question rewritten to reference brain dump context, or original if no context'
+      'Question rewritten to reference brain dump context, or original if no context. Written for the FOUNDER (second-person: "You mentioned...")'
+    ),
+  // Validation version (for real user questionnaire - second person to the real user)
+  validationContextualizedText: z
+    .string()
+    .nullable()
+    .describe(
+      'Question reframed for real user validation. Transforms founder perspective ("they want X") to user perspective ("we have a hypothesis that you..."). Written in second-person TO THE REAL USER, framing founder assumptions as hypotheses to validate.'
     ),
   confirmationPrompt: z
     .string()

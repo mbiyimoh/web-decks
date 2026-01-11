@@ -750,10 +750,91 @@ For each question, return:
 - options: Original options (if applicable)
 - shouldSkip: Boolean
 - skipReason: The extracted value (if skipping)
-- contextualizedText: Rewritten question with integrated context
+- contextualizedText: Rewritten question for the FOUNDER (second-person to founder: "You mentioned...")
+- validationContextualizedText: Rewritten question for REAL USER VALIDATION (see section below)
 - confirmationPrompt: Rich confirmation text (if skipping)
 - priority: 1-19 based on confidence gaps
-- questionStyle: 'exploratory' | 'confirmatory' | 'skip' based on confidence`;
+- questionStyle: 'exploratory' | 'confirmatory' | 'skip' based on confidence
+
+## Validation Question Transformation (Critical)
+
+The validationContextualizedText field transforms founder-perspective questions into real-user-perspective questions for validation surveys.
+
+### The Transformation Challenge
+
+The contextualizedText is written TO THE FOUNDER about their customers:
+- "You mentioned they want to turn inventory into new hype shoes..."
+- "Based on what you shared about their frustrations..."
+
+But validators are THE ACTUAL CUSTOMERS. They didn't "mention" anything—the founder did.
+
+### Transformation Principles
+
+1. **Reframe founder hypotheses as team hypotheses to validate**
+   - Founder view: "You mentioned they want X"
+   - Validator view: "We have a hypothesis that people like you want X. Help us understand..."
+
+2. **Switch perspective from third-person ("they") to second-person ("you")**
+   - Founder view: "What feeling are they chasing?"
+   - Validator view: "What feeling are you chasing?"
+
+3. **Acknowledge the research context without being clinical**
+   - Good: "We're trying to understand collectors like you..."
+   - Good: "We've heard from some people that..."
+   - Avoid: "Our research hypothesis states that..."
+   - Avoid: "Please validate our assumption that..."
+
+4. **Preserve the contextual richness but redirect it**
+   - Founder view: "You mentioned they want to flip dormant inventory. When they achieve this..."
+   - Validator view: "Many collectors have shoes sitting in their closet that they'd love to trade up. When you think about turning those into something more exciting..."
+
+### Transformation Examples
+
+**Example 1: Emotional Job Question**
+
+Founder contextualizedText:
+"You mentioned they want to turn inventory into new hype shoes. When they achieve this, what feeling are they chasing? Is it about feeling in control of their collection, accomplished by their trades, or something else entirely?"
+
+validationContextualizedText:
+"We have a hypothesis that many collectors like you are looking to turn unused shoes into something more exciting.
+
+When you think about trading up or building your collection, what feeling are you really chasing? Is it about feeling in control, feeling accomplished, or something else entirely?
+
+Help us understand what success looks like for you."
+
+**Example 2: Frustrations Question**
+
+Founder contextualizedText:
+"You described their main pain point as 'the grind of tracking prices across platforms.' Walk me through what that looks like for them day-to-day."
+
+validationContextualizedText:
+"One of the things we keep hearing is that tracking prices across different platforms can feel like a grind.
+
+Does that resonate with your experience? If so, walk us through what that actually looks like for you—when does it become most frustrating?"
+
+**Example 3: Goals Question**
+
+Founder contextualizedText:
+"You suggested their primary goal is 'staying ahead of drops.' What does 'ahead' look like for them—is it knowing before others, or having a system that doesn't require constant monitoring?"
+
+validationContextualizedText:
+"Staying ahead of drops seems to be a priority for many collectors.
+
+What does 'staying ahead' actually look like for you? Is it about knowing before everyone else, or having a system so you don't have to constantly check?"
+
+### Anti-Patterns for Validation Questions
+
+**NEVER do this:**
+- "The founder mentioned you want X. Is that true?" (too direct, puts words in mouth)
+- "According to our hypothesis, you probably feel X." (clinical, presumptuous)
+- "You mentioned X." (validator didn't mention anything!)
+- "They said you struggle with X." (breaks immersion, who is "they"?)
+
+**ALWAYS do this:**
+- Frame hypotheses as things "we've heard" or "we're exploring"
+- Use "you" to address the validator directly about their own experience
+- Invite them to share THEIR perspective, not confirm someone else's
+- Maintain the depth and specificity of the original question`;
 
 export const QUESTION_CUSTOMIZATION_USER_PROMPT = (
   persona: ExtractedPersona,
@@ -842,6 +923,9 @@ For each question:
 5. **Format with visual breathing room** (max 2 sentences per paragraph, separated by blank lines)
 6. Assign priority based on confidence gaps (biggest gaps = highest priority)
 7. For skipped questions, write rich, conversational confirmation prompts that explore constraint context
+8. **Generate BOTH contextualizedText (for founder) AND validationContextualizedText (for real users)**
+   - contextualizedText: Second-person to the founder ("You mentioned they...")
+   - validationContextualizedText: Second-person to the real user ("We've heard that collectors like you..."). See "Validation Question Transformation" section above for detailed guidance.
 
 Return an array of customized questions matching the schema.`;
 

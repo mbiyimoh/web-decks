@@ -4,6 +4,7 @@ import React, { useState, useRef, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import type { PersonaDisplay } from '@/lib/clarity-canvas/modules/persona-sharpener/types';
 import type { PersonaInfo } from './types';
+import { ValidationShareButton } from './ValidationShareButton';
 
 interface Props {
   persona: PersonaDisplay;
@@ -13,6 +14,8 @@ interface Props {
   currentPersonaId?: string;
   onSwitchPersona?: (personaId: string) => void;
   showDropdown?: boolean;
+  // Validation sharing props
+  showValidationShare?: boolean;
 }
 
 export function PersonaCard({
@@ -22,6 +25,7 @@ export function PersonaCard({
   currentPersonaId,
   onSwitchPersona,
   showDropdown = false,
+  showValidationShare = false,
 }: Props) {
   const [isDropdownOpen, setIsDropdownOpen] = useState(false);
   const dropdownRef = useRef<HTMLDivElement>(null);
@@ -251,6 +255,16 @@ export function PersonaCard({
               </span>
             ))}
           </div>
+        </div>
+      )}
+
+      {/* Validation Share Button */}
+      {showValidationShare && persona.id && (
+        <div className="pt-4 border-t border-zinc-800">
+          <ValidationShareButton
+            personaId={persona.id}
+            personaName={persona.archetype}
+          />
         </div>
       )}
     </div>

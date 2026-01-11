@@ -397,6 +397,7 @@ function createFallbackQuestions(
       shouldSkip: false,
       skipReason: null,
       contextualizedText: q.question,
+      validationContextualizedText: q.validationQuestion || null, // Fall back to base validation question
       confirmationPrompt: null,
       priority: i + 1,
       questionStyle: 'exploratory' as const,

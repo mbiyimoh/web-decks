@@ -615,7 +615,7 @@ export function PersonaSharpenerSession({ user, sessionId }: Props) {
           </div>
 
           <div className="max-w-md mx-auto mb-12">
-            <PersonaCard persona={persona} />
+            <PersonaCard persona={persona} showValidationShare />
           </div>
 
           <div className="flex flex-col sm:flex-row gap-4 justify-center">
