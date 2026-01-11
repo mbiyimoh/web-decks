@@ -5,7 +5,6 @@
   "scripts": {
     "dev": "next dev -p 3033",
     "build": "prisma generate && next build",
-    "postinstall": "prisma generate",
     "start": "next start -H 0.0.0.0 -p ${PORT:-3033}",
     "lint": "next lint",
     "db:seed-modules": "npx tsx prisma/seed-modules.ts"
