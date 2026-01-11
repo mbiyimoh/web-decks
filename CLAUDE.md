@@ -1124,6 +1124,62 @@ The backfill script:
 
 **Critical Gotcha:** Always use `validationContextualizedText` in validation UI, NOT `contextualizedText`. The former is reframed for real users, the latter is for founders.
 
+### Validation Responses Dashboard
+
+The validation responses dashboard allows founders to view and analyze responses collected from real users.
+
+**Key Files:**
+- `app/clarity-canvas/modules/persona-sharpener/personas/[personaId]/validation-responses/ValidationResponsesPageClient.tsx` - Main dashboard page
+- `app/api/clarity-canvas/modules/persona-sharpener/personas/[personaId]/validation-responses/route.ts` - API endpoint
+- `lib/clarity-canvas/modules/persona-sharpener/alignment-calculator.ts` - Score calculation algorithms
+- `lib/clarity-canvas/modules/persona-sharpener/confidence-thresholds.ts` - Statistical confidence system
+- `lib/clarity-canvas/modules/persona-sharpener/validation-types.ts` - TypeScript interfaces
+
+**Dashboard Components:**
+- `ValidationSummaryHeader` - 4-stat grid (Sessions, Responses, Alignment %, Questions Validated)
+- `ConfidenceCallout` - Statistical confidence level with progress to next threshold
+- `ValidationViewToggle` - Switch between "By Question" and "By Session" views
+- `ValidationByQuestionView` - Compare all responses for each question
+- `ValidationSessionList` / `ValidationSessionDetail` - Drill into individual respondent sessions
+
+**Alignment Scoring by Question Type:**
+
+| Type | Scoring Method |
+|------|----------------|
+| `this-or-that` | Exact match = 100%, different = 0% |
+| `slider` | Proximity-based (within 10 = 100%, linear decay beyond) |
+| `ranking` | Weighted position comparison (1st=30pts, 2nd=25pts, etc.) |
+| `multi-select` | Jaccard similarity (intersection / union) |
+| `fill-blank` | Word overlap scoring |
+| `scenario` | Keyword overlap with 40% floor for subjectivity |
+
+**Confidence Thresholds:**
+
+| Responses | Confidence | Label |
+|-----------|------------|-------|
+| 0 | 0% | No Data |
+| 1-2 | 50% | Early Signal |
+| 3-4 | 90% | Statistically Meaningful |
+| 5-11 | 95% | High Confidence |
+| 12+ | 99% | Very High Confidence |
+
+```typescript
+// Usage
+import { getConfidenceLevel, getConfidenceColor } from '@/lib/clarity-canvas/modules/persona-sharpener/confidence-thresholds';
+
+const level = getConfidenceLevel(3);
+// { label: 'Statistically Meaningful', confidencePercent: 90, nextLevel: { responses: 5, confidence: 95 }, ... }
+
+const color = getConfidenceColor(90); // '#D4A84B' (gold)
+```
+
+**Misalignment Detection:**
+
+The dashboard surfaces "Top Misalignments" - questions with:
+- At least 2 validation responses
+- Alignment score below 70%
+- Sorted by lowest alignment first (max 3 shown)
+
 ---
 
 ## Learning Platform

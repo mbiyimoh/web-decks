@@ -4,7 +4,7 @@ import React, { useState, useRef, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import type { PersonaDisplay } from '@/lib/clarity-canvas/modules/persona-sharpener/types';
 import type { PersonaInfo } from './types';
-import { ValidationShareButton } from './ValidationShareButton';
+import { ValidationSection } from './ValidationSection';
 
 interface Props {
   persona: PersonaDisplay;
@@ -258,10 +258,10 @@ export function PersonaCard({
         </div>
       )}
 
-      {/* Validation Share Button */}
+      {/* Validation Section - Inline sharing and response stats */}
       {showValidationShare && persona.id && (
         <div className="pt-4 border-t border-zinc-800">
-          <ValidationShareButton
+          <ValidationSection
             personaId={persona.id}
             personaName={persona.archetype}
           />

@@ -91,3 +91,36 @@ export interface ValidationResponseBySession {
   session: ValidationSessionSummary;
   responses: SessionResponseWithComparison[];
 }
+
+/**
+ * Computed summary statistics for validation responses
+ */
+export interface ValidationSummary {
+  totalSessions: number;
+  completedSessions: number;
+  inProgressSessions: number;
+  abandonedSessions: number;
+  totalResponses: number;
+  questionsWithResponses: number;
+  totalQuestions: number;
+  overallAlignmentScore: number | null;
+  confidenceLevel: {
+    minResponses: number;
+    confidencePercent: number;
+    label: string;
+    message: string;
+    nextLevel: { responses: number; confidence: number } | null;
+  };
+  topMisalignments: Array<{
+    questionId: string;
+    questionText: string;
+    category: string;
+    alignmentScore: number;
+    responseCount: number;
+  }>;
+  questionAlignments: Array<{
+    questionId: string;
+    alignmentScore: number;
+    responseCount: number;
+  }>;
+}

@@ -551,6 +551,65 @@ Always use the correct perspective in each context:
 <p>{question.contextualizedText}</p>  // This says "You mentioned they..." - wrong for real users!
 ```
 
+### Validation Responses Dashboard
+
+After collecting validation responses, founders can view alignment analysis at `/clarity-canvas/modules/persona-sharpener/personas/[personaId]/validation-responses`.
+
+**Key Files:**
+- `ValidationResponsesPageClient.tsx` - Main dashboard component
+- `alignment-calculator.ts` - Per-question-type scoring algorithms
+- `confidence-thresholds.ts` - Statistical confidence system
+- `validation-types.ts` - TypeScript interfaces
+
+**Dashboard Features:**
+1. **Summary Header** - 4-stat grid (Sessions, Responses, Alignment %, Questions Validated)
+2. **Confidence Callout** - Shows statistical confidence level with progress bar to next threshold
+3. **View Toggle** - "By Question" (compare responses per question) or "By Session" (drill into respondent)
+4. **Top Misalignments** - Auto-surfaces questions with alignment < 70% and 2+ responses
+
+**Alignment Scoring by Question Type:**
+
+| Type | Algorithm |
+|------|-----------|
+| `this-or-that` | Exact match = 100%, different = 0% |
+| `slider` | Proximity-based (within 10 = 100%, linear decay) |
+| `ranking` | Weighted position (1st=30pts, 2nd=25pts, 3rd=20pts, 4th=15pts, 5th=7pts, 6th=3pts) |
+| `multi-select` | Jaccard similarity (intersection / union * 100) |
+| `fill-blank` | Word overlap scoring |
+| `scenario` | Keyword overlap with 40% floor (open-ended responses are subjective) |
+
+**Confidence Thresholds:**
+
+| Responses | Confidence | Label |
+|-----------|------------|-------|
+| 0 | 0% | No Data |
+| 1-2 | 50% | Early Signal |
+| 3-4 | 90% | Statistically Meaningful |
+| 5-11 | 95% | High Confidence |
+| 12+ | 99% | Very High Confidence |
+
+**Usage Example:**
+```typescript
+import { getConfidenceLevel, getConfidenceColor } from '@/lib/clarity-canvas/modules/persona-sharpener/confidence-thresholds';
+import { calculateAlignment, calculateQuestionAlignment, calculateOverallAlignment } from '@/lib/clarity-canvas/modules/persona-sharpener/alignment-calculator';
+
+// Get confidence level
+const level = getConfidenceLevel(sessionCount);
+// { label: 'Statistically Meaningful', confidencePercent: 90, nextLevel: { responses: 5, confidence: 95 } }
+
+// Calculate single alignment
+const result = calculateAlignment('age-range', founderValue, validatorValue);
+// { score: 100, matchType: 'exact', explanation: 'Same choice' }
+
+// Calculate question-level alignment (across all validators)
+const questionAlignment = calculateQuestionAlignment('age-range', founderValue, validatorValues);
+// { averageScore: 75, matchCount: 2, total: 3 }
+
+// Calculate overall alignment (weighted by response count)
+const overall = calculateOverallAlignment(questionAlignments);
+// 82
+```
+
 ### Clarity Score Calculation
 
 ```typescript
@@ -685,6 +744,26 @@ include: {
 ```
 
 The handler (`handleStartPersona`) creates a new session via `POST /api/.../sessions` and navigates to it.
+
+### Avoid Screen Flash During State Transitions
+
+**Problem**: When transitioning between states (e.g., question → skip confirmation), updating multiple state variables causes intermediate renders where the wrong content flashes briefly.
+
+**Solution**: Use a single state update or pass state through function parameters to prevent intermediate renders:
+
+```typescript
+// ❌ WRONG: Two separate state updates cause flash
+setShowSkipConfirm(false);  // Render 1: No confirmation, no question yet
+setCurrentQuestionIndex(idx);  // Render 2: Question appears
+
+// ✅ CORRECT: Accept both values in one function call
+function resetQuestionState(options?: { showSkipConfirm?: boolean }) {
+  setShowSkipConfirm(options?.showSkipConfirm ?? false);
+  // Other state reset logic...
+}
+```
+
+This pattern is critical for skip confirmation dialogs and persona switching.
 
 ---
 

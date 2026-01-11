@@ -21,7 +21,105 @@ import type {
   ValidationSessionSummary,
   ValidationResponseByQuestion,
   ValidationResponseBySession,
+  ValidationSummary,
 } from '@/lib/clarity-canvas/modules/persona-sharpener/validation-types';
+import {
+  calculateQuestionAlignment,
+  calculateOverallAlignment,
+} from '@/lib/clarity-canvas/modules/persona-sharpener/alignment-calculator';
+import { getConfidenceLevel } from '@/lib/clarity-canvas/modules/persona-sharpener/confidence-thresholds';
+import { getQuestionById, getTotalQuestions } from '@/lib/clarity-canvas/modules/persona-sharpener/questions';
+
+/**
+ * Compute validation summary statistics including alignments and confidence
+ */
+function computeValidationSummary(
+  sessions: ValidationSessionSummary[],
+  founderResponses: Array<{ questionId: string; value: unknown }>,
+  validationResponses: Array<{ questionId: string; value: unknown }>,
+  totalQuestions: number
+): ValidationSummary {
+  const completedSessions = sessions.filter((s) => s.status === 'completed').length;
+  const inProgressSessions = sessions.filter((s) => s.status === 'in_progress').length;
+  const abandonedSessions = sessions.filter((s) => s.status === 'abandoned').length;
+
+  // Group validation responses by questionId
+  const responsesByQuestion = new Map<string, unknown[]>();
+  validationResponses.forEach((r) => {
+    const existing = responsesByQuestion.get(r.questionId) || [];
+    existing.push(r.value);
+    responsesByQuestion.set(r.questionId, existing);
+  });
+
+  // Build founder response map
+  const founderByQuestion = new Map<string, unknown>();
+  founderResponses.forEach((r) => {
+    founderByQuestion.set(r.questionId, r.value);
+  });
+
+  // Calculate per-question alignments
+  const questionAlignments: Array<{
+    questionId: string;
+    alignmentScore: number;
+    responseCount: number;
+  }> = [];
+
+  responsesByQuestion.forEach((validatorValues, questionId) => {
+    const founderValue = founderByQuestion.get(questionId);
+    if (founderValue !== undefined) {
+      const alignment = calculateQuestionAlignment(questionId, founderValue, validatorValues);
+      questionAlignments.push({
+        questionId,
+        alignmentScore: alignment.averageScore,
+        responseCount: alignment.total,
+      });
+    }
+  });
+
+  // Calculate overall alignment (map to format expected by calculateOverallAlignment)
+  const overallAlignmentScore =
+    questionAlignments.length > 0
+      ? calculateOverallAlignment(
+          questionAlignments.map((q) => ({
+            questionId: q.questionId,
+            averageScore: q.alignmentScore,
+            responseCount: q.responseCount,
+          }))
+        )
+      : null;
+
+  // Find top misalignments (lowest scoring with >=2 responses)
+  const topMisalignments = questionAlignments
+    .filter((q) => q.responseCount >= 2)
+    .sort((a, b) => a.alignmentScore - b.alignmentScore)
+    .slice(0, 3)
+    .map((q) => {
+      const question = getQuestionById(q.questionId);
+      return {
+        questionId: q.questionId,
+        questionText: question?.question || q.questionId,
+        category: question?.category || 'unknown',
+        alignmentScore: q.alignmentScore,
+        responseCount: q.responseCount,
+      };
+    });
+
+  const confidenceLevel = getConfidenceLevel(sessions.length);
+
+  return {
+    totalSessions: sessions.length,
+    completedSessions,
+    inProgressSessions,
+    abandonedSessions,
+    totalResponses: validationResponses.length,
+    questionsWithResponses: responsesByQuestion.size,
+    totalQuestions,
+    overallAlignmentScore,
+    confidenceLevel,
+    topMisalignments,
+    questionAlignments,
+  };
+}
 
 /**
  * GET - Fetch validation responses with flexible view modes
@@ -70,6 +168,20 @@ export async function GET(
     }
 
     if (!persona.validationLink) {
+      const emptySummary: ValidationSummary = {
+        totalSessions: 0,
+        completedSessions: 0,
+        inProgressSessions: 0,
+        abandonedSessions: 0,
+        totalResponses: 0,
+        questionsWithResponses: 0,
+        totalQuestions: getTotalQuestions(),
+        overallAlignmentScore: null,
+        confidenceLevel: getConfidenceLevel(0),
+        topMisalignments: [],
+        questionAlignments: [],
+      };
+
       return NextResponse.json({
         view,
         personaName: persona.name || 'Unknown Persona',
@@ -77,6 +189,7 @@ export async function GET(
         totalResponses: 0,
         sessions: [],
         responses: view === 'by-question' ? {} : [],
+        summary: emptySummary,
       });
     }
 
@@ -173,6 +286,14 @@ export async function GET(
         });
       }
 
+      // Compute summary statistics
+      const summary = computeValidationSummary(
+        sessionSummaries,
+        founderResponses.map((r) => ({ questionId: r.questionId, value: r.value })),
+        responses.map((r) => ({ questionId: r.questionId, value: r.value })),
+        getTotalQuestions()
+      );
+
       return NextResponse.json({
         view: 'by-question',
         personaName: persona.name || 'Unknown Persona',
@@ -180,6 +301,7 @@ export async function GET(
         totalResponses: persona.validationLink.totalResponses,
         sessions: sessionSummaries,
         responsesByQuestion: responsesByQuestion,
+        summary,
       });
     } else {
       // Group responses by session
@@ -224,6 +346,14 @@ export async function GET(
         }
       }
 
+      // Compute summary statistics
+      const summary = computeValidationSummary(
+        sessionSummaries,
+        founderResponses.map((r) => ({ questionId: r.questionId, value: r.value })),
+        responses.map((r) => ({ questionId: r.questionId, value: r.value })),
+        getTotalQuestions()
+      );
+
       return NextResponse.json({
         view: 'by-session',
         personaName: persona.name || 'Unknown Persona',
@@ -231,6 +361,7 @@ export async function GET(
         totalResponses: persona.validationLink.totalResponses,
         sessions: sessionSummaries,
         responsesBySession: responsesBySession,
+        summary,
       });
     }
   } catch (error) {

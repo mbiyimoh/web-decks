@@ -601,20 +601,20 @@ export function PersonaSharpenerSession({ user, sessionId }: Props) {
   // Completed session view
   if (loadState === 'completed' && persona) {
     return (
-      <div className="min-h-screen bg-[#0a0a0f] text-white py-12 px-6">
-        <div className="max-w-4xl mx-auto">
+      <div className="min-h-screen bg-[#0a0a0f] text-white py-12 px-6 lg:px-8">
+        <div className="max-w-6xl mx-auto">
           <div className="text-center mb-12">
             <span className="text-6xl mb-4 block">✓</span>
             <h1 className="text-4xl font-display text-white mb-4">
               Persona Complete
             </h1>
-            <p className="text-zinc-400 max-w-lg mx-auto">
+            <p className="text-zinc-400 max-w-2xl mx-auto">
               You&apos;ve completed this persona with {persona.clarity.overall}%
               clarity. Review your persona below or continue to the next one.
             </p>
           </div>
 
-          <div className="max-w-md mx-auto mb-12">
+          <div className="max-w-2xl mx-auto mb-12">
             <PersonaCard persona={persona} showValidationShare />
           </div>
 
@@ -634,7 +634,7 @@ export function PersonaSharpenerSession({ user, sessionId }: Props) {
           </div>
 
           {persona.unsureCount > 0 && (
-            <div className="mt-8 p-4 bg-amber-500/10 border border-amber-500/30 rounded-lg text-center max-w-lg mx-auto">
+            <div className="mt-8 p-4 bg-amber-500/10 border border-amber-500/30 rounded-lg text-center max-w-2xl mx-auto">
               <p className="text-amber-400">
                 You marked <strong>{persona.unsureCount}</strong> answers as
                 uncertain. Consider validating these with real customer
@@ -731,8 +731,8 @@ export function PersonaSharpenerSession({ user, sessionId }: Props) {
         >
           {/* Main content */}
           <div className="pt-20 pb-12">
-            <div className="max-w-6xl mx-auto px-6">
-              <div className="grid lg:grid-cols-2 gap-8 lg:gap-12">
+            <div className="max-w-7xl mx-auto px-6 lg:px-8">
+              <div className="grid lg:grid-cols-2 gap-8 lg:gap-16">
                 {/* Persona preview side - LEFT */}
                 <div className="hidden lg:block py-8">
                   <div className="sticky top-24">

@@ -42,10 +42,11 @@ export const plyaFitnessApp: ProjectData = {
       ],
     },
     strategy: {
-      title: "Persona refinement",
+      title: "Personas & Advisors",
       tasks: [
         { label: "Ship Persona Sharpener tool", status: "done" },
-        { label: "Personas V0: Founder Hypotheses", status: "in-progress" },
+        { label: "User personas V0: Founder hypotheses", status: "in-progress" },
+        { label: "Expert/advisor personas", status: "upcoming" },
       ],
     },
   },
@@ -55,7 +56,7 @@ export const plyaFitnessApp: ProjectData = {
   // ============================================================================
   nextWeek: {
     productBuild: "Initial web app scaffolding",
-    strategy: "Persona sharpening from real users",
+    strategy: "Interview guide + user network outreach",
   },
 
   // ============================================================================
@@ -64,17 +65,22 @@ export const plyaFitnessApp: ProjectData = {
   actionItems: [
     {
       id: 1,
-      label: "Complete Persona Sharpener Founder POV",
+      label: "Complete Persona Sharpener for user personas",
       link: "#",
-      neededFor: "Persona Refinement (Week 2)",
+      neededFor: "User interviews & persona refinement (Week 3-4)",
     },
     {
       id: 2,
+      label: "Define 2-3 expert/advisor personas (coaches, trainers, nutritionists)",
+      link: "#",
+      neededFor: "Advisory board plan (Week 7-8)",
+    },
+    {
+      id: 3,
       label:
-        "Identify 20 people in your network who fit one of the PLYA personas (at least 5 per persona ideally)",
-      link: "#", // Will be replaced by Active Work tile if session exists
-      neededFor:
-        "Persona Refinement (Week 2), Prototype + Beta Testing (Weeks 3+)",
+        "Identify 20 people in your network who fit one of the PLYA personas",
+      link: "#",
+      neededFor: "User interviews (Week 3-4), Beta testing (Week 5-8)",
     },
   ],
 
@@ -129,31 +135,46 @@ export const plyaFitnessApp: ProjectData = {
     strategy: [
       {
         weeks: "1-2",
-        phase: "Personas",
+        phase: "Personas & Advisors",
         status: "current",
         items: [
-          "Persona Sharpener tool",
-          "Founder hypothesis capture",
-          "User network identification",
+          "User personas",
+          "Expert/advisor personas",
+          "Interview guide",
         ],
       },
       {
         weeks: "3-4",
-        phase: "Validation",
+        phase: "Research & Validation",
         status: "upcoming",
-        items: ["User interviews", "Persona refinement", "Insight synthesis"],
+        items: [
+          "User interviews",
+          "Persona refinement",
+          "Competitive analysis",
+          "Landing page design",
+        ],
       },
       {
         weeks: "5-6",
-        phase: "Strategy",
+        phase: "Beta Prep",
         status: "upcoming",
-        items: ["Business plan", "Strategy deck", "Landing page"],
+        items: [
+          "Landing page launch",
+          "MVP → beta group",
+          "Persona validation check",
+          "Vision deck",
+        ],
       },
       {
         weeks: "7-8",
-        phase: "Feedback",
+        phase: "Launch Readiness",
         status: "upcoming",
-        items: ["Beta testing", "Synthesis", "Recommendations"],
+        items: [
+          "MVP refinement",
+          "Broader beta testing",
+          "Advisory board plan",
+          "Outreach templates",
+        ],
       },
     ],
   },
@@ -173,19 +194,24 @@ export const plyaFitnessApp: ProjectData = {
       { name: "Authentication / User Account Foundations", estimate: "Jan 10" },
       { name: "Architecture & Data Model Exploration", estimate: "Jan 12" },
       { name: "Founder Persona Hypotheses (V0)", estimate: "Jan 10" },
+      { name: "Expert/Advisor Personas", estimate: "Jan 12" },
     ],
     upcoming: [
       { name: "Initial Web App Scaffolding", week: "Week 2" },
-      { name: "User Interviews", week: "Week 2-3" },
+      { name: "User Interviews", week: "Week 3-4" },
+      { name: "Persona Refinement", week: "Week 3-4" },
+      { name: "Competitive Analysis", week: "Week 3-4" },
       { name: "Database Schema", week: "Week 3-4" },
       { name: "Profile System", week: "Week 3-4" },
+      { name: "Landing Page", week: "Week 3-4" },
       { name: "Content Engine", week: "Week 5-6" },
       { name: "Calendar & Planning UI", week: "Week 5-6" },
-      { name: "Strategy Deck", week: "Week 5-6" },
-      { name: "Landing Page", week: "Week 5-6" },
+      { name: "Vision Deck", week: "Week 5-6" },
+      { name: "MVP Beta Release", week: "Week 5-6" },
       { name: "AI Content Tagging", week: "Week 7-8" },
       { name: "AI Coach Chat", week: "Week 7-8" },
       { name: "Smart Plan Generation", week: "Week 7-8" },
+      { name: "Advisory Board Plan", week: "Week 7-8" },
     ],
   },
 };
