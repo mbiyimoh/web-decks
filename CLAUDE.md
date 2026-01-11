@@ -388,9 +388,29 @@ This project uses **Supabase PostgreSQL** for all database needs (Clarity Canvas
 Database access is via Prisma ORM. The connection string is set via `DATABASE_URL` environment variable.
 
 ```bash
-# Format (pooler connection for serverless)
-DATABASE_URL="postgresql://postgres.[project-ref]:[password]@aws-0-[region].pooler.supabase.com:6543/postgres"
+# Format (pooler connection for serverless) - MUST include pgbouncer=true
+DATABASE_URL="postgresql://postgres.[project-ref]:[password]@aws-0-[region].pooler.supabase.com:6543/postgres?sslmode=require&pgbouncer=true&connection_limit=1"
 ```
+
+**CRITICAL: PgBouncer Configuration Gotcha**
+
+When using Supabase's connection pooler (port 6543), you **MUST** include `?pgbouncer=true` in the DATABASE_URL or you'll get prepared statement conflicts:
+
+```
+PostgresError { code: "42P05", message: "prepared statement already exists" }
+```
+
+**If you ever connect without `pgbouncer=true`:**
+1. The prepared statement cache becomes corrupted
+2. Adding the flag afterward won't fix it
+3. **Solution:** Restart your Supabase project from the dashboard to clear the cache
+
+**Correct URL format:**
+```
+postgresql://postgres.xxx:[pw]@aws-1-us-east-1.pooler.supabase.com:6543/postgres?sslmode=require&pgbouncer=true&connection_limit=1
+```
+
+Note the single `?` before first parameter, then `&` for subsequent parameters.
 
 ### Prisma Commands
 
@@ -703,6 +723,95 @@ This ensures shared links work - users land on the content they were trying to a
 
 ---
 
+## Client Portals
+
+Client portals provide password-protected access to deliverables, project tracking, and active work sessions.
+
+### Architecture
+
+**Portal Types:**
+- **Client Portals** (`/client-portals/[client]`) - External client access
+- **Strategist Portals** (`/strategist-portals/[strategist]`) - Internal team member access
+
+Both use iron-session with email+password authentication and unified session bridging with NextAuth.
+
+### Key Components
+
+Located in `components/portal/`:
+
+| Component | Purpose |
+|-----------|---------|
+| `EnhancedPortal.tsx` | Main portal layout with Active Projects, Active Work, and Artifacts sections |
+| `ProjectTile.tsx` | Expandable project card showing status, progress, tracks, and action items |
+| `ProjectDetailPage.tsx` | Full project page with timeline and deliverables |
+| `ActiveWorkTile.tsx` | Links to in-progress Clarity Canvas sessions |
+| `PasswordGate.tsx` | Login form component |
+| `design-tokens.ts` | Canonical design values (GOLD `#d4a54a`, GREEN `#4ade80`, etc.) |
+| `types.ts` | TypeScript interfaces for all portal data |
+
+### Data Layer
+
+**Project Tracking** (config-driven):
+- `lib/client-projects.ts` - Project configuration and data
+- `lib/portal/active-work.ts` - Database queries for active Clarity Canvas sessions
+
+**Sample project data structure:**
+```typescript
+{
+  id: string;
+  name: string;
+  status: 'on-track' | 'ahead' | 'attention';
+  currentWeek: number;
+  totalWeeks: number;
+  thisWeek: { productBuild: TrackData; strategy: TrackData; };
+  actionItems: ActionItem[];
+  timeline: { productBuild: TimelineBlock[]; strategy: TimelineBlock[]; };
+  deliverables: { completed: [], inProgress: [], upcoming: [] };
+}
+```
+
+### Adding New Projects
+
+1. Add project data to `lib/client-projects.ts`:
+   ```typescript
+   export const clientProjects: Record<string, ProjectData | null> = {
+     'client-id': { id: '...', name: '...', ... },
+   };
+   ```
+
+2. Project will automatically appear on portal homepage
+3. Full project page available at `/client-portals/[client]/project/[projectId]`
+
+### Design System
+
+Portal components use design tokens from `components/portal/design-tokens.ts`:
+- **GOLD** `#d4a54a` - Product Build track, primary accent
+- **GREEN** `#4ade80` - Strategy track, success states
+- **BLUE** `#60a5fa` - Information, ahead status
+- **RED** `#f87171` - Needs attention status
+
+Track visualization uses two-track layout:
+- **Product Build** (gold) - Development, UX, technical work
+- **Strategy** (green) - Go-to-market, positioning, messaging
+
+### Gotchas
+
+**Active Work Integration:**
+- Queries `SharpenerSession` model for in-progress sessions
+- Links directly to Clarity Canvas resume URLs
+- Only shown if user has active sessions
+
+**Authentication Flow:**
+- Unified `/api/client-auth` endpoint checks credentials against ALL clients
+- Creates/updates User record in database for session bridging
+- Supports deep linking with `returnTo` query parameter
+
+**Strategist Portals:**
+- Use separate `/api/strategist-auth/[strategist]` endpoints (per-strategist, not unified)
+- Share same components but with `portalType="strategist"` prop
+
+---
+
 ## Skills & Design Review
 
 ### Design Skill
@@ -943,6 +1052,77 @@ The Clarity Canvas is an interactive platform for building customer clarity thro
   - `docs/clarity-canvas/clarity-modules-and-artifacts/persona-sharpener/voice-text-extraction-pattern.md` - Brain dump processing
 
 **Most Common Gotcha:** When displaying question text in the Persona Sharpener questionnaire UI, always use `currentCustomizedQuestion?.text` (contextualized) NOT `currentQuestion.question` (generic). See customized-questions-pattern.md for full details.
+
+### Validation Sharing System
+
+The Persona Sharpener includes a validation link system that allows founders to share generated personas with real users for validation.
+
+**Architecture:**
+- Founders generate personas from brain dumps (voice or text)
+- OpenAI extracts personas and generates customized questions with **two perspectives**:
+  - `contextualizedText` - Founder perspective (questionnaire UI)
+  - `validationContextualizedText` - User perspective (validation link UI)
+- Founders can generate shareable validation links for each persona
+- Real users validate assumptions via public links (no auth required)
+
+**Perspective Transformation:**
+
+The validation system transforms questions from founder perspective to user perspective:
+
+| Founder Questionnaire | Validation Link |
+|----------------------|-----------------|
+| "You mentioned they want to..." | "We have a hypothesis that people like you want to..." |
+| "Based on your brain dump..." | "Based on our research, we believe..." |
+| Direct reference to founder's thoughts | Framed as testable hypothesis for user |
+
+**Key Files:**
+- `app/api/validate/[slug]/route.ts` - Public validation endpoint (GET)
+- `app/api/validate/[slug]/submit/route.ts` - Response submission (POST)
+- `app/validate/[slug]/page.tsx` - Validation questionnaire UI
+- `lib/clarity-canvas/modules/persona-sharpener/customized-question-schema.ts` - Schema with `validationContextualizedText` field
+- `lib/clarity-canvas/modules/persona-sharpener/prompts/question-customization.ts` - Prompt that generates both perspectives
+- `scripts/backfill-validation-contextualized-text.ts` - Backfill script for existing personas
+
+**Database Models:**
+- `ValidationLink` - Shareable link with slug, persona relation, active status
+- `ValidationSession` - Tracking individual validation attempts
+- `Response` - Stores both assumption (founder) and validation (user) responses
+
+**Question Retrieval Pattern:**
+
+```typescript
+// In validation endpoint (app/api/validate/[slug]/route.ts)
+const customized = customizedQuestions?.find(q => q.questionId === baseQuestion.id);
+
+const validationQuestion: ValidationQuestion = {
+  ...baseQuestion,
+  // Use enriched user-perspective text
+  validationContextualizedText: customized?.validationContextualizedText ?? undefined,
+};
+```
+
+**Backfilling Existing Personas:**
+
+For personas created before the `validationContextualizedText` field was added:
+
+```bash
+# Dry run (no changes)
+npx tsx scripts/backfill-validation-contextualized-text.ts --dry-run
+
+# Live update all personas
+npx tsx scripts/backfill-validation-contextualized-text.ts
+
+# Update specific persona
+npx tsx scripts/backfill-validation-contextualized-text.ts --persona-id <id>
+```
+
+The backfill script:
+1. Finds brain dumps with personas
+2. Regenerates customized questions using OpenAI with current prompt (includes both perspectives)
+3. Updates `customizedQuestions` JSON field on brain dump
+4. Preserves all existing data
+
+**Critical Gotcha:** Always use `validationContextualizedText` in validation UI, NOT `contextualizedText`. The former is reframed for real users, the latter is for founders.
 
 ---
 
