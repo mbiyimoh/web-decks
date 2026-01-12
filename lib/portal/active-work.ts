@@ -110,9 +110,12 @@ export async function getActiveWorkForUser(userId: string): Promise<ActiveWorkIt
 /**
  * Get a count of active work items for a user.
  * Useful for showing badges or indicators.
+ *
+ * Returns count of in-progress sessions, OR 1 if user has established personas
+ * (matching the two-tier logic in getActiveWorkForUser).
  */
 export async function getActiveWorkCount(userId: string): Promise<number> {
-  return prisma.sharpenerSession.count({
+  const inProgressCount = await prisma.sharpenerSession.count({
     where: {
       status: 'in_progress',
       persona: {
@@ -122,4 +125,25 @@ export async function getActiveWorkCount(userId: string): Promise<number> {
       },
     },
   });
+
+  if (inProgressCount > 0) {
+    return inProgressCount;
+  }
+
+  // Check if user has established personas (with completed sessions)
+  const establishedPersonaCount = await prisma.persona.count({
+    where: {
+      profile: {
+        userRecordId: userId,
+      },
+      sessions: {
+        some: {
+          status: 'completed',
+        },
+      },
+    },
+  });
+
+  // Return 1 if user has any established personas (single "view personas" item)
+  return establishedPersonaCount > 0 ? 1 : 0;
 }
