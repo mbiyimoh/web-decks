@@ -99,7 +99,7 @@ export async function getActiveWorkForUser(userId: string): Promise<ActiveWorkIt
         context: `${personas.length} persona${personas.length > 1 ? 's' : ''} defined`,
         status: 'available',
         progress: 'View or refine your personas',
-        link: `/clarity-canvas/modules/persona-sharpener/personas?profile=${profileId}`,
+        link: `/clarity-canvas/modules/persona-sharpener`,
       });
     }
   }

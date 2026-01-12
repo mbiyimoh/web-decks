@@ -28,6 +28,33 @@ export const plyaFitnessApp: ProjectData = {
   totalWeeks: 8,
 
   // ============================================================================
+  // WEEK MINDSET (prominent banner at top of project tile)
+  // Frames founder focus for each phase - the constant reminder to stay in lane
+  // ============================================================================
+  weekMindset: {
+    "1-2": {
+      title: "Sharpen Your Understanding of Who Will Use PLYA",
+      message:
+        "The goal is to validate what you THINK you know about your target customer by connecting with REAL people. These people will act as your 'reality check' throughout the design and build process, and will be your first beta testers.",
+    },
+    "3-4": {
+      title: "Listen & Learn from Real Users",
+      message:
+        "User interviews are your most valuable source of truth. Stay curious, ask follow-up questions, and let their actual needs shape the product - not your assumptions.",
+    },
+    "5-6": {
+      title: "Build for Your Beta Testers",
+      message:
+        "Everything you build this phase should be something you can put in front of real users. Prioritize features that let you learn, not features that feel impressive.",
+    },
+    "7-8": {
+      title: "Polish & Prepare for Launch",
+      message:
+        "Focus on making the core experience bulletproof. A small, polished product beats a large, buggy one. Your beta testers' feedback should drive final priorities.",
+    },
+  },
+
+  // ============================================================================
   // THIS WEEK'S WORK (shown in compact tile)
   // ============================================================================
   thisWeek: {

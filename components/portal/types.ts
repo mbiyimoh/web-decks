@@ -49,6 +49,15 @@ export interface UpcomingDeliverable {
   week: string;
 }
 
+/**
+ * Weekly mindset message - frames the founder's focus for each phase.
+ * Key is a week range like "1-2", "3-4", etc.
+ */
+export interface WeekMindset {
+  title: string;
+  message: string;
+}
+
 export interface ProjectData {
   id: string;
   name: string;
@@ -58,6 +67,12 @@ export interface ProjectData {
   totalWeeks: number;
   targetDelivery: string;
   startDate: string;
+
+  /**
+   * Weekly mindset messages keyed by week range (e.g., "1-2", "3-4").
+   * Displayed prominently at the top of the project tile to keep founders focused.
+   */
+  weekMindset?: Record<string, WeekMindset>;
 
   thisWeek: {
     productBuild: TrackData;
