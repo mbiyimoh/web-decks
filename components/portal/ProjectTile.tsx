@@ -19,6 +19,15 @@ interface ProjectTileProps {
 
 /**
  * Find the current week's mindset based on week ranges like "1-2", "3-4", etc.
+ *
+ * Week ranges should NOT overlap. If they do, the first matching range is returned.
+ * If currentWeek falls in a gap between ranges, no mindset is shown.
+ *
+ * @example
+ * weekMindset: {
+ *   "1-2": { title: "...", message: "..." },
+ *   "3-4": { title: "...", message: "..." },
+ * }
  */
 function getCurrentMindset(
   currentWeek: number,
@@ -27,7 +36,29 @@ function getCurrentMindset(
   if (!weekMindset) return null;
 
   for (const [range, mindset] of Object.entries(weekMindset)) {
-    const [start, end] = range.split('-').map(Number);
+    // Parse and validate range format
+    const parts = range.split('-');
+    if (parts.length !== 2) {
+      console.warn(`Invalid week range format: "${range}" (expected "start-end")`);
+      continue;
+    }
+
+    const start = Number(parts[0]);
+    const end = Number(parts[1]);
+
+    // Validate parsed numbers
+    if (isNaN(start) || isNaN(end)) {
+      console.warn(`Invalid week range values: "${range}" (non-numeric)`);
+      continue;
+    }
+
+    // Validate logical order
+    if (start > end) {
+      console.warn(`Invalid week range order: "${range}" (start > end)`);
+      continue;
+    }
+
+    // Check if current week falls in this range
     if (currentWeek >= start && currentWeek <= end) {
       return { range, mindset };
     }
