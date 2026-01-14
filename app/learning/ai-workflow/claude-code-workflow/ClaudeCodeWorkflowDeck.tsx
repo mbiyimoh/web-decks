@@ -14,8 +14,11 @@ type DocumentId =
   | 'what-were-building'
   | 'how-we-do-shit'
   | 'spec-ideate-output'
+  | 'spec-ideate-output-validation'
   | 'spec-full-example'
+  | 'spec-full-example-validation'
   | 'spec-decomposed'
+  | 'spec-decomposed-validation'
   | 'hook-config';
 
 interface DocumentMeta {
@@ -477,6 +480,432 @@ P1-29 → P1-30 → P1-31 → P1-32 (Screens)
     }
   }
 }`
+  },
+  'spec-ideate-output-validation': {
+    id: 'spec-ideate-output-validation',
+    title: 'Ideation: Persona Validation Sharing',
+    path: 'docs/ideation/persona-sharpener-validation-sharing.md',
+    content: `# Persona Sharpener Validation Sharing System
+
+**Status:** DECISIONS LOCKED - Ready for Spec
+
+---
+
+## 1) Intent & Assumptions
+
+**Task Brief:**
+Enable founders to share validation links with real potential customers who can complete the persona sharpener questionnaire without needing accounts. Their responses are tagged as "validations" and compared against founder "assumptions" to calculate alignment scores.
+
+**Assumptions:**
+- Founders have already completed Mode 1 (Sharpen) and have assumption-tagged responses
+- Validators do not need 33 Strategies accounts to complete the questionnaire
+- The existing 19-question bank has dual framing (question for founders, validationQuestion for validators)
+- Multiple validators can respond to the same link
+- Alignment scoring compares founder assumptions against validator consensus
+
+**Out of Scope:**
+- Incentive/reward systems for validators
+- Real-time notifications when validators complete
+- Voice input for validation mode (text only for MVP)
+- Custom branding of validation pages per founder
+
+---
+
+## 2) Pre-reading Log
+
+| File | Takeaway |
+|------|----------|
+| persona-sharpener-handoff.md | Comprehensive spec for three-mode system. Defines ValidationLink schema, Response tagging, alignment algorithm. |
+| prisma/schema.prisma | Current models: Persona, Response, SharpenerSession. Response has responseType and respondentRole fields ready. No ValidationLink model yet. |
+| lib/.../questions.ts | All 19 questions have dual framing. not-customer has validationQuestion: null. |
+| Cross-project summary | Architecture from document sharing: ShareLink model, slug generation, verify-then-create flow. |
+
+---
+
+## 3) Codebase Map
+
+### Primary Components
+
+| Path | Role |
+|------|------|
+| app/clarity-canvas/modules/persona-sharpener/ | Main module directory |
+| PersonaSharpenerSession.tsx | Questionnaire engine - needs validation-mode variant |
+| lib/.../questions.ts | Question bank with dual framing |
+| lib/.../scoring.ts | Needs alignment calculation |
+| prisma/schema.prisma | Needs ValidationLink model |
+
+### Data Flow
+
+\`\`\`
+Founder creates link → ValidationLink record
+                            ↓
+                    /validate/:slug URL
+                            ↓
+Validator accesses → Fetch metadata → Create ValidationSession
+                            ↓
+                    Answer questions (validationQuestion text)
+                            ↓
+                    Submit responses (tagged 'validation')
+                            ↓
+Founder views Reconcile UI → Calculate alignment scores
+\`\`\`
+
+---
+
+## 5) Research
+
+### Solution 1: Minimal In-App Validation (Recommended)
+
+Build validation directly into existing persona sharpener, adding ValidationLink model and public validation page.
+
+**Pros:**
+- Reuses existing question rendering components
+- Consistent UX between founder and validator
+- Simpler to maintain
+- Faster implementation (~2-3 weeks)
+
+### Implementation Architecture
+
+**Database Models:**
+\`\`\`prisma
+model ValidationLink {
+  id              String    @id @default(cuid())
+  personaId       String    @unique  // ONE link per persona
+  slug            String    @unique  // 16 hex chars
+  isActive        Boolean   @default(true)
+  expiresAt       DateTime?
+  maxResponses    Int?
+  totalResponses  Int       @default(0)
+  sessions        ValidationSession[]
+}
+
+model ValidationSession {
+  id                String    @id @default(cuid())
+  validationLinkId  String
+  respondentEmail   String?
+  status            String    @default("in_progress")
+  questionsAnswered Int       @default(0)
+}
+\`\`\`
+
+---
+
+## 6) Clarifications (Answered)
+
+1. **Access Control** → Default OPEN for maximum conversion
+2. **Email Collection** → Optional at end with beta tester framing
+3. **Link Expiration** → No default, suggest 7/14/30 days when set
+4. **Progress Saving** → localStorage only, no auth required
+5. **Multiple Links** → One per persona for MVP
+
+---
+
+## 7) Proposed Implementation Phases
+
+### Phase 1: Database & API Foundation
+- Add ValidationLink, ValidationSession models
+- Implement API routes for link management
+- Add slug generation utility
+
+### Phase 2: Public Validation Page
+- Create /validate/[slug] route
+- Implement access verification flow
+- Create ValidationQuestionnaire component
+- Add middleware exception for public access
+
+### Phase 3: Founder Link Management UI
+- Add "Share for Validation" button
+- Create ValidationLinkModal
+- Display link analytics
+
+### Phase 4: Alignment Scoring (Future)
+- Implement calculateAlignment() per question type
+- Create ReconciliationView component`
+  },
+  'spec-full-example-validation': {
+    id: 'spec-full-example-validation',
+    title: 'Spec: Persona Validation Mode',
+    path: 'specs/feat-persona-sharpener-validation-mode.md',
+    content: `# Persona Sharpener: Validation Mode
+
+**Status:** Proto-Spec (Implement after V1 core tested)
+**Depends On:** feat-persona-sharpener-module.md (V1)
+
+---
+
+## Overview
+
+Validation and reconciliation features allowing founders to share validation links with real users, compare assumptions against validations, and reconcile differences.
+
+---
+
+## Scope
+
+### In Scope
+- Validation link generation and management
+- Public validation page (no auth required)
+- Real user response collection
+- Assumption vs. validation comparison
+- Alignment scoring
+
+### Out of Scope (Future)
+- Multiple validation cohorts
+- A/B testing different hypotheses
+- Statistical significance calculations
+- Automated persona refinement suggestions
+
+---
+
+## Database Additions
+
+### New Model: ValidationLink
+
+\`\`\`prisma
+model ValidationLink {
+  id          String   @id @default(cuid())
+  personaId   String   @unique
+  persona     Persona  @relation(...)
+  slug        String   @unique  // Short URL-safe identifier
+
+  createdById String   // Founder's user ID
+  expiresAt    DateTime?
+  maxResponses Int?
+
+  totalClicks      Int @default(0)
+  totalCompletions Int @default(0)
+  isActive    Boolean  @default(true)
+
+  @@index([personaId])
+  @@index([slug])
+}
+\`\`\`
+
+### Updated Models
+
+**Persona:** Add totalValidations counter and validationLink relation
+**Response:** Add respondentEmail field for optional follow-up
+
+---
+
+## Route Structure
+
+\`\`\`
+app/
+├── clarity-canvas/modules/persona-sharpener/
+│   └── [personaId]/
+│       ├── validate/page.tsx    # Link management
+│       └── reconcile/page.tsx   # Comparison view
+│
+└── validate/[slug]/page.tsx     # PUBLIC - No auth
+\`\`\`
+
+---
+
+## User Stories
+
+### Generating a Validation Link
+
+**Acceptance Criteria:**
+- [ ] "Generate Validation Link" button on completion
+- [ ] Unique slug generation (validate/abc123)
+- [ ] Optional: Set expiration date
+- [ ] Optional: Set max responses
+- [ ] Copy to clipboard
+- [ ] Show link analytics
+
+### Validation Experience (Public)
+
+**Acceptance Criteria:**
+- [ ] No authentication required
+- [ ] Welcome screen explains purpose
+- [ ] Questions use validationQuestion field
+- [ ] Optional email for follow-up
+- [ ] Thank you screen on completion
+- [ ] Graceful expired/maxed link handling
+
+### Reconciliation View
+
+**Acceptance Criteria:**
+- [ ] Side-by-side: Assumption vs. Validations
+- [ ] Alignment % per field
+- [ ] Highlight fields < 70% alignment
+- [ ] Drill-down to individual responses
+- [ ] "Accept validation consensus" action
+
+---
+
+## Alignment Scoring Algorithm
+
+\`\`\`typescript
+interface AlignmentResult {
+  overall: number;          // 0-100%
+  byField: Record<string, {
+    assumedValue: unknown;
+    validationValues: unknown[];
+    alignmentPercent: number;
+    needsReview: boolean;   // true if < 70%
+  }>;
+}
+
+function calculateAlignment(
+  assumptions: Response[],
+  validations: Response[]
+): AlignmentResult {
+  // Group validations by questionId
+  // Calculate match percentage per field
+  // Overall = average of fields with data
+}
+\`\`\`
+
+---
+
+## Implementation Notes
+
+### Public Page Security
+- No authentication required
+- Rate limit by IP: 10 responses/hour
+- Unguessable slug (nanoid, 10 chars)
+- Validate link active before showing questions
+
+### Question Rewording
+- question: Founder-facing
+- validationQuestion: User-facing
+- Skip if validationQuestion is null
+
+### Response Tagging
+\`\`\`typescript
+{
+  responseType: 'validation',
+  respondentRole: 'real-user',
+  respondentEmail: userProvidedEmail || null,
+}
+\`\`\``
+  },
+  'spec-decomposed-validation': {
+    id: 'spec-decomposed-validation',
+    title: 'Decomposed Tasks: Validation Sharing',
+    path: 'stm-tasks/validation-sharing-tasks.md',
+    content: `# Validation Sharing - Task Decomposition
+
+**Spec:** feat-persona-sharpener-validation-mode.md
+**Task Management:** Simple Task Master (STM)
+**Status:** Phase 1-4 In Progress
+
+---
+
+## Phase 1: Database & Foundation
+
+### P1.1 Add Prisma Models
+| ID | Task | Priority | Status |
+|----|------|----------|--------|
+| 158 | Add ValidationLink, ValidationSession models | HIGH | ✅ Done |
+| - | Extend Response with validationSessionId | HIGH | ✅ Done |
+| - | Add Persona.validationLink relation | HIGH | ✅ Done |
+
+### P1.2 Create Utility Functions
+| ID | Task | Priority | Status |
+|----|------|----------|--------|
+| 159 | generateValidationSlug() - 16 hex chars | HIGH | ✅ Done |
+| 159 | getValidationUrl() helper | MEDIUM | ✅ Done |
+| 159 | isLinkAccessible() check | MEDIUM | ✅ Done |
+
+### P1.3 TypeScript Types
+| ID | Task | Priority | Status |
+|----|------|----------|--------|
+| 160 | ValidationLinkInfo interface | HIGH | ✅ Done |
+| 160 | ValidationProgress (localStorage) | HIGH | ✅ Done |
+| 160 | SubmitResponsePayload | HIGH | ✅ Done |
+
+### P1.4 Question Filtering
+| ID | Task | Priority | Status |
+|----|------|----------|--------|
+| 161 | getValidationQuestions() filter | HIGH | ✅ Done |
+| 161 | Skip questions with null validationQuestion | HIGH | ✅ Done |
+
+---
+
+## Phase 2: Public API Routes
+
+### P2.1-P2.4 Validation Endpoints
+| ID | Task | Priority | Status |
+|----|------|----------|--------|
+| 162 | GET /api/validate/[slug] - metadata | HIGH | ✅ Done |
+| 163 | POST /api/validate/[slug]/start | HIGH | ✅ Done |
+| 164 | POST /api/validate/[slug]/responses | HIGH | ✅ Done |
+| 165 | POST /api/validate/[slug]/complete | HIGH | ✅ Done |
+
+---
+
+## Phase 3: Founder API Routes
+
+| ID | Task | Priority | Status |
+|----|------|----------|--------|
+| 166 | GET/PATCH /personas/[id]/validation-link | HIGH | ✅ Done |
+| 167 | GET /personas/[id]/validation-responses | HIGH | ✅ Done |
+| 168 | Validation sessions API | MEDIUM | ✅ Done |
+
+---
+
+## Phase 4: UI Components
+
+### P4.1-P4.4 Validation Page
+| ID | Task | Priority | Status |
+|----|------|----------|--------|
+| 169 | Create validation page server component | HIGH | ✅ Done |
+| 170 | useValidationProgress hook (localStorage) | HIGH | ✅ Done |
+| 171 | ValidationPage client component | HIGH | ✅ Done |
+| 172 | ValidationComplete component | MEDIUM | ✅ Done |
+
+### P5.1-P5.4 Founder Dashboard
+| ID | Task | Priority | Status |
+|----|------|----------|--------|
+| 173 | ValidationShareButton + modal | HIGH | ✅ Done |
+| 174 | ByQuestionView component | HIGH | 🚀 In Progress |
+| 175 | BySessionView component | HIGH | 🚀 In Progress |
+| 176 | Founder validation dashboard page | HIGH | ✅ Done |
+
+---
+
+## Phase 6: Integration
+
+| ID | Task | Priority | Status |
+|----|------|----------|--------|
+| 177 | Add share button to PersonaCard | HIGH | ✅ Done |
+| 178 | Add navigation to dashboard | MEDIUM | ✅ Done |
+| 179 | Edge cases & error states | MEDIUM | 🚀 In Progress |
+| 180 | Mobile responsive validation | LOW | Pending |
+
+---
+
+## Critical Path
+
+\`\`\`
+P1.1 (Models) → P1.2-P1.4 (Utils/Types)
+       ↓
+P2.1-P2.4 (Public API)
+       ↓
+P4.1-P4.4 (Validation UI)
+       ↓
+P3.1-P3.3 (Founder API)
+       ↓
+P5.1-P5.4 (Dashboard)
+       ↓
+P6.1-P6.4 (Integration)
+\`\`\`
+
+---
+
+## Summary
+
+| Phase | Tasks | HIGH | Status |
+|-------|-------|------|--------|
+| Phase 1: Foundation | 8 | 6 | ✅ Complete |
+| Phase 2: Public API | 4 | 4 | ✅ Complete |
+| Phase 3: Founder API | 3 | 2 | ✅ Complete |
+| Phase 4: Validation UI | 4 | 3 | ✅ Complete |
+| Phase 5: Dashboard | 4 | 3 | 🚀 In Progress |
+| Phase 6: Integration | 4 | 2 | 🚀 In Progress |
+| **Total** | **27** | **20** | |`
   }
 };
 
@@ -539,95 +968,205 @@ const DocumentViewerProvider = ({ children }: { children: React.ReactNode }) => 
 };
 
 // Document Viewer Panel Component
+// Document groups - each documentId can have multiple example variants
+type DocumentGroupId = 'ideation' | 'spec' | 'decomposed';
+
+interface DocumentGroup {
+  id: DocumentGroupId;
+  variants: {
+    id: string;
+    tabLabel: string;
+    tabSubLabel: string;
+    document: DocumentMeta;
+  }[];
+}
+
+const DOCUMENT_GROUPS: Record<DocumentGroupId, DocumentGroup> = {
+  'ideation': {
+    id: 'ideation',
+    variants: [
+      {
+        id: 'greenfield',
+        tabLabel: 'NEW APPLICATION FROM SCRATCH',
+        tabSubLabel: 'Smart Capture SDK',
+        document: DOCUMENTS['spec-ideate-output'],
+      },
+      {
+        id: 'existing',
+        tabLabel: 'NEW FEATURE, EXISTING CODEBASE',
+        tabSubLabel: 'Validation Sharing System',
+        document: DOCUMENTS['spec-ideate-output-validation'],
+      },
+    ],
+  },
+  'spec': {
+    id: 'spec',
+    variants: [
+      {
+        id: 'greenfield',
+        tabLabel: 'NEW APPLICATION FROM SCRATCH',
+        tabSubLabel: 'Smart Capture SDK',
+        document: DOCUMENTS['spec-full-example'],
+      },
+      {
+        id: 'existing',
+        tabLabel: 'NEW FEATURE, EXISTING CODEBASE',
+        tabSubLabel: 'Validation Mode',
+        document: DOCUMENTS['spec-full-example-validation'],
+      },
+    ],
+  },
+  'decomposed': {
+    id: 'decomposed',
+    variants: [
+      {
+        id: 'greenfield',
+        tabLabel: 'NEW APPLICATION FROM SCRATCH',
+        tabSubLabel: 'Smart Capture SDK',
+        document: DOCUMENTS['spec-decomposed'],
+      },
+      {
+        id: 'existing',
+        tabLabel: 'NEW FEATURE, EXISTING CODEBASE',
+        tabSubLabel: 'Validation Sharing',
+        document: DOCUMENTS['spec-decomposed-validation'],
+      },
+    ],
+  },
+};
+
+// Map documentIds to their groups for lookup
+const DOCUMENT_TO_GROUP: Record<string, DocumentGroupId> = {
+  'spec-ideate-output': 'ideation',
+  'spec-ideate-output-validation': 'ideation',
+  'spec-full-example': 'spec',
+  'spec-full-example-validation': 'spec',
+  'spec-decomposed': 'decomposed',
+  'spec-decomposed-validation': 'decomposed',
+};
+
 const DocumentViewerPanel = () => {
-  const { isOpen, documentId, closeViewer } = useDocumentViewer();
-  const [isExpanded, setIsExpanded] = useState(false);
+  const { isOpen, documentId, closeViewer, openDocument } = useDocumentViewer();
+  const [activeVariantIndex, setActiveVariantIndex] = useState(0);
   const scrollRef = useRef<HTMLDivElement>(null);
 
-  const document = documentId ? DOCUMENTS[documentId] : null;
+  // Check if this document is part of a group with multiple variants
+  const groupId = documentId ? DOCUMENT_TO_GROUP[documentId] : null;
+  const group = groupId ? DOCUMENT_GROUPS[groupId] : null;
+  const hasMultipleVariants = group && group.variants.length > 1;
 
-  // Reset expanded state when closing
+  // Get the current document (either from group or directly)
+  const currentDocument = hasMultipleVariants
+    ? group.variants[activeVariantIndex].document
+    : documentId ? DOCUMENTS[documentId] : null;
+
+  // Reset variant index when opening a new document
   useEffect(() => {
-    if (!isOpen) {
-      setIsExpanded(false);
+    if (documentId && groupId) {
+      // Find which variant index matches the opened document
+      const variantIndex = DOCUMENT_GROUPS[groupId].variants.findIndex(
+        v => v.document.id === documentId
+      );
+      setActiveVariantIndex(variantIndex >= 0 ? variantIndex : 0);
     }
-  }, [isOpen]);
+  }, [documentId, groupId]);
 
-  // Calculate panel width
-  const panelWidth = isExpanded ? '75%' : '40%';
+  // Scroll to top when switching variants
+  useEffect(() => {
+    if (scrollRef.current) {
+      scrollRef.current.scrollTop = 0;
+    }
+  }, [activeVariantIndex]);
 
   return (
     <AnimatePresence>
-      {isOpen && document && (
+      {isOpen && currentDocument && (
         <>
-          {/* Backdrop - only visible when expanded */}
-          {isExpanded && (
-            <motion.div
-              className="fixed inset-0 z-40"
-              style={{ backgroundColor: 'rgba(0, 0, 0, 0.85)' }}
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-              exit={{ opacity: 0 }}
-              onClick={() => setIsExpanded(false)}
-            />
-          )}
+          {/* Backdrop */}
+          <motion.div
+            className="fixed inset-0 z-40"
+            style={{ backgroundColor: 'rgba(0, 0, 0, 0.85)' }}
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            onClick={closeViewer}
+          />
 
-          {/* Panel - 40% width by default, 75% when expanded */}
+          {/* Panel - wide by default (75%) */}
           <motion.div
             className="fixed right-0 top-0 h-full z-50 flex flex-col shadow-2xl border-l border-zinc-800"
             style={{
-              width: panelWidth,
-              minWidth: '360px',
+              width: '75%',
+              minWidth: '600px',
+              maxWidth: '1200px',
               backgroundColor: '#0a0a0f'
             }}
             initial={{ x: '100%', opacity: 0.8 }}
             animate={{
               x: 0,
               opacity: 1,
-              width: panelWidth,
-              transition: {
-                x: { type: 'spring', damping: 30, stiffness: 300 },
-                width: { duration: 0.2 }
-              }
+              transition: { type: 'spring', damping: 30, stiffness: 300 }
             }}
             exit={{ x: '100%', opacity: 0.8 }}
           >
-            {/* Header */}
+            {/* Header with variant tabs */}
             <div
-              className="flex items-center justify-between px-6 py-4 border-b border-zinc-800"
+              className="border-b border-zinc-800"
               style={{ backgroundColor: '#0d0d0d' }}
             >
-              <div className="flex items-center gap-4">
-                {/* Expand/Collapse toggle */}
-                <button
-                  onClick={() => setIsExpanded(!isExpanded)}
-                  className="text-zinc-500 hover:text-white transition-colors p-2 hover:bg-zinc-800 rounded-lg"
-                  title={isExpanded ? "Collapse panel" : "Expand panel"}
-                >
-                  {isExpanded ? (
-                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                      <path d="M4 14h6m0 0v6m0-6L3 21M20 10h-6m0 0V4m0 6l7-7" />
-                    </svg>
-                  ) : (
-                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                      <path d="M15 3h6m0 0v6m0-6l-7 7M9 21H3m0 0v-6m0 6l7-7" />
-                    </svg>
-                  )}
-                </button>
-                <div>
-                  <p className="text-zinc-500 text-xs uppercase tracking-wider mb-1">Example Document</p>
-                  <h3 className="text-white font-semibold">{document.title}</h3>
+              {/* Tab switcher for multi-variant documents */}
+              {hasMultipleVariants && (
+                <div className="flex border-b border-zinc-800/50">
+                  {group.variants.map((variant, index) => (
+                    <button
+                      key={variant.id}
+                      onClick={() => setActiveVariantIndex(index)}
+                      className={`flex-1 px-6 py-4 text-left transition-all relative ${
+                        index === activeVariantIndex
+                          ? 'bg-zinc-900/50'
+                          : 'hover:bg-zinc-800/30'
+                      }`}
+                    >
+                      <p className={`text-[10px] font-mono uppercase tracking-wider mb-1 ${
+                        index === activeVariantIndex ? 'text-[#d4a54a]' : 'text-zinc-500'
+                      }`}>
+                        Example {index + 1}: {variant.tabLabel}
+                      </p>
+                      <p className={`text-sm font-medium ${
+                        index === activeVariantIndex ? 'text-white' : 'text-zinc-400'
+                      }`}>
+                        {variant.tabSubLabel}
+                      </p>
+                      {/* Active indicator */}
+                      {index === activeVariantIndex && (
+                        <motion.div
+                          className="absolute bottom-0 left-0 right-0 h-0.5 bg-[#d4a54a]"
+                          layoutId="activeTab"
+                        />
+                      )}
+                    </button>
+                  ))}
                 </div>
+              )}
+
+              {/* Title bar */}
+              <div className="flex items-center justify-between px-6 py-4">
+                <div>
+                  {!hasMultipleVariants && (
+                    <p className="text-zinc-500 text-xs uppercase tracking-wider mb-1">Example Document</p>
+                  )}
+                  <h3 className="text-white font-semibold">{currentDocument.title}</h3>
+                </div>
+                <button
+                  onClick={closeViewer}
+                  className="text-zinc-500 hover:text-white transition-colors p-2 hover:bg-zinc-800 rounded-lg"
+                  title="Close panel"
+                >
+                  <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                    <path d="M18 6L6 18M6 6l12 12" />
+                  </svg>
+                </button>
               </div>
-              <button
-                onClick={closeViewer}
-                className="text-zinc-500 hover:text-white transition-colors p-2 hover:bg-zinc-800 rounded-lg"
-                title="Close panel"
-              >
-                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                  <path d="M18 6L6 18M6 6l12 12" />
-                </svg>
-              </button>
             </div>
 
             {/* Content - solid background for readability */}
@@ -637,7 +1176,7 @@ const DocumentViewerPanel = () => {
               style={{ backgroundColor: '#0a0a0f' }}
             >
               <div className="prose prose-invert prose-sm max-w-none">
-                <DocumentMarkdown content={document.content} />
+                <DocumentMarkdown content={currentDocument.content} />
               </div>
             </div>
 
@@ -648,9 +1187,9 @@ const DocumentViewerPanel = () => {
             >
               <p className="text-zinc-600 text-xs flex items-center gap-2">
                 <span>📄</span>
-                <span className="font-mono">{document.path}</span>
+                <span className="font-mono">{currentDocument.path}</span>
                 <span className="text-zinc-700">•</span>
-                <span>{document.content.split('\n').length} lines</span>
+                <span>{currentDocument.content.split('\n').length} lines</span>
               </p>
             </div>
           </motion.div>
