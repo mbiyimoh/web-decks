@@ -467,3 +467,137 @@ app/learning/ai-workflow/
      },
    ],
    ```
+
+---
+
+## Document Viewer System
+
+The Claude Code Workflow module includes a document viewer system that displays example documents (specs, ideation docs, decomposed tasks) in a slide-in panel. This allows learners to view real examples without leaving the deck.
+
+### Architecture
+
+Document data is stored separately from the deck component for maintainability:
+
+```
+app/learning/ai-workflow/claude-code-workflow/
+├── ClaudeCodeWorkflowDeck.tsx   # Main deck component
+└── documents.ts                  # Document data & grouping
+```
+
+### Key Types
+
+```typescript
+// documents.ts
+
+// Document identifiers
+type DocumentId =
+  | 'claude-md-example'
+  | 'spec-ideate-output'
+  | 'spec-ideate-output-validation'
+  | 'spec-full-example'
+  // ... etc
+
+// Document metadata
+interface DocumentMeta {
+  id: DocumentId;
+  title: string;
+  path: string;
+  content: string;
+}
+
+// Document grouping for multi-variant examples
+type DocumentGroupId = 'ideation' | 'spec' | 'decomposed';
+
+interface DocumentGroup {
+  id: DocumentGroupId;
+  variants: {
+    id: string;
+    tabLabel: string;      // e.g., "NEW APPLICATION FROM SCRATCH"
+    tabSubLabel: string;   // e.g., "Smart Capture SDK"
+    document: DocumentMeta;
+  }[];
+}
+```
+
+### Multi-Variant Document System
+
+Documents can be grouped to show multiple examples of the same artifact type (e.g., ideation for greenfield vs existing codebase):
+
+```typescript
+// documents.ts
+export const DOCUMENT_GROUPS: Record<DocumentGroupId, DocumentGroup> = {
+  'ideation': {
+    id: 'ideation',
+    variants: [
+      {
+        id: 'greenfield',
+        tabLabel: 'NEW APPLICATION FROM SCRATCH',
+        tabSubLabel: 'Smart Capture SDK',
+        document: DOCUMENTS['spec-ideate-output'],
+      },
+      {
+        id: 'existing',
+        tabLabel: 'NEW FEATURE, EXISTING CODEBASE',
+        tabSubLabel: 'Validation Sharing System',
+        document: DOCUMENTS['spec-ideate-output-validation'],
+      },
+    ],
+  },
+  // ... 'spec' and 'decomposed' groups
+};
+
+// Map document IDs to their groups
+export const DOCUMENT_TO_GROUP: Record<string, DocumentGroupId> = {
+  'spec-ideate-output': 'ideation',
+  'spec-ideate-output-validation': 'ideation',
+  // ...
+};
+```
+
+### Usage in Deck
+
+```tsx
+// Import from documents.ts
+import {
+  type DocumentId,
+  DOCUMENTS,
+  DOCUMENT_GROUPS,
+  DOCUMENT_TO_GROUP,
+} from './documents';
+
+// Open a document (context provider handles state)
+const { openDocument } = useDocumentViewer();
+openDocument('spec-ideate-output');
+
+// ViewExampleCTA component for consistent styling
+<ViewExampleCTA
+  text="See Ideation Example"
+  onClick={() => openDocument('spec-ideate-output')}
+/>
+```
+
+### Adding New Documents
+
+1. Add the document ID to the `DocumentId` type in `documents.ts`
+2. Add the document content to `DOCUMENTS` record
+3. If part of a group, add to `DOCUMENT_GROUPS` and `DOCUMENT_TO_GROUP`
+
+```typescript
+// 1. Add to type
+type DocumentId =
+  | 'existing-ids'
+  | 'new-document-id';
+
+// 2. Add content
+const DOCUMENTS: Record<DocumentId, DocumentMeta> = {
+  // ... existing
+  'new-document-id': {
+    id: 'new-document-id',
+    title: 'New Document Title',
+    path: 'path/to/document.md',
+    content: `Document content here...`,
+  },
+};
+
+// 3. If grouped, add to DOCUMENT_GROUPS variant
+```
