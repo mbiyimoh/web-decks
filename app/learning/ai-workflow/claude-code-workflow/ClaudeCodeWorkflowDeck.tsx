@@ -146,135 +146,285 @@ Use conventional commits: feat:, fix:, refactor:, docs:, test:
   },
   'spec-ideate-output': {
     id: 'spec-ideate-output',
-    title: 'Ideation Output: Auth Magic Link',
-    path: 'specs/ideate/auth-magic-link.md',
-    content: `# Ideation: Magic Link Authentication
+    title: 'Ideation: Smart Capture SDK',
+    path: 'docs/ideation/sneaker-angle-capture-system.md',
+    content: `# Smart Capture SDK: Object-Agnostic Angle Capture System
 
-## Codebase Analysis
+**Status:** DECISIONS LOCKED - Ready for Spec
 
-### Existing Auth Patterns Found
-- src/lib/auth.ts — Current NextAuth v4 config (needs upgrade)
-- src/middleware.ts — Route protection logic
-- src/hooks/use-auth.ts — Client-side auth hook
-- prisma/schema.prisma — User, Session, Account models exist
+---
 
-### Related Components
-- src/components/auth/login-form.tsx — Current login UI
-- src/components/auth/signup-form.tsx — Current signup UI
-- src/app/(auth)/layout.tsx — Auth page layout
+## 1) Intent & Assumptions
 
-## External Research
+**Task brief:** Build a reusable, object-agnostic smart capture system that guides users through capturing objects from predefined angles using real-time ML-powered recognition.
 
-### Auth.js v5 Migration
-- Breaking changes: new auth() function replaces getServerSession
-- Config moves from API route to auth.ts file
-- Adapters API unchanged
+**Assumptions:**
+- Extensibility is paramount - architecture must support adding new object types
+- Target: Web prototype first → Mobile-first micro-app MVP
+- Object profiles define: target angles, ML model, overlay guides, confidence thresholds
+- Sneakers are the first object profile; figurines, watches will follow
 
-### Magic Link Best Practices
-- Token expiry: 10-15 minutes recommended
-- One-time use: invalidate after click
-- Rate limiting: max 3 requests per email per hour
+**Out of scope:**
+- Native app integration work (designed for, but not implemented)
+- Cloud-based ML processing
+- Building object profiles beyond sneakers
 
-## Recommended Approach
+---
 
-1. Set up Resend for email delivery
-2. Migrate NextAuth v4 → v5 first (separate PR)
-3. Add Email provider with custom template
-4. Add rate limiting with upstash/redis
-5. Implement graceful session migration`
+## 2) Pre-reading Log
+
+This is a greenfield project with no existing codebase.
+
+**Key Implication:** Full architecture decisions need to be made from scratch.
+
+---
+
+## 3) Codebase Map
+
+### Recommended Architecture
+
+\`\`\`
+src/
+├── core/                    # Reusable SDK engine
+│   ├── camera/              # Camera abstraction layer
+│   ├── ml/                  # ML inference engine
+│   ├── capture/             # Capture orchestration
+│   └── ui/                  # Reusable UI components
+│
+├── profiles/                # Object profile configurations
+│   ├── types.ts             # ObjectProfile interface
+│   ├── sneakers/            # Sneaker-specific implementation
+│   └── _template/           # Template for new profiles
+│
+└── app/                     # Application layer
+\`\`\`
+
+---
+
+## 5) Research Findings
+
+### Registry Pattern for ML Models
+**Industry Standard:** Used by MMDetection, Ultralytics YOLO
+
+Enables:
+- Lazy loading: Models load only when needed
+- Hot-swapping: Switch profiles without app restart
+- Memory management: Unload unused models
+
+### Classification-Based ML Approach
+- **8 Classes:** top-down, sole, heel, toe, side-left, side-right, size-tag, box
+- **Architecture:** MobileNetV3-Small backbone (~4MB)
+- **Target Accuracy:** >90% top-1 per angle
+
+---
+
+## 6) Decisions (LOCKED)
+
+| Decision | Choice | Rationale |
+|----------|--------|-----------|
+| Profile Format | TypeScript modules | Type-safe, IDE support |
+| ML Approach | Classification | Simpler than pose estimation |
+| Platform | Web-first | Fastest iteration |
+| Performance | <200ms latency | Good UX baseline |
+
+---
+
+## 7) Next Steps
+
+1. Create implementation spec
+2. Train angle detection model
+3. Begin implementation`
   },
   'spec-full-example': {
     id: 'spec-full-example',
-    title: 'Full Spec: Auth Magic Link',
-    path: 'specs/auth-magic-link.spec.md',
-    content: `# Spec: Magic Link Authentication
+    title: 'Spec: Smart Capture SDK Web Prototype',
+    path: 'specs/smart-capture-sdk-web-prototype.md',
+    content: `# Smart Capture SDK - Web Prototype Specification
 
-## Overview
-Implement passwordless authentication via email magic links as the primary login method for TradeBlock.
+**Version:** 1.1 | **Status:** Phase 2 Complete (Real Model Trained)
 
-## User Stories
+---
 
-### US-1: New User Signup
-As a new user, I want to sign up with just my email so I don't have to create a password.
+## 1. Overview
 
-**Acceptance Criteria:**
-- Enter email on signup page
-- Receive magic link email within 30 seconds
-- Click link to complete signup
-- Redirected to onboarding flow
+### 1.1 Purpose
+Build a web-based prototype of the Smart Capture SDK that demonstrates ML-powered angle capture for sneakers. Mobile-first to validate UX before React Native.
 
-### US-2: Existing User Login
-As an existing user, I want to log in with a magic link.
+### 1.2 Goals
+1. Deliver Apple Face ID-inspired capture experience
+2. Validate ML angle detection with real training data
+3. Build extensibility for future object profiles
+4. Deploy to Railway for mobile testing
 
-**Acceptance Criteria:**
-- Enter email on login page
-- Receive magic link if account exists
-- Click link to authenticate
-- Redirected to dashboard
+### 1.3 Non-Goals (This Phase)
+- React Native implementation
+- Multiple object profiles (only sneakers)
+- Native app embedding API
 
-## Security Considerations
+---
 
-1. **Token Expiry**: 10 minutes
-2. **One-Time Use**: Token invalidated after click
-3. **Rate Limiting**: 3 requests per email per hour
-4. **HTTPS Only**: Magic link URLs use HTTPS
+## 2. User Experience
 
-## Rollout Plan
+### 2.1 User Flow
 
-1. Phase 1: Add magic link as secondary option
-2. Phase 2: Make magic link the default
-3. Phase 3: Deprecate password login (optional)`
+Landing → Onboarding → Capture Screen → Review → Success
+
+### 2.2 Capture Screen (Core Experience)
+
+**Elements:**
+1. **Progress Indicator:** "1 of 7" with completion status
+2. **Camera Feed:** Full-screen video from device
+3. **Silhouette Overlay:** SVG outline for target angle
+4. **Confidence Ring:** Color gradient blue → yellow → green
+5. **Manual Capture:** Appears after 5 seconds
+
+**Auto-Capture Flow:**
+1. Freeze frame briefly (100ms)
+2. Play success animation
+3. Trigger haptic feedback
+4. Save captured image
+5. Transition to next angle
+
+---
+
+## 3. Technical Architecture
+
+### 3.1 Technology Stack
+
+| Layer | Technology |
+|-------|------------|
+| Framework | Next.js 14 (App Router) |
+| Styling | Tailwind CSS |
+| Animation | Framer Motion |
+| Camera | react-webcam |
+| ML Inference | TensorFlow.js |
+| Deployment | Railway |
+
+### 3.2 ML Model
+
+| Property | Value |
+|----------|-------|
+| Architecture | MobileNetV3-Small |
+| Input Size | 224 x 224 x 3 |
+| Output | 8 classes (softmax) |
+| Format | TensorFlow.js |
+| Size | < 10MB |
+
+**Class Labels:**
+top-down, sole, heel, toe, side-left, side-right, size-tag, box
+
+---
+
+## 4. Implementation Phases
+
+### Phase 1: Foundation ✅
+Full UX flow with placeholder model
+
+### Phase 2: Model Training ✅
+- Accuracy: 72% overall
+- Size: 4.44 MB
+- Confidence threshold: 0.55
+
+### Phase 3: Polish
+Performance optimization, error handling, accessibility
+
+---
+
+## 5. Success Criteria
+
+### Functional
+- [ ] Complete 7-angle capture session
+- [ ] Auto-capture triggers correctly
+- [ ] Works on iPhone Safari + Android Chrome
+
+### Technical
+- [ ] Model accuracy > 70% ✅ (72%)
+- [ ] Page loads < 3 seconds
+- [ ] Model loads < 2 seconds`
   },
   'spec-decomposed': {
     id: 'spec-decomposed',
-    title: 'Decomposed Tasks: Auth Magic Link',
-    path: 'specs/auth-magic-link.tasks.md',
-    content: `# Task Breakdown: Magic Link Authentication
+    title: 'Decomposed Tasks: Smart Capture SDK',
+    path: 'specs/smart-capture-sdk-decomposed-tasks.md',
+    content: `# Smart Capture SDK - Task Decomposition
 
-## Phase 1: Foundation (Parallel)
+**Spec:** smart-capture-sdk-web-prototype.md
+**Status:** Ready for Execution
 
-### Task 1.1: Install Dependencies
-npm install resend @react-email/components next-auth@beta @auth/prisma-adapter
+---
 
-**Files:** package.json
-**Estimate:** 5 min
+## Phase 1: Foundation (Core + Placeholder Model)
 
-### Task 1.2: Database Schema Update
-Add VerificationToken model to Prisma schema.
+### 1.1 Project Setup
+| ID | Task | Priority | Complexity |
+|----|------|----------|------------|
+| P1-01 | Initialize Next.js 14 with Tailwind, TypeScript | HIGH | LOW |
+| P1-02 | Configure project structure (core/, profiles/, app/) | HIGH | LOW |
+| P1-03 | Install deps (framer-motion, react-webcam, tfjs) | HIGH | LOW |
 
-**Files:** prisma/schema.prisma, prisma/migrations/
-**Estimate:** 10 min
+### 1.2 Core Types & Interfaces
+| ID | Task | Priority | Complexity |
+|----|------|----------|------------|
+| P1-06 | Create profiles/types.ts (ObjectProfile, AngleDefinition) | HIGH | LOW |
+| P1-07 | Create core/capture/types.ts (CaptureState, SessionState) | HIGH | LOW |
+| P1-08 | Create core/ml/types.ts (InferenceResult) | HIGH | LOW |
 
-### Task 1.3: Email Template Component
-Create React Email template for magic links.
+### 1.3 Camera Module
+| ID | Task | Priority | Complexity |
+|----|------|----------|------------|
+| P1-13 | Implement CameraProvider.tsx with react-webcam | HIGH | MEDIUM |
+| P1-14 | Implement useCamera.ts hook | HIGH | MEDIUM |
 
-**Files:** src/emails/magic-link.tsx
-**Estimate:** 15 min
+### 1.4 ML Module (Placeholder)
+| ID | Task | Priority | Complexity |
+|----|------|----------|------------|
+| P1-16 | Implement TFJSAdapter.ts with placeholder | HIGH | MEDIUM |
+| P1-17 | Implement useInference.ts hook | HIGH | MEDIUM |
 
-## Phase 2: Core Auth
+### 1.5 Capture Session Logic
+| ID | Task | Priority | Complexity |
+|----|------|----------|------------|
+| P1-19 | Implement CaptureSession.ts state machine | HIGH | HIGH |
+| P1-20 | Implement useCaptureSession.ts hook | HIGH | HIGH |
 
-### Task 2.1: Auth.js v5 Configuration
-Set up new auth config with Email provider.
+### 1.6 UI Components
+| ID | Task | Priority | Complexity |
+|----|------|----------|------------|
+| P1-22 | ConfidenceRing.tsx with gradient animation | HIGH | MEDIUM |
+| P1-23 | GuideOverlay.tsx for silhouettes | HIGH | MEDIUM |
+| P1-11 | Create 8 silhouette SVGs | HIGH | MEDIUM |
 
-**Files:** src/lib/auth.ts, src/lib/auth.config.ts
-**Estimate:** 30 min
+### 1.7 App Screens
+| ID | Task | Priority | Complexity |
+|----|------|----------|------------|
+| P1-29 | Landing Screen with permission request | HIGH | MEDIUM |
+| P1-30 | Capture Screen with full flow | HIGH | HIGH |
+| P1-31 | Review Screen with retake | HIGH | MEDIUM |
+| P1-32 | Success Screen with celebration | MEDIUM | LOW |
 
-### Task 2.2: API Route Handler
-Create NextAuth API route.
+---
 
-**Files:** src/app/api/auth/[...nextauth]/route.ts
-**Estimate:** 10 min
+## Critical Path
+
+P1-01 → P1-02 → P1-03 (Setup)
+  ↓
+P1-06, P1-07, P1-08 (Types)
+  ↓
+P1-13 → P1-14 (Camera)  |  P1-16 → P1-17 (ML)
+  ↓
+P1-19 → P1-20 (Session)
+  ↓
+P1-29 → P1-30 → P1-31 → P1-32 (Screens)
+
+---
 
 ## Summary
 
-| Phase | Tasks | Total Estimate |
-|-------|-------|----------------|
-| 1. Foundation | 3 | 30 min |
-| 2. Core Auth | 2 | 40 min |
-| 3. UI | 3 | 55 min |
-| 4. Testing | 2 | 75 min |
-
-**Total Estimate:** ~3.5 hours`
+| Phase | Tasks | HIGH | MEDIUM | Status |
+|-------|-------|------|--------|--------|
+| Phase 1 | 38 | 22 | 12 | ✅ Complete |
+| Phase 2 | 12 | 9 | 3 | ✅ Complete |
+| Phase 3 | 12 | 4 | 5 | 🚀 In Progress |`
   },
   'hook-config': {
     id: 'hook-config',
@@ -762,6 +912,7 @@ export default function ClaudeCodeWorkflowDeck() {
     { id: 'validate', label: '/spec:validate' },
     { id: 'decompose', label: '/spec:decompose' },
     { id: 'execute', label: '/spec:execute' },
+    { id: 'dev-guides', label: 'Developer Guides' },
     { id: 'debugging', label: 'Debugging' },
     { id: 'hooks-subagents', label: 'Hooks & Subagents' },
     { id: 'real-scenarios', label: 'Real Scenarios' },
@@ -1685,11 +1836,139 @@ export async function authenticateUser(
         </div>
       </Section>
 
+      {/* DEVELOPER GUIDES */}
+      <Section id="dev-guides" className="relative">
+        <div className="absolute top-1/3 right-1/4 w-80 h-80 bg-emerald-500/5 rounded-full blur-3xl" />
+        <div className="relative z-10 max-w-5xl mx-auto">
+          <RevealText>
+            <SectionLabel number={10} label="DEVELOPER GUIDES" className="text-emerald-400" />
+          </RevealText>
+          <RevealText delay={0.05}>
+            <h2 className="font-display text-4xl md:text-5xl font-medium leading-tight mb-4">
+              Documentation that <span className="text-emerald-400">AI agents can use</span>
+            </h2>
+          </RevealText>
+          <RevealText delay={0.1}>
+            <p className="text-xl text-zinc-400 mb-8 max-w-3xl">
+              Developer guides help you understand your codebase — but more importantly,
+              they help <span className="text-white">any AI coding agent</span> understand it too.
+            </p>
+          </RevealText>
+
+          {/* Core insight card */}
+          <RevealText delay={0.15}>
+            <Card className="mb-8" highlight>
+              <p className="text-zinc-300">
+                <span className="text-emerald-400">The real audience?</span> Every AI that touches this code.
+                When Claude Code, Cursor, or any LLM-powered tool opens your project, these guides
+                tell it exactly what's here and how everything connects.
+              </p>
+            </Card>
+          </RevealText>
+
+          <RevealText delay={0.18}>
+            <TheoryPracticeDivider />
+          </RevealText>
+
+          {/* Two commands side by side */}
+          <div className="grid md:grid-cols-2 gap-6 mb-8">
+            <RevealText delay={0.2}>
+              <Card className="h-full">
+                <div className="flex items-center gap-3 mb-4">
+                  <span className="text-2xl">📖</span>
+                  <h3 className="text-xl font-semibold text-emerald-400">/create-dev-guide</h3>
+                </div>
+                <p className="text-zinc-400 text-sm mb-4">
+                  Generate a comprehensive guide for any part of your codebase
+                </p>
+                <div className="bg-[#0d0d0d] border border-zinc-800 rounded-lg p-3 mb-4">
+                  <code className="text-xs text-zinc-400">
+                    /create-dev-guide auth-system
+                  </code>
+                </div>
+                <div className="space-y-2 text-zinc-500 text-sm">
+                  <div className="flex items-start gap-2">
+                    <span className="text-emerald-400">→</span>
+                    <span>Analyzes file structure and relationships</span>
+                  </div>
+                  <div className="flex items-start gap-2">
+                    <span className="text-emerald-400">→</span>
+                    <span>Documents patterns, conventions, gotchas</span>
+                  </div>
+                  <div className="flex items-start gap-2">
+                    <span className="text-emerald-400">→</span>
+                    <span>Creates reference for humans AND AI agents</span>
+                  </div>
+                </div>
+              </Card>
+            </RevealText>
+
+            <RevealText delay={0.2}>
+              <Card className="h-full">
+                <div className="flex items-center gap-3 mb-4">
+                  <span className="text-2xl">🔄</span>
+                  <h3 className="text-xl font-semibold text-blue-400">/docs:sync</h3>
+                </div>
+                <p className="text-zinc-400 text-sm mb-4">
+                  Smart update of all documentation after changes
+                </p>
+                <div className="bg-[#0d0d0d] border border-zinc-800 rounded-lg p-3 mb-4">
+                  <code className="text-xs text-zinc-400">
+                    /docs:sync
+                  </code>
+                </div>
+                <div className="space-y-2 text-zinc-500 text-sm">
+                  <div className="flex items-start gap-2">
+                    <span className="text-blue-400">→</span>
+                    <span>Analyzes what's changed since last sync</span>
+                  </div>
+                  <div className="flex items-start gap-2">
+                    <span className="text-blue-400">→</span>
+                    <span>Updates only affected documentation</span>
+                  </div>
+                  <div className="flex items-start gap-2">
+                    <span className="text-blue-400">→</span>
+                    <span>Keeps guides accurate as code evolves</span>
+                  </div>
+                </div>
+              </Card>
+            </RevealText>
+          </div>
+
+          {/* What gets documented */}
+          <RevealText delay={0.25}>
+            <Card>
+              <h3 className="text-lg font-semibold mb-4 text-zinc-300">What a developer guide captures</h3>
+              <div className="grid grid-cols-2 md:grid-cols-4 gap-3 text-sm">
+                {[
+                  { icon: '🗂️', label: 'File structure', desc: 'What lives where' },
+                  { icon: '🔗', label: 'Dependencies', desc: 'How parts connect' },
+                  { icon: '⚠️', label: 'Gotchas', desc: 'Known edge cases' },
+                  { icon: '🎯', label: 'Patterns', desc: 'How to extend it' },
+                ].map(item => (
+                  <div key={item.label} className="bg-[#0d0d0d] border border-zinc-800 rounded-lg p-3">
+                    <div className="text-lg mb-1">{item.icon}</div>
+                    <div className="text-emerald-400 text-xs mb-1">{item.label}</div>
+                    <div className="text-zinc-500 text-xs">{item.desc}</div>
+                  </div>
+                ))}
+              </div>
+              <div className="mt-4 pt-4 border-t border-zinc-800">
+                <p className="text-zinc-500 text-sm">
+                  <span className="text-emerald-400">Result:</span> When any AI agent opens your project,
+                  it immediately knows the lay of the land — no exploration phase needed.
+                </p>
+              </div>
+            </Card>
+          </RevealText>
+        </div>
+      </Section>
+
       {/* DEBUGGING */}
       <Section id="debugging" className="relative">
         <div className="max-w-5xl mx-auto">
           <RevealText>
-            <SectionLabel number={9} label="DEBUGGING" />
+            <SectionLabel number={11} label="DEBUGGING" />
           </RevealText>
           <RevealText delay={0.1}>
             <h2 className="font-display text-4xl md:text-5xl font-medium leading-tight mb-6">
@@ -1787,7 +2066,7 @@ export async function authenticateUser(
         <div className="absolute top-1/3 left-1/4 w-80 h-80 bg-purple-500/5 rounded-full blur-3xl" />
         <div className="relative z-10 max-w-5xl mx-auto">
           <RevealText>
-            <SectionLabel number={10} label="AUTOMATED QUALITY" />
+            <SectionLabel number={12} label="AUTOMATED QUALITY" />
           </RevealText>
           <RevealText delay={0.1}>
             <h2 className="font-display text-4xl md:text-5xl font-medium leading-tight mb-4">
@@ -1903,7 +2182,7 @@ export async function authenticateUser(
         <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[500px] h-[300px] bg-[#d4a54a]/8 rounded-full blur-3xl" />
         <div className="relative z-10 max-w-5xl mx-auto">
           <RevealText>
-            <SectionLabel number={11} label="REAL SCENARIOS" />
+            <SectionLabel number={13} label="REAL SCENARIOS" />
           </RevealText>
           <RevealText delay={0.1}>
             <h2 className="font-display text-4xl md:text-5xl font-medium leading-tight mb-4">
@@ -1985,7 +2264,7 @@ export async function authenticateUser(
         <div className="absolute bottom-1/3 right-1/3 w-96 h-96 bg-green-500/5 rounded-full blur-3xl" />
         <div className="relative z-10 max-w-5xl mx-auto">
           <RevealText>
-            <SectionLabel number={12} label="EVOLVE THE WORKFLOW" />
+            <SectionLabel number={14} label="EVOLVE THE WORKFLOW" />
           </RevealText>
           <RevealText delay={0.1}>
             <h2 className="font-display text-4xl md:text-5xl font-medium leading-tight mb-8">
