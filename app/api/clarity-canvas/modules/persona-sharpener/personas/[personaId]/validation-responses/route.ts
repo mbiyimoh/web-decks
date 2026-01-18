@@ -188,8 +188,36 @@ export async function GET(
         totalSessions: 0,
         totalResponses: 0,
         sessions: [],
-        responses: view === 'by-question' ? {} : [],
+        responsesByQuestion: {},   // Always included
+        responsesBySession: [],    // Always included
         summary: emptySummary,
+      });
+    }
+
+    // Fetch brain dump to get customized question texts
+    let customizedTextMap = new Map<string, string | null>();
+    if (persona.brainDumpId) {
+      const brainDump = await prisma.personaBrainDump.findUnique({
+        where: { id: persona.brainDumpId },
+        select: { customizedQuestions: true },
+      });
+
+      // customizedQuestions is stored as { [personaId]: { questions: CustomizedQuestion[], ... } }
+      type CustomizedQuestion = {
+        questionId: string;
+        validationContextualizedText?: string | null;
+      };
+      type CustomizedQuestionsResponse = {
+        questions: CustomizedQuestion[];
+      };
+      const allCustomizedQuestions = brainDump?.customizedQuestions as Record<string, CustomizedQuestionsResponse> | null;
+      const personaData = allCustomizedQuestions?.[personaId];
+      const personaQuestions = personaData?.questions || [];
+
+      personaQuestions.forEach((q) => {
+        if (q.validationContextualizedText) {
+          customizedTextMap.set(q.questionId, q.validationContextualizedText);
+        }
       });
     }
 
@@ -254,77 +282,18 @@ export async function GET(
         completedAt: s.completedAt,
       }));
 
-    if (view === 'by-question') {
-      // Group responses by questionId
-      const responsesByQuestion: Record<string, ValidationResponseByQuestion> = {};
+    // Always build BOTH responsesByQuestion AND responsesBySession
+    // This fixes the "0 responses" bug where client expects both formats
 
-      for (const response of responses) {
-        if (!responsesByQuestion[response.questionId]) {
-          const founderResponse = founderResponseMap.get(response.questionId);
-          responsesByQuestion[response.questionId] = {
-            questionId: response.questionId,
-            field: response.field,
-            founderAssumption: founderResponse
-              ? {
-                  value: founderResponse.value,
-                  confidence: founderResponse.confidence,
-                  isUnsure: founderResponse.isUnsure,
-                }
-              : null,
-            validationResponses: [],
-          };
-        }
+    // 1. Build responsesByQuestion
+    const responsesByQuestion: Record<string, ValidationResponseByQuestion> = {};
 
-        responsesByQuestion[response.questionId].validationResponses.push({
-          sessionId: response.validationSessionId!,
-          respondentName: response.validationSession?.respondentName || null,
-          value: response.value,
-          confidence: response.confidence,
-          isUnsure: response.isUnsure,
-          additionalContext: response.additionalContext,
-          createdAt: response.createdAt,
-        });
-      }
-
-      // Compute summary statistics
-      const summary = computeValidationSummary(
-        sessionSummaries,
-        founderResponses.map((r) => ({ questionId: r.questionId, value: r.value })),
-        responses.map((r) => ({ questionId: r.questionId, value: r.value })),
-        getTotalQuestions()
-      );
-
-      return NextResponse.json({
-        view: 'by-question',
-        personaName: persona.name || 'Unknown Persona',
-        totalSessions: persona.validationLink.totalSessions,
-        totalResponses: persona.validationLink.totalResponses,
-        sessions: sessionSummaries,
-        responsesByQuestion: responsesByQuestion,
-        summary,
-      });
-    } else {
-      // Group responses by session
-      const responsesBySession: ValidationResponseBySession[] = [];
-      const sessionResponseMap = new Map<
-        string,
-        ValidationResponseBySession['responses']
-      >();
-
-      for (const response of responses) {
-        const sessionId = response.validationSessionId!;
-        if (!sessionResponseMap.has(sessionId)) {
-          sessionResponseMap.set(sessionId, []);
-        }
-
+    for (const response of responses) {
+      if (!responsesByQuestion[response.questionId]) {
         const founderResponse = founderResponseMap.get(response.questionId);
-        sessionResponseMap.get(sessionId)!.push({
+        responsesByQuestion[response.questionId] = {
           questionId: response.questionId,
           field: response.field,
-          value: response.value,
-          confidence: response.confidence,
-          isUnsure: response.isUnsure,
-          additionalContext: response.additionalContext,
           founderAssumption: founderResponse
             ? {
                 value: founderResponse.value,
@@ -332,38 +301,83 @@ export async function GET(
                 isUnsure: founderResponse.isUnsure,
               }
             : null,
-        });
+          validationResponses: [],
+          validationContextualizedText: customizedTextMap.get(response.questionId) || null,
+        };
       }
 
-      // Build session response objects
-      for (const session of sessionSummaries) {
-        const sessionResponses = sessionResponseMap.get(session.id) || [];
-        if (sessionResponses.length > 0 || !filterQuestionId) {
-          responsesBySession.push({
-            session,
-            responses: sessionResponses,
-          });
-        }
-      }
-
-      // Compute summary statistics
-      const summary = computeValidationSummary(
-        sessionSummaries,
-        founderResponses.map((r) => ({ questionId: r.questionId, value: r.value })),
-        responses.map((r) => ({ questionId: r.questionId, value: r.value })),
-        getTotalQuestions()
-      );
-
-      return NextResponse.json({
-        view: 'by-session',
-        personaName: persona.name || 'Unknown Persona',
-        totalSessions: persona.validationLink.totalSessions,
-        totalResponses: persona.validationLink.totalResponses,
-        sessions: sessionSummaries,
-        responsesBySession: responsesBySession,
-        summary,
+      responsesByQuestion[response.questionId].validationResponses.push({
+        sessionId: response.validationSessionId!,
+        respondentName: response.validationSession?.respondentName || null,
+        value: response.value,
+        confidence: response.confidence,
+        isUnsure: response.isUnsure,
+        additionalContext: response.additionalContext,
+        createdAt: response.createdAt,
       });
     }
+
+    // 2. Build responsesBySession
+    const responsesBySession: ValidationResponseBySession[] = [];
+    const sessionResponseMap = new Map<
+      string,
+      ValidationResponseBySession['responses']
+    >();
+
+    for (const response of responses) {
+      const sessionId = response.validationSessionId!;
+      if (!sessionResponseMap.has(sessionId)) {
+        sessionResponseMap.set(sessionId, []);
+      }
+
+      const founderResponse = founderResponseMap.get(response.questionId);
+      sessionResponseMap.get(sessionId)!.push({
+        questionId: response.questionId,
+        field: response.field,
+        value: response.value,
+        confidence: response.confidence,
+        isUnsure: response.isUnsure,
+        additionalContext: response.additionalContext,
+        founderAssumption: founderResponse
+          ? {
+              value: founderResponse.value,
+              confidence: founderResponse.confidence,
+              isUnsure: founderResponse.isUnsure,
+            }
+          : null,
+      });
+    }
+
+    // Build session response objects
+    for (const session of sessionSummaries) {
+      const sessionResponses = sessionResponseMap.get(session.id) || [];
+      if (sessionResponses.length > 0 || !filterQuestionId) {
+        responsesBySession.push({
+          session,
+          responses: sessionResponses,
+        });
+      }
+    }
+
+    // 3. Compute summary statistics
+    const summary = computeValidationSummary(
+      sessionSummaries,
+      founderResponses.map((r) => ({ questionId: r.questionId, value: r.value })),
+      responses.map((r) => ({ questionId: r.questionId, value: r.value })),
+      getTotalQuestions()
+    );
+
+    // 4. Return BOTH formats in response
+    return NextResponse.json({
+      view,
+      personaName: persona.name || 'Unknown Persona',
+      totalSessions: persona.validationLink.totalSessions,
+      totalResponses: persona.validationLink.totalResponses,
+      sessions: sessionSummaries,
+      responsesByQuestion,  // Always included
+      responsesBySession,   // Always included
+      summary,
+    });
   } catch (error) {
     console.error('Error fetching validation responses:', error);
     return NextResponse.json(

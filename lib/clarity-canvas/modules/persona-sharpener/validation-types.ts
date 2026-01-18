@@ -69,6 +69,8 @@ export interface ValidationResponseByQuestion {
   field: string;
   founderAssumption: FounderAssumption | null;
   validationResponses: ValidationResponseItem[];
+  /** The contextualized question text that validators actually saw */
+  validationContextualizedText?: string | null;
 }
 
 /**

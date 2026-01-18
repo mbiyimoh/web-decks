@@ -7,6 +7,7 @@
  * to compare their assumptions with real customer responses.
  */
 
+import { useEffect } from 'react';
 import { motion } from 'framer-motion';
 import type { ValidationResponseByQuestion } from '@/lib/clarity-canvas/modules/persona-sharpener/validation-types';
 import { questionSequence } from '@/lib/clarity-canvas/modules/persona-sharpener/questions';
@@ -14,10 +15,24 @@ import { formatResponseValue } from '@/lib/clarity-canvas/modules/persona-sharpe
 
 interface Props {
   responses: Record<string, ValidationResponseByQuestion>;
+  focusedQuestionId?: string | null;
+  onFocusHandled?: () => void;
 }
 
-export function ValidationByQuestionView({ responses }: Props) {
+export function ValidationByQuestionView({ responses, focusedQuestionId, onFocusHandled }: Props) {
   const questionIds = Object.keys(responses);
+
+  // Scroll to focused question when navigating from "Needs Attention"
+  useEffect(() => {
+    if (focusedQuestionId) {
+      const element = document.getElementById(`question-${focusedQuestionId}`);
+      if (element) {
+        element.scrollIntoView({ behavior: 'smooth', block: 'start' });
+        // Clear the focus after scrolling
+        onFocusHandled?.();
+      }
+    }
+  }, [focusedQuestionId, onFocusHandled]);
 
   if (questionIds.length === 0) {
     return (
@@ -45,9 +60,14 @@ export function ValidationByQuestionView({ responses }: Props) {
         return (
           <motion.div
             key={questionId}
+            id={`question-${questionId}`}
             initial={{ opacity: 0, y: 10 }}
             animate={{ opacity: 1, y: 0 }}
-            className="bg-zinc-900/50 border border-zinc-800 rounded-xl p-6"
+            className={`bg-zinc-900/50 border rounded-xl p-6 scroll-mt-4 ${
+              focusedQuestionId === questionId
+                ? 'border-[#D4A84B] ring-1 ring-[#D4A84B]/50'
+                : 'border-zinc-800'
+            }`}
           >
             {/* Question header */}
             <div className="mb-4">
@@ -57,6 +77,11 @@ export function ValidationByQuestionView({ responses }: Props) {
               <h3 className="text-lg font-display text-white">
                 {question.question}
               </h3>
+              {data.validationContextualizedText && (
+                <p className="text-sm text-zinc-400 mt-2 italic">
+                  Validators saw: &ldquo;{data.validationContextualizedText}&rdquo;
+                </p>
+              )}
             </div>
 
             {/* Founder assumption */}

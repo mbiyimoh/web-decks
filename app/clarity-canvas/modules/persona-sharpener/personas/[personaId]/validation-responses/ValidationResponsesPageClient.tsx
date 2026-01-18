@@ -8,7 +8,7 @@
  * - By Session: Drill down into individual respondent sessions
  */
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { motion } from 'framer-motion';
 import { ValidationSummaryHeader } from '@/app/clarity-canvas/modules/persona-sharpener/components/ValidationSummaryHeader';
 import { ConfidenceCallout } from '@/app/clarity-canvas/modules/persona-sharpener/components/ConfidenceCallout';
@@ -40,6 +40,11 @@ export function ValidationResponsesPageClient({ personaId }: Props) {
   // View state
   const [activeView, setActiveView] = useState<'by-question' | 'by-session'>('by-question');
   const [selectedSessionId, setSelectedSessionId] = useState<string | null>(null);
+  const [showEmptySessions, setShowEmptySessions] = useState(false);
+  const [focusedQuestionId, setFocusedQuestionId] = useState<string | null>(null);
+
+  // Refs for auto-scroll
+  const sessionDetailRef = useRef<HTMLDivElement>(null);
 
   // Data state
   const [summary, setSummary] = useState<ValidationSummary | null>(null);
@@ -116,6 +121,13 @@ export function ValidationResponsesPageClient({ personaId }: Props) {
     fetchData();
   }, [personaId]);
 
+  // Auto-scroll to session detail when a session is selected
+  useEffect(() => {
+    if (selectedSessionId && sessionDetailRef.current) {
+      sessionDetailRef.current.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    }
+  }, [selectedSessionId]);
+
   // Loading state
   if (isLoading) {
     return (
@@ -143,6 +155,16 @@ export function ValidationResponsesPageClient({ personaId }: Props) {
     );
   }
 
+  // Filter sessions by answer count
+  const sessionsWithAnswers = sessions.filter(s => s.questionsAnswered > 0);
+  const emptySessions = sessions.filter(s => s.questionsAnswered === 0);
+
+  // Handle clicking a "Needs Attention" question
+  const handleQuestionClick = (questionId: string) => {
+    setActiveView('by-question');
+    setFocusedQuestionId(questionId);
+  };
+
   // Get selected session data
   const selectedSession = sessions.find(s => s.id === selectedSessionId);
   const selectedSessionResponseList = selectedSessionId ? sessionResponses.get(selectedSessionId) || [] : [];
@@ -162,7 +184,11 @@ export function ValidationResponsesPageClient({ personaId }: Props) {
         </a>
 
         {/* Summary header */}
-        <ValidationSummaryHeader summary={summary} personaName={personaName} />
+        <ValidationSummaryHeader
+          summary={summary}
+          personaName={personaName}
+          onQuestionClick={handleQuestionClick}
+        />
 
         {/* Confidence callout */}
         <ConfidenceCallout
@@ -183,21 +209,45 @@ export function ValidationResponsesPageClient({ personaId }: Props) {
           {activeView === 'by-question' ? (
             <ValidationByQuestionView
               responses={responsesByQuestion}
+              focusedQuestionId={focusedQuestionId}
+              onFocusHandled={() => setFocusedQuestionId(null)}
             />
           ) : (
             <div className="space-y-4">
               <ValidationSessionList
-                sessions={sessions}
+                sessions={sessionsWithAnswers}
                 onSelectSession={setSelectedSessionId}
                 selectedSessionId={selectedSessionId}
               />
-              {selectedSession && (
-                <ValidationSessionDetail
-                  session={selectedSession}
-                  responses={selectedSessionResponseList}
-                  onClose={() => setSelectedSessionId(null)}
+
+              {/* Toggle for empty sessions */}
+              {emptySessions.length > 0 && (
+                <button
+                  onClick={() => setShowEmptySessions(!showEmptySessions)}
+                  className="w-full text-sm text-zinc-500 hover:text-zinc-300 py-2 border border-dashed border-zinc-800 rounded-lg transition-colors"
+                >
+                  {showEmptySessions ? 'Hide' : 'Show'} {emptySessions.length} session{emptySessions.length !== 1 ? 's' : ''} with 0 answers
+                </button>
+              )}
+
+              {showEmptySessions && emptySessions.length > 0 && (
+                <ValidationSessionList
+                  sessions={emptySessions}
+                  onSelectSession={setSelectedSessionId}
+                  selectedSessionId={selectedSessionId}
                 />
               )}
+
+              {/* Session detail with ref for auto-scroll */}
+              <div ref={sessionDetailRef}>
+                {selectedSession && (
+                  <ValidationSessionDetail
+                    session={selectedSession}
+                    responses={selectedSessionResponseList}
+                    onClose={() => setSelectedSessionId(null)}
+                  />
+                )}
+              </div>
             </div>
           )}
         </motion.div>

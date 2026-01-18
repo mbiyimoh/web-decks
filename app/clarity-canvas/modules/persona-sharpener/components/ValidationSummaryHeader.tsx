@@ -6,9 +6,10 @@ import type { ValidationSummary } from '@/lib/clarity-canvas/modules/persona-sha
 interface Props {
   summary: ValidationSummary;
   personaName: string;
+  onQuestionClick?: (questionId: string) => void;
 }
 
-export function ValidationSummaryHeader({ summary, personaName }: Props) {
+export function ValidationSummaryHeader({ summary, personaName, onQuestionClick }: Props) {
   const getAlignmentColor = (score: number | null) => {
     if (score === null) return '#888888';
     if (score >= 70) return '#4ADE80';
@@ -85,9 +86,15 @@ export function ValidationSummaryHeader({ summary, personaName }: Props) {
           </div>
           <ul className="space-y-2">
             {summary.topMisalignments.map(m => (
-              <li key={m.questionId} className="flex items-center justify-between text-sm">
+              <li
+                key={m.questionId}
+                onClick={() => onQuestionClick?.(m.questionId)}
+                className={`flex items-center justify-between text-sm rounded-lg px-2 py-1 -mx-2 transition-colors ${
+                  onQuestionClick ? 'cursor-pointer hover:bg-red-500/10' : ''
+                }`}
+              >
                 <span className="text-zinc-300">{m.questionText}</span>
-                <span className="text-red-400">{m.alignmentScore}% ({m.responseCount} responses)</span>
+                <span className="text-red-400 whitespace-nowrap ml-4">{m.alignmentScore}% ({m.responseCount} responses)</span>
               </li>
             ))}
           </ul>
