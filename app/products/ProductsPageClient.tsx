@@ -26,27 +26,33 @@ export default function ProductsPageClient() {
         className="border-t px-6 py-12"
         style={{ borderColor: 'rgba(255,255,255,0.06)' }}
       >
-        <div className="max-w-6xl mx-auto flex flex-col md:flex-row items-center justify-between gap-6">
+        <div className="max-w-6xl mx-auto flex flex-col md:flex-row items-center gap-6">
           {/* Logo */}
-          <Link href="/" className="inline-block">
-            <span className="text-3xl font-display" style={{ color: GOLD }}>
-              33
-            </span>
-          </Link>
+          <div className="md:flex-1">
+            <Link href="/" className="inline-block">
+              <span className="text-3xl font-display" style={{ color: GOLD }}>
+                33
+              </span>
+            </Link>
+          </div>
 
-          {/* Contact Link */}
-          <Link
-            href="/contact"
-            className="text-sm transition-colors hover:text-white"
-            style={{ color: TEXT_MUTED }}
-          >
-            Get in Touch
-          </Link>
+          {/* Contact Link - Centered */}
+          <div className="md:flex-1 text-center">
+            <Link
+              href="/contact"
+              className="text-sm transition-colors hover:text-white"
+              style={{ color: TEXT_MUTED }}
+            >
+              Get in Touch
+            </Link>
+          </div>
 
           {/* Copyright */}
-          <p className="text-sm" style={{ color: TEXT_MUTED }}>
-            &copy; {new Date().getFullYear()} 33 Strategies. All rights reserved.
-          </p>
+          <div className="md:flex-1 md:text-right">
+            <p className="text-sm" style={{ color: TEXT_MUTED }}>
+              &copy; {new Date().getFullYear()} 33 Strategies. All rights reserved.
+            </p>
+          </div>
         </div>
       </footer>
     </div>
