@@ -362,3 +362,45 @@ model ValidationSession {
 
   @@index([linkId])
 }
+
+// ============================================================================
+// CONTACT FORM SUBMISSIONS
+// ============================================================================
+
+model ContactSubmission {
+  id String @id @default(cuid())
+
+  // Contact info
+  name  String
+  email String
+
+  // Interests (stored as array of IDs)
+  interests String[]
+
+  // Optional message
+  message String? @db.Text
+
+  // Tracking
+  source String? // URL query param that led here (e.g., "m33t")
+
+  // Status for manual follow-up
+  status ContactStatus @default(NEW)
+  notes  String?       @db.Text // Internal notes from team
+
+  // Slack notification tracking
+  slackNotificationSent  Boolean @default(false)
+  slackNotificationError String? // Error message if notification failed
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([status])
+  @@index([createdAt])
+}
+
+enum ContactStatus {
+  NEW
+  CONTACTED
+  IN_PROGRESS
+  CLOSED
+}
