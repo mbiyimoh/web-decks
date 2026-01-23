@@ -343,7 +343,7 @@ const CorrelationChart = () => {
           </div>
 
           {/* Row labels */}
-          <div className="absolute right-0 mt-[-38px] text-xs text-zinc-600">
+          <div className="absolute left-0 mt-[-38px] text-xs text-zinc-600">
             <div className="h-5 flex items-center">Push</div>
             <div className="h-5 flex items-center">Email</div>
           </div>
@@ -516,23 +516,24 @@ export default function TradeblockJan2026Projections() {
           {/* Transaction Momentum */}
           <RevealText delay={0.25}>
             <div className="rounded-xl border border-amber-500/30 p-5 mb-6" style={{ background: 'rgba(245, 158, 11, 0.05)' }}>
-              <p className="text-amber-400 text-xs uppercase tracking-widest mb-4">Transaction Momentum</p>
+              <p className="text-amber-400 text-xs uppercase tracking-widest mb-1">Transaction Momentum</p>
+              <p className="text-zinc-500 text-xs mb-4">Validated transactions per month</p>
               <div className="flex items-center justify-center gap-4 md:gap-8">
                 <div className="text-center">
                   <p className="text-zinc-500 text-xs mb-1">Nov</p>
-                  <p className="text-2xl font-bold text-zinc-400">892</p>
+                  <p className="text-2xl font-bold text-zinc-400">927</p>
                 </div>
                 <div className="text-zinc-600 text-xl">→</div>
                 <div className="text-center">
                   <p className="text-zinc-500 text-xs mb-1">Dec</p>
-                  <p className="text-2xl font-bold text-zinc-300">975</p>
-                  <p className="text-emerald-400 text-xs">+9%</p>
+                  <p className="text-2xl font-bold text-zinc-300">1,053</p>
+                  <p className="text-emerald-400 text-xs">+14%</p>
                 </div>
                 <div className="text-zinc-600 text-xl">→</div>
                 <div className="text-center">
                   <p className="text-zinc-500 text-xs mb-1">Jan (proj)</p>
-                  <p className="text-2xl font-bold text-white">1,030</p>
-                  <p className="text-emerald-400 text-xs">+6%</p>
+                  <p className="text-2xl font-bold text-white">1,090</p>
+                  <p className="text-emerald-400 text-xs">+4%</p>
                 </div>
               </div>
               <p className="text-zinc-500 text-sm mt-4 text-center">
@@ -580,14 +581,10 @@ export default function TradeblockJan2026Projections() {
                 <p className="text-blue-400 font-medium">Push Results</p>
                 <span className="text-zinc-500 text-xs">61 targeted campaigns &bull; Dec-Jan</span>
               </div>
-              <div className="grid grid-cols-3 gap-4">
+              <div className="grid grid-cols-2 gap-4">
                 <div className="text-center">
                   <p className="text-3xl font-bold text-white">84%</p>
                   <p className="text-zinc-500 text-xs">positive offer lift</p>
-                </div>
-                <div className="text-center">
-                  <p className="text-3xl font-bold text-blue-400">6</p>
-                  <p className="text-zinc-500 text-xs">campaigns with significant trade lift</p>
                 </div>
                 <div className="text-center">
                   <p className="text-3xl font-bold text-white">+270%</p>
