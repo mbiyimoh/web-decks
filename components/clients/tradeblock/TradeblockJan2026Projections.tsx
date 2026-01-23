@@ -531,13 +531,16 @@ export default function TradeblockJan2026Projections() {
                 </div>
                 <div className="text-zinc-600 text-xl">→</div>
                 <div className="text-center">
-                  <p className="text-zinc-500 text-xs mb-1">Jan (proj)</p>
-                  <p className="text-2xl font-bold text-white">1,090</p>
+                  <p className="text-zinc-500 text-xs mb-1">Jan<br /><span className="text-[10px]">(current pace)</span></p>
+                  <p className="text-2xl font-bold text-white">1,090*</p>
                   <p className="text-emerald-400 text-xs">+4%</p>
                 </div>
               </div>
               <p className="text-zinc-500 text-sm mt-4 text-center">
                 Steady climb as comms volume increases
+              </p>
+              <p className="text-zinc-600 text-xs mt-2 text-center">
+                *Despite 5-day full app outage. This figure would be ~1,250 if daily averages were applied to those days.
               </p>
             </div>
           </RevealText>
