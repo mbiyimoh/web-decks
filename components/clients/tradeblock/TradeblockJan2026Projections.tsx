@@ -460,7 +460,7 @@ export default function TradeblockJan2026Projections() {
         <div className="relative z-10 max-w-3xl">
           <RevealText>
             <p className="uppercase tracking-widest text-xs mb-4" style={{ color: '#f59e0b' }}>
-              Investor Update &bull; January 2025
+              Investor Update &bull; January 2026
             </p>
           </RevealText>
 
