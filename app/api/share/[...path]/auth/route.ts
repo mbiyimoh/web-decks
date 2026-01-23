@@ -9,9 +9,10 @@ const MAX_ATTEMPTS = 5;
 const LOCKOUT_MINUTES = 15;
 
 /**
- * POST /api/share/[slug]/auth
+ * POST /api/share/[...path]/auth
  *
  * Verifies password and creates session for share link access.
+ * Path segments are joined to reconstruct the full slug.
  *
  * Request body:
  * - password: string
@@ -24,10 +25,15 @@ const LOCKOUT_MINUTES = 15;
  */
 export async function POST(
   req: NextRequest,
-  { params }: { params: Promise<{ slug: string }> }
+  { params }: { params: Promise<{ path: string[] }> }
 ) {
   try {
-    const { slug } = await params;
+    const { path } = await params;
+    // Remove 'auth' from path and join remaining segments to get slug
+    // Path: ["tradeblock-artifacts", "the-120-day-sprint", "x7k9m2p3", "auth"]
+    // Slug: "tradeblock-artifacts/the-120-day-sprint/x7k9m2p3"
+    const slugSegments = path.slice(0, -1); // Remove 'auth' segment
+    const slug = slugSegments.join('/');
     const { password } = await req.json();
 
     // 1. Fetch link

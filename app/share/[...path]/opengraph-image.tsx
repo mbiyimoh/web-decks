@@ -8,12 +8,20 @@ export const alt = 'Shared Content';
 export const size = { width: 1200, height: 630 };
 export const contentType = 'image/png';
 
+/**
+ * Reconstruct slug from path segments
+ */
+function pathToSlug(path: string[]): string {
+  return path.join('/');
+}
+
 export default async function OGImage({
   params,
 }: {
-  params: Promise<{ slug: string }>;
+  params: Promise<{ path: string[] }>;
 }) {
-  const { slug } = await params;
+  const { path } = await params;
+  const slug = pathToSlug(path);
 
   const link = await prisma.artifactShareLink.findUnique({
     where: { slug },

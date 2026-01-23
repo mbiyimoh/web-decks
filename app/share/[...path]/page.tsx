@@ -1,3 +1,4 @@
+import { Metadata } from 'next';
 import { getIronSession } from 'iron-session';
 import { cookies } from 'next/headers';
 import { prisma } from '@/lib/prisma';
@@ -5,12 +6,61 @@ import { getShareLinkSessionOptions, ShareLinkSessionData, isShareSessionValid }
 import { getClient, getClientContent } from '@/lib/clients';
 import SharePasswordGate from '@/components/share/SharePasswordGate';
 
+/**
+ * Reconstruct slug from path segments
+ * Path: ["tradeblock-artifacts", "the-120-day-sprint", "x7k9m2p3"]
+ * Slug: "tradeblock-artifacts/the-120-day-sprint/x7k9m2p3"
+ */
+function pathToSlug(path: string[]): string {
+  return path.join('/');
+}
+
+export async function generateMetadata({
+  params,
+}: {
+  params: Promise<{ path: string[] }>;
+}): Promise<Metadata> {
+  const { path } = await params;
+  const slug = pathToSlug(path);
+
+  const link = await prisma.artifactShareLink.findUnique({
+    where: { slug },
+  });
+
+  if (!link) {
+    return { title: 'Link Not Found' };
+  }
+
+  const client = getClient(link.clientId);
+  const content = client ? getClientContent(link.clientId, link.artifactSlug) : null;
+
+  if (!client || !content) {
+    return { title: 'Link Not Found' };
+  }
+
+  // Format: "Client Name: Artifact Title"
+  const title = `${client.name}: ${content.title}`;
+
+  return {
+    title,
+    openGraph: {
+      title,
+      type: 'website',
+    },
+    twitter: {
+      card: 'summary',
+      title,
+    },
+  };
+}
+
 export default async function SharePage({
   params,
 }: {
-  params: Promise<{ slug: string }>;
+  params: Promise<{ path: string[] }>;
 }) {
-  const { slug } = await params;
+  const { path } = await params;
+  const slug = pathToSlug(path);
 
   // 1. Fetch share link to get metadata (for password gate display)
   const link = await prisma.artifactShareLink.findUnique({

@@ -3,14 +3,33 @@ import { nanoid } from 'nanoid';
 import { SHARE_PASSWORD_MIN_LENGTH } from '@/lib/session';
 
 const BCRYPT_WORK_FACTOR = 10;
-const SLUG_LENGTH = 21;
+const RANDOM_ID_LENGTH = 8;
+const ARTIFACT_NAME_MAX_LENGTH = 20;
 
 /**
- * Generate a secure share link slug using nanoid
- * 21 characters = 126 bits of entropy (URL-safe)
+ * Convert a title to URL-friendly slug
+ * "The 120-Day Sprint" -> "the-120-day-sprint"
  */
-export function generateShareSlug(): string {
-  return nanoid(SLUG_LENGTH);
+function slugify(text: string, maxLength: number = ARTIFACT_NAME_MAX_LENGTH): string {
+  return text
+    .toLowerCase()
+    .replace(/[^a-z0-9]+/g, '-')  // Replace non-alphanumeric with hyphens
+    .replace(/^-+|-+$/g, '')      // Trim leading/trailing hyphens
+    .slice(0, maxLength)          // Truncate to max length
+    .replace(/-+$/, '');          // Remove trailing hyphen if truncated mid-word
+}
+
+/**
+ * Generate a readable share link slug
+ * Format: [client]-artifacts/[artifact-name]/[random-id]
+ * Example: tradeblock-artifacts/the-120-day-sprint/x7k9m2p3
+ */
+export function generateShareSlug(clientId: string, artifactTitle: string): string {
+  const clientSlug = slugify(clientId, 50);  // Client names are short, allow more chars
+  const artifactSlug = slugify(artifactTitle, ARTIFACT_NAME_MAX_LENGTH);
+  const randomId = nanoid(RANDOM_ID_LENGTH);
+
+  return `${clientSlug}-artifacts/${artifactSlug}/${randomId}`;
 }
 
 /**

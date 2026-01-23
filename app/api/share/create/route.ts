@@ -95,7 +95,7 @@ export async function POST(req: NextRequest) {
 
     // 5. Hash password and generate slug
     const hashedPassword = await hashPassword(password);
-    const slug = generateShareSlug();
+    const slug = generateShareSlug(clientId, content.title);
 
     // 6. Create share link
     const shareLink = await prisma.artifactShareLink.create({
