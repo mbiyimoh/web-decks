@@ -9,12 +9,12 @@ const MAX_ATTEMPTS = 5;
 const LOCKOUT_MINUTES = 15;
 
 /**
- * POST /api/share/[...path]/auth
+ * POST /api/share/auth
  *
  * Verifies password and creates session for share link access.
- * Path segments are joined to reconstruct the full slug.
  *
  * Request body:
+ * - slug: string (the share link slug)
  * - password: string
  *
  * Returns:
@@ -23,18 +23,16 @@ const LOCKOUT_MINUTES = 15;
  * - 429: Link locked (with lockedUntil and minutesRemaining)
  * - 404: Link not found (disguised as 401 to prevent enumeration)
  */
-export async function POST(
-  req: NextRequest,
-  { params }: { params: Promise<{ path: string[] }> }
-) {
+export async function POST(req: NextRequest) {
   try {
-    const { path } = await params;
-    // Remove 'auth' from path and join remaining segments to get slug
-    // Path: ["tradeblock-artifacts", "the-120-day-sprint", "x7k9m2p3", "auth"]
-    // Slug: "tradeblock-artifacts/the-120-day-sprint/x7k9m2p3"
-    const slugSegments = path.slice(0, -1); // Remove 'auth' segment
-    const slug = slugSegments.join('/');
-    const { password } = await req.json();
+    const { slug, password } = await req.json();
+
+    if (!slug || !password) {
+      return NextResponse.json(
+        { error: 'Missing slug or password' },
+        { status: 400 }
+      );
+    }
 
     // 1. Fetch link
     const link = await prisma.artifactShareLink.findUnique({

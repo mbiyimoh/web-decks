@@ -33,10 +33,10 @@ export default function SharePasswordGate({
     setLoading(true);
 
     try {
-      const res = await fetch(`/api/share/${slug}/auth`, {
+      const res = await fetch('/api/share/auth', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ password }),
+        body: JSON.stringify({ slug, password }),
       });
 
       const data = await res.json();

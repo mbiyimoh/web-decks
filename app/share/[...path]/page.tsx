@@ -40,16 +40,27 @@ export async function generateMetadata({
 
   // Format: "Client Name: Artifact Title"
   const title = `${client.name}: ${content.title}`;
+  const baseUrl = process.env.NEXT_PUBLIC_APP_URL || 'https://33strategies.ai';
+  const ogImageUrl = `${baseUrl}/api/og/share?slug=${encodeURIComponent(slug)}`;
 
   return {
     title,
     openGraph: {
       title,
       type: 'website',
+      images: [
+        {
+          url: ogImageUrl,
+          width: 1200,
+          height: 630,
+          alt: title,
+        },
+      ],
     },
     twitter: {
-      card: 'summary',
+      card: 'summary_large_image',
       title,
+      images: [ogImageUrl],
     },
   };
 }

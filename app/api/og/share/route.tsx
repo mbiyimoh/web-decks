@@ -1,27 +1,40 @@
 import { ImageResponse } from 'next/og';
+import { NextRequest } from 'next/server';
 import { prisma } from '@/lib/prisma';
 import { getClient, getClientContent } from '@/lib/clients';
 
-// Use Node runtime since Prisma doesn't work in Edge
 export const runtime = 'nodejs';
-export const alt = 'Shared Content';
-export const size = { width: 1200, height: 630 };
-export const contentType = 'image/png';
+
+const size = { width: 1200, height: 630 };
 
 /**
- * Reconstruct slug from path segments
+ * GET /api/og/share?slug=...
+ *
+ * Generates dynamic OG images for share links.
+ * The slug is passed as a query parameter (URL-encoded if it contains slashes).
  */
-function pathToSlug(path: string[]): string {
-  return path.join('/');
-}
+export async function GET(req: NextRequest) {
+  const slug = req.nextUrl.searchParams.get('slug');
 
-export default async function OGImage({
-  params,
-}: {
-  params: Promise<{ path: string[] }>;
-}) {
-  const { path } = await params;
-  const slug = pathToSlug(path);
+  if (!slug) {
+    return new ImageResponse(
+      (
+        <div
+          style={{
+            background: '#0a0a0f',
+            width: '100%',
+            height: '100%',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+          }}
+        >
+          <div style={{ color: '#888', fontSize: 32 }}>Invalid Request</div>
+        </div>
+      ),
+      size
+    );
+  }
 
   const link = await prisma.artifactShareLink.findUnique({
     where: { slug },
