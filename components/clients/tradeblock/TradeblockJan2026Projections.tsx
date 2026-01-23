@@ -68,20 +68,20 @@ const NavDots = ({ sections, activeSection }: {
   activeSection: string;
 }) => {
   return (
-    <div className="fixed right-6 top-1/2 -translate-y-1/2 z-40 hidden lg:flex flex-col gap-3">
+    <div className="fixed right-6 top-1/2 -translate-y-1/2 z-40 hidden lg:flex flex-col items-end gap-3">
       {sections.map((section) => (
         <a
           key={section.id}
           href={`#${section.id}`}
           className="group flex items-center gap-3"
         >
-          <span className={`text-xs transition-opacity ${
+          <span className={`text-xs whitespace-nowrap transition-opacity ${
             activeSection === section.id ? 'opacity-100 text-amber-400' : 'opacity-0 group-hover:opacity-100 text-zinc-500'
           }`}>
             {section.label}
           </span>
           <div
-            className={`w-2 h-2 rounded-full transition-all ${
+            className={`w-2 h-2 rounded-full transition-all flex-shrink-0 ${
               activeSection === section.id
                 ? 'bg-amber-400 scale-125'
                 : 'bg-zinc-700 hover:bg-zinc-500'
