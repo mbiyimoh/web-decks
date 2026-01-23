@@ -10,6 +10,7 @@ export interface ContentItem {
   lastUpdated?: string;  // ISO date string (YYYY-MM-DD) - when last modified
   tagOverride?: string;  // Optional custom tag to display instead of type label
   component: ComponentType;
+  shareable?: boolean;   // Enable share link functionality for this artifact
 }
 
 export interface ClientEntry {
@@ -23,6 +24,11 @@ export interface ClientEntry {
 // Lazy-load components for code splitting
 const TradeblockAIInflection = dynamic(
   () => import('@/components/clients/tradeblock/TradeblockAIInflection'),
+  { ssr: true }
+);
+
+const TradeblockJan2026Projections = dynamic(
+  () => import('@/components/clients/tradeblock/TradeblockJan2026Projections'),
   { ssr: true }
 );
 
@@ -48,6 +54,15 @@ export const clients: Record<string, ClientEntry> = {
     passwordEnvVar: 'TRADEBLOCK_PASSWORD',
     emailEnvVar: 'TRADEBLOCK_EMAIL',
     content: [
+      {
+        slug: 'jan-2026-projections',
+        type: 'deck',
+        title: 'The 120-Day Sprint',
+        description: 'Investor update - January 2025',
+        addedOn: '2025-01-23',
+        component: TradeblockJan2026Projections,
+        shareable: true,  // Enable share link functionality
+      },
       {
         slug: 'ai-inflection',
         type: 'deck',

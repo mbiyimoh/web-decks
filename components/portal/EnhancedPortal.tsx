@@ -7,6 +7,7 @@ import { ProjectData, ActiveWorkItem, Artifact } from './types';
 import { ProjectTile } from './ProjectTile';
 import { ActiveWorkTile } from './ActiveWorkTile';
 import { GOLD, BG_PRIMARY, BG_SURFACE } from './design-tokens';
+import ShareLinkModal from './ShareLinkModal';
 
 // Serializable content item (from existing ContentIndex)
 interface ContentItemData {
@@ -17,6 +18,7 @@ interface ContentItemData {
   addedOn?: string;
   lastUpdated?: string;
   tagOverride?: string;
+  shareable?: boolean;  // Enable share link functionality
 }
 
 interface ClientData {
@@ -51,12 +53,14 @@ function ArtifactTile({
   index,
   isNewest,
   portalType = 'client',
+  onShare,
 }: {
   item: ContentItemData;
   clientId: string;
   index: number;
   isNewest: boolean;
   portalType?: 'client' | 'strategist';
+  onShare?: (artifactSlug: string, artifactTitle: string) => void;
 }) {
   const GOLD_GLOW = 'rgba(212, 165, 74, 0.25)';
   const basePath = portalType === 'strategist' ? 'strategist-portals' : 'client-portals';
@@ -127,14 +131,36 @@ function ArtifactTile({
             )}
           </div>
 
-          {/* Arrow icon */}
-          <div
-            className="transition-all duration-300 ml-4 group-hover:translate-x-1"
-            style={{ color: isNewest ? GOLD : '#555' }}
-          >
-            <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
-            </svg>
+          {/* Action buttons */}
+          <div className="flex items-center gap-2 ml-4">
+            {/* Share button - only for shareable artifacts */}
+            {item.shareable && onShare && (
+              <button
+                onClick={(e) => {
+                  e.preventDefault();
+                  e.stopPropagation();
+                  onShare(item.slug, item.title);
+                }}
+                className="p-2 rounded-lg transition-colors hover:bg-white/10"
+                style={{ color: '#888' }}
+                data-testid={`share-button-${item.slug}`}
+                title="Create share link"
+              >
+                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8.684 13.342C8.886 12.938 9 12.482 9 12c0-.482-.114-.938-.316-1.342m0 2.684a3 3 0 110-2.684m0 2.684l6.632 3.316m-6.632-6l6.632-3.316m0 0a3 3 0 105.367-2.684 3 3 0 00-5.367 2.684zm0 9.316a3 3 0 105.368 2.684 3 3 0 00-5.368-2.684z" />
+                </svg>
+              </button>
+            )}
+
+            {/* Arrow icon */}
+            <div
+              className="transition-all duration-300 group-hover:translate-x-1"
+              style={{ color: isNewest ? GOLD : '#555' }}
+            >
+              <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+              </svg>
+            </div>
           </div>
         </div>
       </Link>
@@ -149,6 +175,11 @@ export default function EnhancedPortal({
   portalType = 'client',
 }: EnhancedPortalProps) {
   const [projectExpanded, setProjectExpanded] = useState(false);
+  const [shareModal, setShareModal] = useState<{
+    isOpen: boolean;
+    artifactSlug: string;
+    artifactTitle: string;
+  } | null>(null);
 
   // Sort content by addedOn date, newest first
   const sortedContent = [...client.content].sort((a, b) => {
@@ -157,6 +188,15 @@ export default function EnhancedPortal({
     if (!b.addedOn) return -1;
     return b.addedOn.localeCompare(a.addedOn);
   });
+
+  // Handler for opening share modal
+  const handleShare = (artifactSlug: string, artifactTitle: string) => {
+    setShareModal({
+      isOpen: true,
+      artifactSlug,
+      artifactTitle,
+    });
+  };
 
   return (
     <div className="min-h-screen px-6 py-12" style={{ background: BG_PRIMARY }}>
@@ -261,6 +301,7 @@ export default function EnhancedPortal({
                   index={index}
                   isNewest={index === 0}
                   portalType={portalType}
+                  onShare={handleShare}
                 />
               ))}
             </div>
@@ -280,6 +321,17 @@ export default function EnhancedPortal({
           </div>
         </motion.div>
       </div>
+
+      {/* Share Link Modal */}
+      {shareModal && (
+        <ShareLinkModal
+          isOpen={shareModal.isOpen}
+          onClose={() => setShareModal(null)}
+          clientId={client.id}
+          artifactSlug={shareModal.artifactSlug}
+          artifactTitle={shareModal.artifactTitle}
+        />
+      )}
     </div>
   );
 }

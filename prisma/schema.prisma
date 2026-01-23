@@ -404,3 +404,29 @@ enum ContactStatus {
   IN_PROGRESS
   CLOSED
 }
+
+// ============================================================================
+// ARTIFACT SHARE LINKS - Password-protected sharing for portal artifacts
+// ============================================================================
+
+model ArtifactShareLink {
+  id             String    @id @default(cuid())
+  slug           String    @unique  // nanoid(21) - 126 bits entropy
+
+  // What's being shared (composite unique - one link per artifact)
+  clientId       String    // e.g., "tradeblock"
+  artifactSlug   String    // e.g., "jan-2026-projections"
+
+  // Security
+  hashedPassword String    // bcrypt hash with work factor 10
+  failedAttempts Int       @default(0)
+  lockedUntil    DateTime?
+
+  // Metadata
+  accessCount    Int       @default(0)
+  lastAccessedAt DateTime?
+  createdAt      DateTime  @default(now())
+
+  @@unique([clientId, artifactSlug])  // One link per artifact
+  @@index([slug])
+}
