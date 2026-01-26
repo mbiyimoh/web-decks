@@ -15,7 +15,7 @@ export default function ProductsPageClient() {
 
       {/* Philosophy Statement */}
       <section className="px-6 pb-16 -mt-8">
-        <div className="max-w-3xl mx-auto text-center space-y-4">
+        <div className="max-w-4xl mx-auto text-left space-y-4">
           <motion.p
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
@@ -42,8 +42,8 @@ export default function ProductsPageClient() {
             style={{ color: TEXT_MUTED }}
           >
             So we build things that reduce the latency between{' '}
-            <span className="font-display" style={{ color: GOLD }}>thought</span> and{' '}
-            <span className="font-display" style={{ color: GOLD }}>execution</span>.
+            <span className="font-display font-semibold" style={{ color: GOLD }}>thought</span> and{' '}
+            <span className="font-display font-semibold" style={{ color: GOLD }}>execution</span>.
           </motion.p>
         </div>
       </section>
