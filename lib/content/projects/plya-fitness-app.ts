@@ -40,7 +40,7 @@ export const plyaFitnessApp: ProjectData = {
     "3-4": {
       title: "Listen & Learn from Real Users",
       message:
-        "User interviews are your most valuable source of truth. Stay curious, ask follow-up questions, and let their actual needs shape the product - not your assumptions.",
+        "User interviews are your most valuable source of truth. Stay curious, ask follow-up questions, and let their actual needs shape the product—not your assumptions. For competitive analysis, go deeper: don't just look at direct competitors. Study companies delivering in similar ways but in different industries. How do they onboard users? Build trust? Create stickiness? The best insights often come from unexpected places.",
     },
     "5-6": {
       title: "Build for Your Beta Testers",
@@ -90,21 +90,30 @@ export const plyaFitnessApp: ProjectData = {
   actionItems: [
     {
       id: 1,
-      label: "Review & refine personas based on interview insights",
+      label:
+        "Persona Successes — Capture Who (specific person), What (problem they're solving), and Wow (what would make them say 'this is exactly what I needed')",
       link: "#",
       neededFor: "Finalized personas for beta prep (Week 5)",
     },
     {
       id: 2,
-      label: "Identify 5-10 users to review clickable prototype",
+      label:
+        "Competitive Analysis & Product Experience — What similar products exist? What pros/cons stand out? What feels 'sticky' or interactive?",
       link: "#",
-      neededFor: "Prototype feedback sessions (Week 4)",
+      neededFor: "Product positioning & differentiation (Week 4)",
     },
     {
       id: 3,
-      label: "Confirm beta tester list (aim for 10-15 committed users)",
+      label:
+        "Brand Toolkit/Mood Board — Collect screenshots of websites/app GUIs you enjoy: buttons, menus, colors, fonts. Compile for PLYA's brand direction.",
       link: "#",
-      neededFor: "MVP beta release (Week 5-6)",
+      neededFor: "UI/UX design foundations (Week 4-5)",
+    },
+    {
+      id: 4,
+      label: "Identify 5-10 users to review clickable prototype",
+      link: "#",
+      neededFor: "Prototype feedback sessions (Week 4)",
     },
   ],
 
