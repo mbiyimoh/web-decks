@@ -141,25 +141,13 @@ export function ProductsHero() {
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.6, delay: 0.2 }}
-          className="text-4xl md:text-5xl lg:text-6xl font-display leading-tight mb-6"
+          className="text-4xl md:text-5xl lg:text-6xl font-display leading-tight"
           style={{ color: TEXT_PRIMARY }}
         >
           AI-first Tools Built For Operators
           <br />
           <span style={{ color: GOLD }}>By Operators</span>
         </motion.h1>
-
-        {/* Subline */}
-        <motion.p
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.6, delay: 0.3 }}
-          className="text-lg md:text-xl max-w-2xl mx-auto"
-          style={{ color: TEXT_MUTED }}
-        >
-          We build the tools we wish existed. Each product solves a real problem we&apos;ve faced
-          ourselves.
-        </motion.p>
       </div>
     </section>
   );

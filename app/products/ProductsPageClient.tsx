@@ -14,7 +14,7 @@ export default function ProductsPageClient() {
       <ProductsHero />
 
       {/* Philosophy Statement */}
-      <section className="px-6 py-16 border-b" style={{ borderColor: 'rgba(255,255,255,0.06)' }}>
+      <section className="px-6 pb-16 -mt-8">
         <div className="max-w-3xl mx-auto text-center space-y-4">
           <motion.p
             initial={{ opacity: 0, y: 20 }}
