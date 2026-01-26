@@ -24,7 +24,7 @@ export const plyaFitnessApp: ProjectData = {
   // ============================================================================
   // PROGRESS (shown in compact tile)
   // ============================================================================
-  currentWeek: 1,
+  currentWeek: 3,
   totalWeeks: 8,
 
   // ============================================================================
@@ -59,21 +59,19 @@ export const plyaFitnessApp: ProjectData = {
   // ============================================================================
   thisWeek: {
     productBuild: {
-      title: "User system & database",
+      title: "Database & Profile System",
       tasks: [
-        { label: "Authentication / user account foundations", status: "done" },
-        {
-          label: "Architecture and data model exploration",
-          status: "in-progress",
-        },
+        { label: "Database schema implementation", status: "done" },
+        { label: "Profile system architecture", status: "in-progress" },
+        { label: "Core UI components", status: "upcoming" },
       ],
     },
     strategy: {
-      title: "Personas & Advisors",
+      title: "Research & Validation",
       tasks: [
-        { label: "Ship Persona Sharpener tool", status: "done" },
-        { label: "User personas V0: Founder hypotheses", status: "in-progress" },
-        { label: "Expert/advisor personas", status: "upcoming" },
+        { label: "User interview synthesis", status: "in-progress" },
+        { label: "Persona refinement from interviews", status: "in-progress" },
+        { label: "Competitive analysis", status: "upcoming" },
       ],
     },
   },
@@ -82,8 +80,8 @@ export const plyaFitnessApp: ProjectData = {
   // NEXT WEEK PREVIEW (shown in expanded tile)
   // ============================================================================
   nextWeek: {
-    productBuild: "Initial web app scaffolding",
-    strategy: "Interview guide + user network outreach",
+    productBuild: "Content engine & calendar UI foundations",
+    strategy: "Landing page design & beta prep",
   },
 
   // ============================================================================
@@ -92,22 +90,21 @@ export const plyaFitnessApp: ProjectData = {
   actionItems: [
     {
       id: 1,
-      label: "Complete Persona Sharpener for user personas",
+      label: "Review & refine personas based on interview insights",
       link: "#",
-      neededFor: "User interviews & persona refinement (Week 3-4)",
+      neededFor: "Finalized personas for beta prep (Week 5)",
     },
     {
       id: 2,
-      label: "Define 2-3 expert/advisor personas (coaches, trainers, nutritionists)",
+      label: "Share competitive analysis findings",
       link: "#",
-      neededFor: "Advisory board plan (Week 7-8)",
+      neededFor: "Landing page positioning (Week 5-6)",
     },
     {
       id: 3,
-      label:
-        "Identify 20 people in your network who fit one of the PLYA personas",
+      label: "Confirm beta tester list (aim for 10-15 committed users)",
       link: "#",
-      neededFor: "User interviews (Week 3-4), Beta testing (Week 5-8)",
+      neededFor: "MVP beta release (Week 5-6)",
     },
   ],
 
@@ -120,7 +117,7 @@ export const plyaFitnessApp: ProjectData = {
       {
         weeks: "1-2",
         phase: "Foundation",
-        status: "current",
+        status: "done",
         items: [
           "User auth foundations",
           "Architecture exploration",
@@ -131,7 +128,7 @@ export const plyaFitnessApp: ProjectData = {
       {
         weeks: "3-4",
         phase: "Frame",
-        status: "upcoming",
+        status: "current",
         items: [
           "Database schema",
           "Profile system",
@@ -163,7 +160,7 @@ export const plyaFitnessApp: ProjectData = {
       {
         weeks: "1-2",
         phase: "Personas & Advisors",
-        status: "current",
+        status: "done",
         items: [
           "User personas",
           "Expert/advisor personas",
@@ -173,7 +170,7 @@ export const plyaFitnessApp: ProjectData = {
       {
         weeks: "3-4",
         phase: "Research & Validation",
-        status: "upcoming",
+        status: "current",
         items: [
           "User interviews",
           "Persona refinement",
