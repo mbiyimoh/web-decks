@@ -80,8 +80,8 @@ export const plyaFitnessApp: ProjectData = {
   // NEXT WEEK PREVIEW (shown in expanded tile)
   // ============================================================================
   nextWeek: {
-    productBuild: "Content engine & calendar UI foundations",
-    strategy: "Landing page design & beta prep",
+    productBuild: "Core UI components & clickable prototype",
+    strategy: "Prototype feedback sessions & competitive analysis",
   },
 
   // ============================================================================
@@ -96,9 +96,9 @@ export const plyaFitnessApp: ProjectData = {
     },
     {
       id: 2,
-      label: "Share competitive analysis findings",
+      label: "Identify 5-10 users to review clickable prototype",
       link: "#",
-      neededFor: "Landing page positioning (Week 5-6)",
+      neededFor: "Prototype feedback sessions (Week 4)",
     },
     {
       id: 3,
@@ -175,6 +175,7 @@ export const plyaFitnessApp: ProjectData = {
           "User interviews",
           "Persona refinement",
           "Competitive analysis",
+          "Prototype feedback sessions",
           "Landing page design",
         ],
       },
@@ -227,7 +228,8 @@ export const plyaFitnessApp: ProjectData = {
       { name: "Competitive Analysis", week: "Week 3-4" },
       { name: "Database Schema", week: "Week 3-4" },
       { name: "Profile System", week: "Week 3-4" },
-      { name: "Landing Page", week: "Week 3-4" },
+      { name: "Landing Page", week: "Week 5-6" },
+      { name: "Clickable Prototype Feedback", week: "Week 4" },
       { name: "Content Engine", week: "Week 5-6" },
       { name: "Calendar & Planning UI", week: "Week 5-6" },
       { name: "Vision Deck", week: "Week 5-6" },
