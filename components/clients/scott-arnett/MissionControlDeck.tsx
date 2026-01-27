@@ -35,221 +35,9 @@ const colors = {
   zinc800: '#27272a',
 };
 
-// Project data for Scott's ventures
-const projectsData = [
-  {
-    id: 'deep_dive_pools',
-    name: 'Deep Dive Pools + ASR',
-    category: 'Venture / Infrastructure',
-    tier: 1,
-    summary: 'Partnering with ASR to build 45m deep dive pools inside multi-attraction adventure resorts.',
-    why: 'Creates physical infrastructure and recurring revenue. Uniquely positioned through relationships and domain expertise.',
-    momentum: 'active' as const,
-    passionScore: 9,
-    roiScore: 9,
-    delegatabilityScore: 3,
-    timeThisWeek: { budgeted: 8, actual: 6 },
-    currentBlocker: null,
-    oneThingThisWeek: 'Follow up with ASR on Riverside site timeline',
-    primaryObjectives: [
-      { label: 'Finalize Riverside LOI', timeframe: '60 days', description: 'Get letter of intent signed for first location' },
-      { label: 'Utah site feasibility', timeframe: '90 days', description: 'Complete feasibility study for St. George location' }
-    ],
-    keyNextActions: [
-      'Follow up with ASR on Riverside site timeline',
-      'Review updated pro forma from finance team',
-      'Schedule call with Utah land developer'
-    ],
-    decisionLog: [
-      { date: '2025-01-20', note: 'Decided to prioritize Riverside over Texas due to faster permitting' },
-      { date: '2025-01-10', note: 'Confirmed mermaid program partnership structure with training team' }
-    ],
-    notes: 'Multiple locations in discussion: Riverside CA, Utah/St. George, Texas, NorCal.'
-  },
-  {
-    id: 'med_device_startup',
-    name: 'Med Device Startup',
-    category: 'Venture / High Upside',
-    tier: 1,
-    summary: 'New medical device company targeting FDA clearance and rapid commercialization.',
-    why: 'High-upside venture aligned with med device expertise. Time-sensitive FDA timelines.',
-    momentum: 'stuck' as const,
-    passionScore: 8,
-    roiScore: 9,
-    delegatabilityScore: 4,
-    timeThisWeek: { budgeted: 6, actual: 2 },
-    currentBlocker: {
-      description: 'Waiting on FDA pre-submission feedback',
-      stuckSince: '2025-01-10',
-      daysStuck: 16
-    },
-    oneThingThisWeek: 'Prep contingency plan if FDA feedback delayed',
-    primaryObjectives: [
-      { label: 'FDA pre-sub response', timeframe: '30 days', description: 'Receive and analyze FDA pre-submission feedback' },
-      { label: 'Manufacturing partner LOI', timeframe: '60 days', description: 'Secure letter of intent from contract manufacturer' }
-    ],
-    keyNextActions: [
-      'Prep contingency plan if FDA feedback delayed',
-      'Review manufacturing partner shortlist',
-      'Update investor deck with timeline scenarios'
-    ],
-    decisionLog: [
-      { date: '2025-01-15', note: 'Decided to pause GPO outreach until FDA feedback arrives' },
-      { date: '2025-01-05', note: 'Submitted pre-submission package to FDA' }
-    ],
-    notes: 'Corporate entity + B2C site + GPO relationships being built.'
-  },
-  {
-    id: 'throw_flasher',
-    name: 'Throw Flasher',
-    category: 'Product / Commerce',
-    tier: 1,
-    summary: 'Hardware flasher device for spearfishing with proven distribution traction.',
-    why: 'Already has 5,000-unit order. Clear path to scale with established distribution.',
-    momentum: 'active' as const,
-    passionScore: 7,
-    roiScore: 8,
-    delegatabilityScore: 6,
-    timeThisWeek: { budgeted: 4, actual: 5 },
-    currentBlocker: null,
-    oneThingThisWeek: 'Finalize packaging design for production run',
-    primaryObjectives: [
-      { label: 'Ship 5K unit order', timeframe: '45 days', description: 'Complete and ship American Dive Co order' },
-      { label: 'Second distribution deal', timeframe: '90 days', description: 'Close deal with one additional major retailer' }
-    ],
-    keyNextActions: [
-      'Finalize packaging design for production run',
-      'Confirm production timeline with manufacturer',
-      'Draft outreach list for second distribution partner'
-    ],
-    decisionLog: [
-      { date: '2025-01-18', note: 'Confirmed 5,000-unit order with American Dive Co' }
-    ],
-    notes: 'Hardware device that attracts fish by spinning and reflecting as it descends.'
-  },
-  {
-    id: 'versus_dive_shop',
-    name: 'Verso-Sphere Dive Shop',
-    category: 'Sports / Passion',
-    tier: 2,
-    summary: 'Free diving & spearfishing dive shop, instruction, and elite athlete sponsorships.',
-    why: 'High passion project. Platform for athletes and sport visibility.',
-    momentum: 'active' as const,
-    passionScore: 9,
-    roiScore: 6,
-    delegatabilityScore: 7,
-    timeThisWeek: { budgeted: 4, actual: 4 },
-    currentBlocker: null,
-    oneThingThisWeek: 'Review Q1 athlete sponsorship renewals',
-    primaryObjectives: [
-      { label: 'Athlete World Champs prep', timeframe: '90 days', description: 'Support squad preparation for New Zealand championships' }
-    ],
-    keyNextActions: [
-      'Review Q1 athlete sponsorship renewals',
-      'Schedule training camp logistics'
-    ],
-    decisionLog: [
-      { date: '2025-01-12', note: 'Confirmed New Zealand World Championships squad roster' }
-    ],
-    notes: 'Elite athletes including national record holder.'
-  },
-  {
-    id: 'fish_fertilizer',
-    name: 'Fish Fertilizer Venture',
-    category: 'Adjacent Venture',
-    tier: 2,
-    summary: 'New fish-based fertilizer opportunity leveraging strong distribution relationships.',
-    why: 'Good ROI potential. Medium personal passion—structure and delegate.',
-    momentum: 'paused' as const,
-    passionScore: 4,
-    roiScore: 7,
-    delegatabilityScore: 8,
-    timeThisWeek: { budgeted: 2, actual: 0 },
-    currentBlocker: {
-      description: 'Need to decide on go/no-go and partnership structure',
-      stuckSince: '2025-01-15',
-      daysStuck: 11
-    },
-    oneThingThisWeek: 'Make go/no-go decision on fertilizer venture',
-    primaryObjectives: [
-      { label: 'Go/no-go decision', timeframe: '30 days', description: 'Decide whether to pursue' }
-    ],
-    keyNextActions: [
-      'Make go/no-go decision on fertilizer venture',
-      'If go: identify operator to run day-to-day'
-    ],
-    decisionLog: [],
-    notes: 'Distribution access: sod farms, nurseries, Sun Pro.'
-  },
-  {
-    id: 'family_office',
-    name: 'Family Office',
-    category: 'Capital / Impact',
-    tier: 2,
-    summary: 'Personal investment arm for family health solutions and impact ventures.',
-    why: 'Long-term wealth and impact vehicle. Episodic attention.',
-    momentum: 'active' as const,
-    passionScore: 8,
-    roiScore: 7,
-    delegatabilityScore: 5,
-    timeThisWeek: { budgeted: 2, actual: 1 },
-    currentBlocker: null,
-    oneThingThisWeek: 'Review two inbound deal memos',
-    primaryObjectives: [
-      { label: 'Deploy Q1 capital', timeframe: '90 days', description: 'Make 1-2 investments' }
-    ],
-    keyNextActions: [
-      'Review two inbound deal memos',
-      'Follow up on biotech intro'
-    ],
-    decisionLog: [
-      { date: '2025-01-05', note: 'Passed on Series A—too far from thesis' }
-    ],
-    notes: 'Mission: Fund solutions for family health problems.'
-  },
-  {
-    id: 'med_device_day_job',
-    name: 'CDMO Day Job',
-    category: 'Core Income',
-    tier: 3,
-    summary: 'Strategic relations engineer at medical device contract manufacturer.',
-    why: 'Supports cashflow and network. Not primary long-term vehicle.',
-    momentum: 'active' as const,
-    passionScore: 5,
-    roiScore: 5,
-    delegatabilityScore: 2,
-    timeThisWeek: { budgeted: 40, actual: 38 },
-    currentBlocker: null,
-    oneThingThisWeek: 'Close pending lead from trade show',
-    primaryObjectives: [
-      { label: 'Hit Q1 targets', timeframe: '90 days', description: 'Meet quarterly goals' }
-    ],
-    keyNextActions: ['Close pending lead from trade show'],
-    decisionLog: [],
-    notes: 'Role: Generating leads, supporting med device development.'
-  },
-  {
-    id: 'olympic_sport_mission',
-    name: 'Olympic Sport Mission',
-    category: 'Long-Term Mission',
-    tier: 3,
-    summary: 'Elevate freediving and spearfishing toward Olympic status.',
-    why: '10-year horizon. Advances through other sports projects.',
-    momentum: 'active' as const,
-    passionScore: 10,
-    roiScore: 4,
-    delegatabilityScore: 6,
-    timeThisWeek: { budgeted: 0, actual: 0 },
-    currentBlocker: null,
-    oneThingThisWeek: 'No direct action—advances through Verso-Sphere',
-    primaryObjectives: [
-      { label: 'World Champs visibility', timeframe: '6 months', description: 'Maximize media coverage' }
-    ],
-    keyNextActions: ['Coordinate with Verso-Sphere on athlete media strategy'],
-    decisionLog: [],
-    notes: 'Long-term: Olympic recognition, storytelling, events.'
-  }
-];
+// =============================================================================
+// TYPE DEFINITIONS
+// =============================================================================
 
 type Momentum = 'active' | 'paused' | 'stuck';
 
@@ -279,7 +67,269 @@ interface Project {
   notes: string;
 }
 
-// Helper functions
+// =============================================================================
+// PROJECT DATA
+// =============================================================================
+// Updated based on conversation analysis - prioritized by urgency and immediacy
+const projectsData: Project[] = [
+  // =============================================================================
+  // TIER 1: FOCUS ZONE - March deadlines and highest urgency
+  // =============================================================================
+  {
+    id: 'med_device_startup',
+    name: 'Med Device Startup',
+    category: 'Venture / High Upside',
+    tier: 1,
+    summary: 'FDA clearance expected March. Standing up corporate entity, B2C site, GPO relationships, and manufacturing simultaneously.',
+    why: 'Most time-sensitive venture. Small team trying to bring ALL systems online at once for immediate post-clearance sales.',
+    momentum: 'active' ,
+    passionScore: 8,
+    roiScore: 10,
+    delegatabilityScore: 4,
+    timeThisWeek: { budgeted: 12, actual: 8 },
+    currentBlocker: {
+      description: 'Small team standing up ALL systems at once (entity, GTM, GPOs, manufacturing, pre-sales)',
+      stuckSince: '2026-01-20',
+      daysStuck: 6
+    },
+    oneThingThisWeek: 'Clarify and sequence the launch plan: what must be true by FDA date vs. can slip',
+    primaryObjectives: [
+      { label: 'FDA clearance', timeframe: '45 days', description: 'Achieve FDA clearance (expected March)' },
+      { label: 'GPO relationships locked', timeframe: '45 days', description: 'Secure agreements to sell into ~54 hospitals at clearance' },
+      { label: 'B2C site + marketing live', timeframe: '45 days', description: 'Launch pre-sales campaigns before FDA date' }
+    ],
+    keyNextActions: [
+      'Clarify and sequence the launch plan',
+      'Lock manufacturing partnership',
+      'Secure 1-2 anchor GPO/hospital agreements',
+      'Finalize corporate entity'
+    ],
+    decisionLog: [
+      { date: '2026-01-20', note: 'Identified need to sequence launch plan - too many parallel workstreams' },
+      { date: '2026-01-05', note: 'Submitted pre-submission package to FDA' }
+    ],
+    notes: 'Very small team. Need help figuring out how to bring all pieces online. Corporate entity + B2C site + GPO relationships all in flight.'
+  },
+  {
+    id: 'versus_dive_shop',
+    name: 'Versus Beer + Athletes',
+    category: 'Sports / Passion',
+    tier: 1,
+    summary: 'Free diving & spearfishing dive shop supporting Team USA at World Championships in New Zealand (March). Son on junior team.',
+    why: 'World Championships in March is a hard deadline. Athletes need support now. High passion + family involvement.',
+    momentum: 'active' ,
+    passionScore: 10,
+    roiScore: 7,
+    delegatabilityScore: 5,
+    timeThisWeek: { budgeted: 8, actual: 6 },
+    currentBlocker: {
+      description: 'Athletes are broke, have day jobs, limited time to train. No repeatable marketing/sponsorship funnel.',
+      stuckSince: '2026-01-15',
+      daysStuck: 11
+    },
+    oneThingThisWeek: 'Design or secure a repeatable marketing/sponsorship funnel for athletes and shop',
+    primaryObjectives: [
+      { label: 'NZ World Championships', timeframe: '60 days', description: 'Successfully manage and support Team USA squad (including son on junior team)' },
+      { label: 'Athlete sustainability', timeframe: '90 days', description: 'Reduce athlete dependence on day jobs through sponsorships/income' }
+    ],
+    keyNextActions: [
+      'Design repeatable marketing/sponsorship funnel',
+      'Clarify: optimizing for athlete income, shop revenue, or both?',
+      'Finalize World Champs travel and training logistics',
+      'Identify marketing help (Scott lacks patience/skill for campaigns)'
+    ],
+    decisionLog: [
+      { date: '2026-01-12', note: 'Confirmed New Zealand World Championships squad roster' },
+      { date: '2026-01-10', note: 'Acknowledged role as "sugar daddy" for athletes - need sustainable model' }
+    ],
+    notes: 'Scott effectively funds the athletes. Elite team includes national record holder. Need marketing team - Scott admits he lacks patience/skill for campaigns.'
+  },
+  {
+    id: 'deep_dive_pools',
+    name: 'Deep Dive Pools + ASR',
+    category: 'Venture / Infrastructure',
+    tier: 1,
+    summary: 'Partnering with ASR to build 45m deep dive pools inside multi-attraction adventure resorts. Riverside site in planning.',
+    why: 'High strategic leverage. Creates physical infrastructure and recurring revenue through implementation company.',
+    momentum: 'active' ,
+    passionScore: 9,
+    roiScore: 9,
+    delegatabilityScore: 3,
+    timeThisWeek: { budgeted: 6, actual: 4 },
+    currentBlocker: null,
+    oneThingThisWeek: 'Get to a clear, written concept + financial rationale for deep pool module',
+    primaryObjectives: [
+      { label: 'Riverside concept finalized', timeframe: '60 days', description: 'Decide pool placement on site plan + define program (what happens in/around pool)' },
+      { label: 'Implementation playbook', timeframe: '90 days', description: 'Create repeatable playbook for implementation company at each resort' }
+    ],
+    keyNextActions: [
+      'Write clear concept + financial rationale for ASR alignment',
+      'Nail down Riverside conceptual placement and program',
+      'Address site constraints (water tables, geothermal)',
+      'Advance Utah/St. George vs Utah County conversations'
+    ],
+    decisionLog: [
+      { date: '2026-01-20', note: 'Decided to prioritize Riverside over Texas due to faster permitting' },
+      { date: '2026-01-10', note: 'Confirmed mermaid program partnership structure with training team' }
+    ],
+    notes: 'Pool must pencil as part of larger resort P&L, not standalone. Sites: Riverside CA, Utah/St. George, Northern Texas, NorCal. Implementation company runs dive shop, training, mermaid programs at each location.'
+  },
+  // =============================================================================
+  // TIER 2: IN MOTION - Active but not March-urgent
+  // =============================================================================
+  {
+    id: 'olympic_sport_mission',
+    name: 'Olympic Sport Mission',
+    category: 'Long-Term Mission',
+    tier: 2,
+    summary: 'Elevate freediving and spearfishing toward world championship and Olympic-level visibility.',
+    why: 'Long-term mission, but World Championships in March creates immediate storytelling opportunity.',
+    momentum: 'active' ,
+    passionScore: 10,
+    roiScore: 5,
+    delegatabilityScore: 6,
+    timeThisWeek: { budgeted: 2, actual: 1 },
+    currentBlocker: {
+      description: 'No clear, repeatable media/content/distribution engine yet',
+      stuckSince: '2026-01-15',
+      daysStuck: 11
+    },
+    oneThingThisWeek: 'Decide on ONE flagship story/campaign around Worlds and record-holder athlete',
+    primaryObjectives: [
+      { label: 'Worlds visibility campaign', timeframe: '60 days', description: 'Design and execute flagship story around NZ championships' },
+      { label: 'Media partnerships', timeframe: '90 days', description: 'Identify and engage 3-5 target media/partners/platforms' }
+    ],
+    keyNextActions: [
+      'Decide on flagship story/campaign for Worlds',
+      'Identify 3-5 target media/partners/platforms',
+      'Professionalize narrative around athletes and sports',
+      'Explore early streaming/coverage conversations'
+    ],
+    decisionLog: [],
+    notes: 'Very niche audience currently. Limited awareness of freediving & freshwater spearfishing. 10-year Olympic horizon, but Worlds creates near-term opportunity.'
+  },
+  {
+    id: 'throw_flasher',
+    name: 'Throw Flasher',
+    category: 'Product / Commerce',
+    tier: 2,
+    summary: 'Hardware flasher device for spearfishing. 5,000-unit American Dive Co distribution deal in progress.',
+    why: 'Proven traction with first major order. Clear path to scale, but needs structured GTM.',
+    momentum: 'active' ,
+    passionScore: 7,
+    roiScore: 8,
+    delegatabilityScore: 7,
+    timeThisWeek: { budgeted: 3, actual: 3 },
+    currentBlocker: null,
+    oneThingThisWeek: 'Treat American Dive Co as case study: document economics, performance targets, upsell plan',
+    primaryObjectives: [
+      { label: 'Fulfill 5K order', timeframe: '45 days', description: 'Successfully fulfill American Dive Co distribution deal' },
+      { label: 'Next 3-5 distributors', timeframe: '90 days', description: 'Use American Dive proof to approach additional retailers' }
+    ],
+    keyNextActions: [
+      'Document American Dive Co as case study',
+      'Identify next 3-5 ideal distributors/retailers',
+      'Set up operational system (inventory, fulfillment) for scale',
+      'Finalize packaging design'
+    ],
+    decisionLog: [
+      { date: '2026-01-18', note: 'Confirmed 5,000-unit order with American Dive Co' }
+    ],
+    notes: 'Hardware device that attracts fish by spinning and reflecting as it descends. Needs more structured GTM and marketing, not just one-off deals.'
+  },
+  {
+    id: 'fish_fertilizer',
+    name: 'Fish Fertilizer Venture',
+    category: 'Adjacent Venture',
+    tier: 2,
+    summary: 'New fish-based fertilizer opportunity with strong distribution access (Sun Pro, sod farms, nurseries, spouse network).',
+    why: 'Good ROI potential if structured right. Must decide commitment level and founder/operator structure.',
+    momentum: 'paused' ,
+    passionScore: 4,
+    roiScore: 7,
+    delegatabilityScore: 9,
+    timeThisWeek: { budgeted: 1, actual: 0 },
+    currentBlocker: {
+      description: 'Need to decide go/no-go and clarify founder/operator structure',
+      stuckSince: '2026-01-15',
+      daysStuck: 11
+    },
+    oneThingThisWeek: 'Clarify who the founding partner/operator is and Scott\'s role (connector? capital? co-founder?)',
+    primaryObjectives: [
+      { label: 'Go/no-go decision', timeframe: '30 days', description: 'Decide whether to commit as real venture vs. opportunistic side deal' },
+      { label: 'Test market pull', timeframe: '45 days', description: 'If go: land first meaningful orders/pilots through warm relationships' }
+    ],
+    keyNextActions: [
+      'Clarify founder/operator structure and Scott\'s role',
+      'Make 1-2 test introductions to see if product pull is real',
+      'Decide: connector, capital provider, or co-founder?'
+    ],
+    decisionLog: [
+      { date: '2026-01-10', note: 'Previous founder partnership ended badly - founder-fit scar tissue to address' }
+    ],
+    notes: 'NOT the old venture with difficult co-founder. New opportunity. Distribution access: Sun Pro, sod farms, nurseries, spouse\'s gardening network. Must not over-consume time relative to passion level.'
+  },
+  {
+    id: 'family_office',
+    name: 'Family Office',
+    category: 'Capital / Impact',
+    tier: 2,
+    summary: 'Personal investment arm designed to fund solutions to family health problems and impact ventures.',
+    why: 'Long-term wealth and impact vehicle. Still forming thesis and operating model.',
+    momentum: 'active' ,
+    passionScore: 8,
+    roiScore: 7,
+    delegatabilityScore: 5,
+    timeThisWeek: { budgeted: 2, actual: 1 },
+    currentBlocker: null,
+    oneThingThisWeek: 'Draft 1-page family office thesis tied to long-term health-solution goal',
+    primaryObjectives: [
+      { label: 'Define thesis', timeframe: '30 days', description: 'Clear thesis: what types of companies, check sizes, value Scott brings' },
+      { label: 'Make 1-2 investments', timeframe: '90 days', description: 'Structure high-conviction deals where Scott\'s social capital moves the needle' }
+    ],
+    keyNextActions: [
+      'Draft 1-page family office thesis',
+      'Map strongest current opportunities (med device, ASR, fertilizer) against thesis',
+      'Define operating model for how this integrates with time and network'
+    ],
+    decisionLog: [
+      { date: '2026-01-05', note: 'Passed on Series A—too far from thesis' }
+    ],
+    notes: 'Early stage - still "forming the fund." Mission: Build capital to fund solutions for family health problems whenever viable therapies appear.'
+  },
+  // =============================================================================
+  // TIER 3: MAINTENANCE MODE
+  // =============================================================================
+  {
+    id: 'med_device_day_job',
+    name: 'CDMO Day Job',
+    category: 'Core Income',
+    tier: 3,
+    summary: 'Strategic relations engineer at medical device CDMO. Generates leads, supports early-stage med device development.',
+    why: 'Supports cashflow and network expansion. Not primary long-term vehicle, but must maintain performance.',
+    momentum: 'active' ,
+    passionScore: 5,
+    roiScore: 5,
+    delegatabilityScore: 2,
+    timeThisWeek: { budgeted: 40, actual: 38 },
+    currentBlocker: null,
+    oneThingThisWeek: 'Clarify minimum viable performance: what metrics/activities keep role healthy without dominating bandwidth',
+    primaryObjectives: [
+      { label: 'Hit Q1 targets', timeframe: '90 days', description: 'Meet quarterly goals while not over-investing attention' }
+    ],
+    keyNextActions: [
+      'Define minimum viable performance metrics',
+      'Close pending leads from trade show',
+      'Use role for network expansion into med device ecosystem'
+    ],
+    decisionLog: [],
+    notes: 'Time and attention spread over many ventures. Risk of under-investing in role expectations. Role is stable income + relationship platform.'
+  }
+];
+
+// =============================================================================
+// HELPER FUNCTIONS
+// =============================================================================
 const getMomentumColor = (momentum: Momentum): string => {
   switch (momentum) {
     case 'active': return colors.green;
