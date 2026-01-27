@@ -9,18 +9,12 @@ export const size = {
 };
 export const contentType = 'image/png';
 
-// Brand colors from 33 Strategies design system
+// Brand colors
 const GOLD = '#d4a54a';
 const BG_PRIMARY = '#0a0a0f';
 const TEXT_PRIMARY = '#f5f5f5';
-const TEXT_MUTED = '#888888';
-const TEXT_DIM = '#555555';
-
-// Font stacks that approximate brand fonts with system fallbacks
-// (External font loading can timeout in serverless environments)
-const FONT_DISPLAY = 'Georgia, Times New Roman, serif'; // Approximates Instrument Serif
-const FONT_MONO = 'ui-monospace, SFMono-Regular, Menlo, monospace'; // Approximates JetBrains Mono
-const FONT_BODY = 'system-ui, -apple-system, sans-serif'; // Approximates DM Sans
+const TEXT_MUTED = '#71717a';
+const TEXT_DIM = '#52525b';
 
 export default async function Image({ params }: { params: { client: string } }) {
   const client = getClient(params.client);
@@ -40,7 +34,7 @@ export default async function Image({ params }: { params: { client: string } }) 
           padding: '60px 80px',
           position: 'relative',
           overflow: 'hidden',
-          fontFamily: FONT_BODY,
+          fontFamily: 'system-ui, -apple-system, sans-serif',
         }}
       >
         {/* Background glow effect - top right */}
@@ -80,7 +74,8 @@ export default async function Image({ params }: { params: { client: string } }) 
           <span
             style={{
               fontSize: '48px',
-              fontFamily: FONT_DISPLAY,
+              fontFamily: 'Georgia, serif',
+              fontStyle: 'italic',
               color: GOLD,
             }}
           >
@@ -89,9 +84,9 @@ export default async function Image({ params }: { params: { client: string } }) 
           <span
             style={{
               fontSize: '20px',
-              fontFamily: FONT_MONO,
+              fontFamily: 'monospace',
               color: TEXT_MUTED,
-              letterSpacing: '0.2em',
+              letterSpacing: '0.25em',
               textTransform: 'uppercase',
             }}
           >
@@ -109,10 +104,10 @@ export default async function Image({ params }: { params: { client: string } }) 
         >
           <span
             style={{
-              fontSize: '24px',
-              fontFamily: FONT_MONO,
+              fontSize: '26px',
+              fontFamily: 'monospace',
               color: GOLD,
-              letterSpacing: '0.2em',
+              letterSpacing: '0.25em',
               textTransform: 'uppercase',
             }}
           >
@@ -121,7 +116,7 @@ export default async function Image({ params }: { params: { client: string } }) 
           <span
             style={{
               fontSize: '120px',
-              fontFamily: FONT_DISPLAY,
+              fontFamily: 'Georgia, serif',
               color: TEXT_PRIMARY,
               lineHeight: 1.0,
             }}
@@ -149,7 +144,6 @@ export default async function Image({ params }: { params: { client: string } }) 
           <span
             style={{
               fontSize: '28px',
-              fontFamily: FONT_BODY,
               color: TEXT_DIM,
             }}
           >
