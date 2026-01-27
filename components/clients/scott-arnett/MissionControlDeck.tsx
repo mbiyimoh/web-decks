@@ -1,6 +1,7 @@
 'use client';
 
-import React, { useState } from 'react';
+import React, { useState, useEffect, useRef, useCallback } from 'react';
+import { motion, useInView, AnimatePresence } from 'framer-motion';
 import {
   BG_PRIMARY,
   BG_SURFACE,
@@ -10,6 +11,9 @@ import {
   TEXT_DIM,
   GREEN,
 } from '@/lib/design-tokens';
+
+// Phase management for intro → dashboard flow
+type Phase = 'intro' | 'dashboard-with-tooltips' | 'dashboard';
 
 // Color constants aligned with 33 Strategies design system
 const colors = {
@@ -390,11 +394,12 @@ const BlockerBadge = ({ blocker }: { blocker: Blocker }) => {
 };
 
 // Project card component
-const ProjectCard = ({ project, onClick, isFocusTier }: { project: Project; onClick: (p: Project) => void; isFocusTier: boolean }) => {
+const ProjectCard = ({ project, onClick, isFocusTier, id }: { project: Project; onClick: (p: Project) => void; isFocusTier: boolean; id?: string }) => {
   const [isHovered, setIsHovered] = useState(false);
 
   return (
     <div
+      id={id}
       onClick={() => onClick(project)}
       onMouseEnter={() => setIsHovered(true)}
       onMouseLeave={() => setIsHovered(false)}
@@ -907,6 +912,477 @@ const ProjectDetail = ({ project, onClose }: { project: Project; onClose: () => 
   );
 };
 
+// =============================================================================
+// INTRO SCROLLYTELLING COMPONENTS
+// =============================================================================
+
+interface IntroSectionProps {
+  children: React.ReactNode;
+  id: string;
+}
+
+const IntroSection = ({ children, id }: IntroSectionProps) => {
+  const ref = useRef<HTMLElement>(null);
+  const isInView = useInView(ref, { once: false, margin: '-20%' });
+
+  return (
+    <motion.section
+      ref={ref}
+      id={id}
+      initial={{ opacity: 0 }}
+      animate={isInView ? { opacity: 1 } : { opacity: 0 }}
+      transition={{ duration: 0.8, ease: 'easeOut' }}
+      style={{
+        minHeight: '100vh',
+        display: 'flex',
+        flexDirection: 'column',
+        justifyContent: 'center',
+        padding: '64px 24px',
+        maxWidth: '800px',
+        margin: '0 auto',
+      }}
+    >
+      {children}
+    </motion.section>
+  );
+};
+
+interface RevealTextProps {
+  children: React.ReactNode;
+  delay?: number;
+}
+
+const RevealText = ({ children, delay = 0 }: RevealTextProps) => {
+  const ref = useRef<HTMLDivElement>(null);
+  const isInView = useInView(ref, { once: false, margin: '-10%' });
+
+  return (
+    <motion.div
+      ref={ref}
+      initial={{ opacity: 0, y: 40 }}
+      animate={isInView ? { opacity: 1, y: 0 } : { opacity: 0, y: 40 }}
+      transition={{ duration: 0.7, delay, ease: [0.25, 0.4, 0.25, 1] }}
+    >
+      {children}
+    </motion.div>
+  );
+};
+
+// Abstract opportunity categories for the intro
+const opportunityCategories = [
+  { label: 'Infrastructure', description: 'Deep dive pools, resorts, physical spaces' },
+  { label: 'Products', description: 'Throw Flasher, hardware that solves real problems' },
+  { label: 'Sports & Athletes', description: 'World-class competitors, championship visibility' },
+  { label: 'Ventures', description: 'Med device, fertilizer, strategic bets' },
+  { label: 'Mission', description: 'Olympic recognition, sport legitimacy, long-term impact' },
+];
+
+// Intro scrollytelling component
+const IntroExperience = ({ onComplete }: { onComplete: () => void }) => {
+  return (
+    <div style={{ backgroundColor: colors.bg, minHeight: '100vh' }}>
+      {/* Section 1: We talked about a lot */}
+      <IntroSection id="intro-1">
+        <RevealText>
+          <p style={{
+            fontFamily: "'JetBrains Mono', monospace",
+            fontSize: '11px',
+            color: colors.gold,
+            textTransform: 'uppercase',
+            letterSpacing: '0.2em',
+            marginBottom: '24px',
+          }}>
+            After Our Conversation
+          </p>
+        </RevealText>
+        <RevealText delay={0.15}>
+          <h1 style={{
+            fontFamily: "'Instrument Serif', Georgia, serif",
+            fontSize: 'clamp(36px, 6vw, 56px)',
+            color: colors.white,
+            lineHeight: 1.15,
+            margin: 0,
+          }}>
+            We talked about <em style={{ fontStyle: 'italic', color: colors.gold }}>a lot</em>.
+          </h1>
+        </RevealText>
+        <RevealText delay={0.3}>
+          <p style={{
+            fontFamily: "'DM Sans', sans-serif",
+            fontSize: '18px',
+            color: colors.textMuted,
+            lineHeight: 1.6,
+            marginTop: '24px',
+            maxWidth: '520px',
+          }}>
+            The ventures. The athletes. The deals in motion. The missions that matter most to you.
+          </p>
+        </RevealText>
+      </IntroSection>
+
+      {/* Section 2: Compelling opportunities */}
+      <IntroSection id="intro-2">
+        <RevealText>
+          <p style={{
+            fontFamily: "'JetBrains Mono', monospace",
+            fontSize: '11px',
+            color: colors.gold,
+            textTransform: 'uppercase',
+            letterSpacing: '0.2em',
+            marginBottom: '24px',
+          }}>
+            What We Saw
+          </p>
+        </RevealText>
+        <RevealText delay={0.15}>
+          <h2 style={{
+            fontFamily: "'Instrument Serif', Georgia, serif",
+            fontSize: 'clamp(32px, 5vw, 48px)',
+            color: colors.white,
+            lineHeight: 1.2,
+            margin: '0 0 40px 0',
+          }}>
+            Compelling opportunities across <em style={{ fontStyle: 'italic', color: colors.gold }}>every</em> front.
+          </h2>
+        </RevealText>
+        <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
+          {opportunityCategories.map((cat, i) => (
+            <RevealText key={cat.label} delay={0.25 + i * 0.1}>
+              <div style={{
+                display: 'flex',
+                alignItems: 'baseline',
+                gap: '16px',
+                padding: '12px 0',
+                borderBottom: `1px solid ${colors.border}`,
+              }}>
+                <span style={{
+                  fontFamily: "'Instrument Serif', Georgia, serif",
+                  fontSize: '20px',
+                  color: colors.white,
+                  minWidth: '140px',
+                }}>
+                  {cat.label}
+                </span>
+                <span style={{
+                  fontFamily: "'DM Sans', sans-serif",
+                  fontSize: '14px',
+                  color: colors.textDim,
+                }}>
+                  {cat.description}
+                </span>
+              </div>
+            </RevealText>
+          ))}
+        </div>
+      </IntroSection>
+
+      {/* Section 3: The question */}
+      <IntroSection id="intro-3">
+        <RevealText>
+          <p style={{
+            fontFamily: "'JetBrains Mono', monospace",
+            fontSize: '11px',
+            color: colors.gold,
+            textTransform: 'uppercase',
+            letterSpacing: '0.2em',
+            marginBottom: '24px',
+          }}>
+            But One Question Kept Coming Back
+          </p>
+        </RevealText>
+        <RevealText delay={0.2}>
+          <h2 style={{
+            fontFamily: "'Instrument Serif', Georgia, serif",
+            fontSize: 'clamp(28px, 4.5vw, 42px)',
+            color: colors.white,
+            lineHeight: 1.3,
+            margin: 0,
+            fontWeight: 400,
+          }}>
+            How do I help Scott better <em style={{ fontStyle: 'italic', color: colors.gold }}>organize</em> and{' '}
+            <em style={{ fontStyle: 'italic', color: colors.gold }}>visualize</em> everything he&apos;s building—
+          </h2>
+        </RevealText>
+        <RevealText delay={0.4}>
+          <p style={{
+            fontFamily: "'DM Sans', sans-serif",
+            fontSize: '20px',
+            color: colors.textMuted,
+            lineHeight: 1.6,
+            marginTop: '24px',
+          }}>
+            so he can be more <span style={{ color: colors.white, fontWeight: 500 }}>intentional</span> about where his time goes as an operator?
+          </p>
+        </RevealText>
+      </IntroSection>
+
+      {/* Section 4: What if we started here */}
+      <IntroSection id="intro-4">
+        <RevealText>
+          <h2 style={{
+            fontFamily: "'Instrument Serif', Georgia, serif",
+            fontSize: 'clamp(36px, 6vw, 56px)',
+            color: colors.white,
+            lineHeight: 1.15,
+            margin: 0,
+          }}>
+            What if we started <em style={{ fontStyle: 'italic', color: colors.gold }}>here</em>?
+          </h2>
+        </RevealText>
+        <RevealText delay={0.25}>
+          <p style={{
+            fontFamily: "'DM Sans', sans-serif",
+            fontSize: '18px',
+            color: colors.textMuted,
+            lineHeight: 1.6,
+            marginTop: '24px',
+            maxWidth: '480px',
+          }}>
+            A prototype for organizing your portfolio of ventures—built around where your next hour should actually go.
+          </p>
+        </RevealText>
+        <RevealText delay={0.45}>
+          <button
+            onClick={onComplete}
+            style={{
+              marginTop: '48px',
+              padding: '16px 32px',
+              backgroundColor: 'transparent',
+              border: `1px solid ${colors.gold}`,
+              borderRadius: '8px',
+              color: colors.gold,
+              fontFamily: "'DM Sans', sans-serif",
+              fontSize: '16px',
+              fontWeight: 500,
+              cursor: 'pointer',
+              transition: 'all 0.2s ease',
+              display: 'inline-flex',
+              alignItems: 'center',
+              gap: '8px',
+            }}
+            onMouseEnter={(e) => {
+              e.currentTarget.style.backgroundColor = colors.goldSubtle;
+            }}
+            onMouseLeave={(e) => {
+              e.currentTarget.style.backgroundColor = 'transparent';
+            }}
+          >
+            Enter Mission Control
+            <span style={{ fontSize: '18px' }}>→</span>
+          </button>
+        </RevealText>
+      </IntroSection>
+    </div>
+  );
+};
+
+// =============================================================================
+// ONBOARDING TOOLTIP SYSTEM
+// =============================================================================
+
+interface TooltipConfig {
+  id: string;
+  title: string;
+  description: string;
+  target: string; // CSS selector or element ID
+  position: 'top' | 'bottom' | 'left' | 'right';
+  arrowOffset?: string;
+}
+
+const tooltipConfigs: TooltipConfig[] = [
+  {
+    id: 'priority-zones',
+    title: 'Three Priority Zones',
+    description: 'Focus Zone holds your top 3 priorities. In Motion tracks active-but-not-urgent work. Maintenance is everything else.',
+    target: 'focus-zone-section',
+    position: 'top',
+  },
+  {
+    id: 'next-hour',
+    title: 'Your Next Hour',
+    description: 'A smart recommendation engine that suggests where your time should go based on urgency, ROI, and current blockers.',
+    target: 'next-hour-section',
+    position: 'bottom',
+  },
+  {
+    id: 'scoring-framework',
+    title: 'Passion / ROI / Delegatability',
+    description: 'Rate each project—and even individual objectives—on these three dimensions to surface where your unique contribution matters most.',
+    target: 'first-project-card',
+    position: 'right',
+  },
+  {
+    id: 'project-details',
+    title: 'Click for Details',
+    description: 'Each project expands into a full view with objectives, blockers, decision logs, and this week\'s one thing.',
+    target: 'first-project-card',
+    position: 'bottom',
+  },
+];
+
+interface OnboardingTooltipProps {
+  config: TooltipConfig;
+  currentStep: number;
+  totalSteps: number;
+  onNext: () => void;
+  onSkip: () => void;
+}
+
+const OnboardingTooltip = ({ config, currentStep, totalSteps, onNext, onSkip }: OnboardingTooltipProps) => {
+  // Position styles based on tooltip position
+  const getPositionStyles = (): React.CSSProperties => {
+    switch (config.id) {
+      case 'priority-zones':
+        return {
+          position: 'fixed',
+          top: '60%',
+          left: '50%',
+          transform: 'translateX(-50%)',
+        };
+      case 'next-hour':
+        return {
+          position: 'fixed',
+          top: '40%',
+          left: '50%',
+          transform: 'translateX(-50%)',
+        };
+      case 'scoring-framework':
+        return {
+          position: 'fixed',
+          top: '50%',
+          right: '10%',
+          transform: 'translateY(-50%)',
+        };
+      case 'project-details':
+        return {
+          position: 'fixed',
+          top: '65%',
+          left: '25%',
+        };
+      default:
+        return {
+          position: 'fixed',
+          top: '50%',
+          left: '50%',
+          transform: 'translate(-50%, -50%)',
+        };
+    }
+  };
+
+  return (
+    <motion.div
+      initial={{ opacity: 0, scale: 0.95 }}
+      animate={{ opacity: 1, scale: 1 }}
+      exit={{ opacity: 0, scale: 0.95 }}
+      transition={{ duration: 0.25 }}
+      style={{
+        ...getPositionStyles(),
+        zIndex: 100,
+        maxWidth: '320px',
+        backgroundColor: colors.surface,
+        border: `1px solid ${colors.goldDim}`,
+        borderRadius: '12px',
+        padding: '20px',
+        boxShadow: `0 20px 40px rgba(0,0,0,0.5), ${colors.goldGlow}`,
+      } as React.CSSProperties}
+    >
+      {/* Step indicator */}
+      <div style={{
+        display: 'flex',
+        gap: '6px',
+        marginBottom: '16px',
+      }}>
+        {Array.from({ length: totalSteps }).map((_, i) => (
+          <div
+            key={i}
+            style={{
+              width: '24px',
+              height: '3px',
+              borderRadius: '2px',
+              backgroundColor: i <= currentStep ? colors.gold : colors.zinc700,
+              transition: 'background-color 0.2s',
+            }}
+          />
+        ))}
+      </div>
+
+      {/* Title */}
+      <h3 style={{
+        fontFamily: "'Instrument Serif', Georgia, serif",
+        fontSize: '18px',
+        color: colors.white,
+        margin: '0 0 8px 0',
+      }}>
+        {config.title}
+      </h3>
+
+      {/* Description */}
+      <p style={{
+        fontFamily: "'DM Sans', sans-serif",
+        fontSize: '14px',
+        color: colors.textMuted,
+        lineHeight: 1.5,
+        margin: '0 0 20px 0',
+      }}>
+        {config.description}
+      </p>
+
+      {/* Actions */}
+      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+        <button
+          onClick={onSkip}
+          style={{
+            background: 'none',
+            border: 'none',
+            color: colors.textDim,
+            fontSize: '13px',
+            fontFamily: "'DM Sans', sans-serif",
+            cursor: 'pointer',
+            padding: '4px 8px',
+          }}
+        >
+          Skip tour
+        </button>
+        <button
+          onClick={onNext}
+          style={{
+            backgroundColor: colors.gold,
+            color: colors.bg,
+            border: 'none',
+            borderRadius: '6px',
+            padding: '10px 20px',
+            fontSize: '14px',
+            fontFamily: "'DM Sans', sans-serif",
+            fontWeight: 500,
+            cursor: 'pointer',
+            display: 'flex',
+            alignItems: 'center',
+            gap: '6px',
+          }}
+        >
+          {currentStep === totalSteps - 1 ? 'Get Started' : 'Next'}
+          {currentStep < totalSteps - 1 && <span>→</span>}
+        </button>
+      </div>
+    </motion.div>
+  );
+};
+
+// Overlay that dims the background during tooltip tour
+const TooltipOverlay = ({ children }: { children: React.ReactNode }) => (
+  <div style={{
+    position: 'fixed',
+    inset: 0,
+    backgroundColor: 'rgba(10, 10, 15, 0.7)',
+    zIndex: 99,
+    pointerEvents: 'none',
+  }}>
+    <div style={{ pointerEvents: 'auto' }}>
+      {children}
+    </div>
+  </div>
+);
+
 // Generate smart recommendations based on project state
 const generateRecommendations = (projects: Project[]) => {
   const recommendations: { project: string; action: string; reason: string; urgency: 'high' | 'medium' | 'normal' }[] = [];
@@ -975,6 +1451,8 @@ const generateRecommendations = (projects: Project[]) => {
 
 // Main Mission Control component
 export default function MissionControlDeck() {
+  const [phase, setPhase] = useState<Phase>('intro');
+  const [tooltipStep, setTooltipStep] = useState(0);
   const [selectedProject, setSelectedProject] = useState<Project | null>(null);
   const [showMaintenance, setShowMaintenance] = useState(false);
 
@@ -988,6 +1466,30 @@ export default function MissionControlDeck() {
 
   const recommendations = generateRecommendations(projectsData);
 
+  // Handle intro completion
+  const handleIntroComplete = useCallback(() => {
+    setPhase('dashboard-with-tooltips');
+    window.scrollTo({ top: 0, behavior: 'instant' });
+  }, []);
+
+  // Handle tooltip navigation
+  const handleTooltipNext = useCallback(() => {
+    if (tooltipStep < tooltipConfigs.length - 1) {
+      setTooltipStep(prev => prev + 1);
+    } else {
+      setPhase('dashboard');
+    }
+  }, [tooltipStep]);
+
+  const handleTooltipSkip = useCallback(() => {
+    setPhase('dashboard');
+  }, []);
+
+  // Render intro experience
+  if (phase === 'intro') {
+    return <IntroExperience onComplete={handleIntroComplete} />;
+  }
+
   if (selectedProject) {
     return <ProjectDetail project={selectedProject} onClose={() => setSelectedProject(null)} />;
   }
@@ -1000,6 +1502,21 @@ export default function MissionControlDeck() {
       padding: '24px',
       fontFamily: "'DM Sans', -apple-system, BlinkMacSystemFont, sans-serif"
     }}>
+      {/* Tooltip overlay during onboarding */}
+      <AnimatePresence>
+        {phase === 'dashboard-with-tooltips' && (
+          <TooltipOverlay>
+            <OnboardingTooltip
+              config={tooltipConfigs[tooltipStep]}
+              currentStep={tooltipStep}
+              totalSteps={tooltipConfigs.length}
+              onNext={handleTooltipNext}
+              onSkip={handleTooltipSkip}
+            />
+          </TooltipOverlay>
+        )}
+      </AnimatePresence>
+
       <div style={{ maxWidth: '1152px', margin: '0 auto' }}>
         {/* Header */}
         <div style={{ marginBottom: '32px' }}>
@@ -1063,7 +1580,7 @@ export default function MissionControlDeck() {
         </div>
 
         {/* Your Next Hour */}
-        <div style={{ marginBottom: '32px' }}>
+        <div id="next-hour-section" style={{ marginBottom: '32px' }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '16px' }}>
             <span style={{
               fontSize: '12px',
@@ -1146,7 +1663,7 @@ export default function MissionControlDeck() {
         </div>
 
         {/* Focus Zone */}
-        <div style={{ marginBottom: '32px' }}>
+        <div id="focus-zone-section" style={{ marginBottom: '32px' }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: '12px', marginBottom: '16px' }}>
             <div style={{ fontSize: '11px', color: colors.gold, fontFamily: "'JetBrains Mono', monospace", textTransform: 'uppercase', letterSpacing: '0.15em' }}>
               Focus Zone
@@ -1155,8 +1672,14 @@ export default function MissionControlDeck() {
             <div style={{ fontSize: '11px', color: colors.textDim, fontFamily: "'JetBrains Mono', monospace" }}>Max 3 projects</div>
           </div>
           <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '16px' }}>
-            {focusZone.map(project => (
-              <ProjectCard key={project.id} project={project} onClick={setSelectedProject} isFocusTier={true} />
+            {focusZone.map((project, index) => (
+              <ProjectCard
+                key={project.id}
+                project={project}
+                onClick={setSelectedProject}
+                isFocusTier={true}
+                id={index === 0 ? 'first-project-card' : undefined}
+              />
             ))}
           </div>
         </div>
