@@ -1395,20 +1395,94 @@ const OnboardingTooltip = ({ config, currentStep, totalSteps, onNext, onSkip }: 
   );
 };
 
-// Overlay that dims the background during tooltip tour
-const TooltipOverlay = ({ children }: { children: React.ReactNode }) => (
-  <div style={{
-    position: 'fixed',
-    inset: 0,
-    backgroundColor: 'rgba(10, 10, 15, 0.7)',
-    zIndex: 99,
-    pointerEvents: 'none',
-  }}>
-    <div style={{ pointerEvents: 'auto' }}>
-      {children}
-    </div>
-  </div>
-);
+// Overlay with spotlight effect that highlights the target element
+const TooltipOverlay = ({ targetId, children }: { targetId: string; children: React.ReactNode }) => {
+  const [spotlightRect, setSpotlightRect] = useState<{ x: number; y: number; width: number; height: number } | null>(null);
+
+  useEffect(() => {
+    const updateSpotlight = () => {
+      const target = document.getElementById(targetId);
+      if (target) {
+        const rect = target.getBoundingClientRect();
+        setSpotlightRect({
+          x: rect.x,
+          y: rect.y,
+          width: rect.width,
+          height: rect.height,
+        });
+      }
+    };
+
+    // Initial calculation with small delay
+    const timer = setTimeout(updateSpotlight, 50);
+    window.addEventListener('resize', updateSpotlight);
+    window.addEventListener('scroll', updateSpotlight);
+
+    return () => {
+      clearTimeout(timer);
+      window.removeEventListener('resize', updateSpotlight);
+      window.removeEventListener('scroll', updateSpotlight);
+    };
+  }, [targetId]);
+
+  return (
+    <>
+      {/* SVG overlay with spotlight cutout */}
+      <svg
+        style={{
+          position: 'fixed',
+          inset: 0,
+          width: '100vw',
+          height: '100vh',
+          zIndex: 99,
+          pointerEvents: 'none',
+        }}
+      >
+        <defs>
+          <mask id="spotlight-mask">
+            {/* White = visible, Black = transparent */}
+            <rect width="100%" height="100%" fill="white" />
+            {spotlightRect && (
+              <rect
+                x={spotlightRect.x - 8}
+                y={spotlightRect.y - 8}
+                width={spotlightRect.width + 16}
+                height={spotlightRect.height + 16}
+                rx={12}
+                fill="black"
+              />
+            )}
+          </mask>
+        </defs>
+        {/* Dark overlay with mask applied */}
+        <rect
+          width="100%"
+          height="100%"
+          fill="rgba(10, 10, 15, 0.85)"
+          mask="url(#spotlight-mask)"
+        />
+        {/* Gold glow border around spotlight */}
+        {spotlightRect && (
+          <rect
+            x={spotlightRect.x - 8}
+            y={spotlightRect.y - 8}
+            width={spotlightRect.width + 16}
+            height={spotlightRect.height + 16}
+            rx={12}
+            fill="none"
+            stroke={colors.gold}
+            strokeWidth={2}
+            style={{ filter: 'drop-shadow(0 0 8px rgba(212, 165, 74, 0.5))' }}
+          />
+        )}
+      </svg>
+      {/* Tooltip content */}
+      <div style={{ position: 'relative', zIndex: 100, pointerEvents: 'auto' }}>
+        {children}
+      </div>
+    </>
+  );
+};
 
 // Generate smart recommendations based on project state
 const generateRecommendations = (projects: Project[]) => {
@@ -1478,12 +1552,8 @@ const generateRecommendations = (projects: Project[]) => {
 
 // Main Mission Control component
 export default function MissionControlDeck() {
-  // Persist phase in localStorage so users don't re-watch intro on refresh
-  const [phase, setPhase] = useState<Phase>(() => {
-    if (typeof window === 'undefined') return 'intro';
-    const saved = localStorage.getItem('mission-control-phase');
-    return (saved as Phase) || 'intro';
-  });
+  // Always start from intro - plays every time user opens the prototype
+  const [phase, setPhase] = useState<Phase>('intro');
   const [tooltipStep, setTooltipStep] = useState(0);
   const [selectedProject, setSelectedProject] = useState<Project | null>(null);
   const [showMaintenance, setShowMaintenance] = useState(false);
@@ -1501,7 +1571,6 @@ export default function MissionControlDeck() {
   // Handle intro completion
   const handleIntroComplete = useCallback(() => {
     setPhase('dashboard-with-tooltips');
-    localStorage.setItem('mission-control-phase', 'dashboard-with-tooltips');
     window.scrollTo({ top: 0, behavior: 'instant' });
   }, []);
 
@@ -1511,20 +1580,17 @@ export default function MissionControlDeck() {
       setTooltipStep(prev => prev + 1);
     } else {
       setPhase('dashboard');
-      localStorage.setItem('mission-control-phase', 'dashboard');
     }
   }, [tooltipStep]);
 
   const handleTooltipSkip = useCallback(() => {
     setPhase('dashboard');
-    localStorage.setItem('mission-control-phase', 'dashboard');
   }, []);
 
   // Reset tour handler (for testing/demo)
   const handleResetTour = useCallback(() => {
     setPhase('intro');
     setTooltipStep(0);
-    localStorage.setItem('mission-control-phase', 'intro');
     window.scrollTo({ top: 0, behavior: 'smooth' });
   }, []);
 
@@ -1548,7 +1614,7 @@ export default function MissionControlDeck() {
       {/* Tooltip overlay during onboarding */}
       <AnimatePresence>
         {phase === 'dashboard-with-tooltips' && (
-          <TooltipOverlay>
+          <TooltipOverlay targetId={tooltipConfigs[tooltipStep].target}>
             <OnboardingTooltip
               config={tooltipConfigs[tooltipStep]}
               currentStep={tooltipStep}
