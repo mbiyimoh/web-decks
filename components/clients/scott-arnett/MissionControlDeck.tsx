@@ -1063,11 +1063,128 @@ const IntroExperience = ({ onComplete }: { onComplete: () => void }) => {
             color: colors.textMuted,
             lineHeight: 1.6,
             marginTop: '24px',
-            maxWidth: '520px',
+            maxWidth: '560px',
           }}>
-            The ventures. The athletes. The deals in motion. The missions that matter most to you.
+            You shared a rich tapestry of different projects and passions that cross over and intersect in ways that are both complex but also highly complementary.
           </p>
         </RevealText>
+      </IntroSection>
+
+      {/* Section 1.5: Project Index */}
+      <IntroSection id="intro-1b">
+        <RevealText>
+          <p style={{
+            fontFamily: "'JetBrains Mono', monospace",
+            fontSize: '11px',
+            color: colors.gold,
+            textTransform: 'uppercase',
+            letterSpacing: '0.2em',
+            marginBottom: '24px',
+          }}>
+            What You&apos;re Building
+          </p>
+        </RevealText>
+        <RevealText delay={0.15}>
+          <h2 style={{
+            fontFamily: "'Instrument Serif', Georgia, serif",
+            fontSize: 'clamp(28px, 4vw, 36px)',
+            color: colors.white,
+            lineHeight: 1.25,
+            margin: '0 0 32px 0',
+          }}>
+            Eight projects. One vision.
+          </h2>
+        </RevealText>
+        <div style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
+          {/* Med Device Startup */}
+          <RevealText delay={0.2}>
+            <div style={{ borderLeft: `2px solid ${colors.gold}`, paddingLeft: '16px' }}>
+              <p style={{ fontFamily: "'Instrument Serif', Georgia, serif", fontSize: '18px', color: colors.white, margin: 0 }}>
+                Med Device Startup
+              </p>
+              <p style={{ fontFamily: "'DM Sans', sans-serif", fontSize: '14px', color: colors.textMuted, margin: '4px 0 0 0', lineHeight: 1.5 }}>
+                FDA-targeted product racing toward clearance. <span style={{ color: colors.gold }}>Most urgent:</span> Sequencing the launch plan before the March FDA date.
+              </p>
+            </div>
+          </RevealText>
+          {/* Verso-Sphere + Athletes */}
+          <RevealText delay={0.25}>
+            <div style={{ borderLeft: `2px solid ${colors.gold}`, paddingLeft: '16px' }}>
+              <p style={{ fontFamily: "'Instrument Serif', Georgia, serif", fontSize: '18px', color: colors.white, margin: 0 }}>
+                Verso-Sphere + Athletes
+              </p>
+              <p style={{ fontFamily: "'DM Sans', sans-serif", fontSize: '14px', color: colors.textMuted, margin: '4px 0 0 0', lineHeight: 1.5 }}>
+                Freediving & spearfishing shop supporting elite athletes, including your son. <span style={{ color: colors.gold }}>Most urgent:</span> World Championships in New Zealand this March.
+              </p>
+            </div>
+          </RevealText>
+          {/* Deep Dive Pools */}
+          <RevealText delay={0.3}>
+            <div style={{ borderLeft: `2px solid ${colors.gold}`, paddingLeft: '16px' }}>
+              <p style={{ fontFamily: "'Instrument Serif', Georgia, serif", fontSize: '18px', color: colors.white, margin: 0 }}>
+                Deep Dive Pools + ASR
+              </p>
+              <p style={{ fontFamily: "'DM Sans', sans-serif", fontSize: '14px', color: colors.textMuted, margin: '4px 0 0 0', lineHeight: 1.5 }}>
+                45m pools inside adventure resorts—infrastructure that compounds. <span style={{ color: colors.gold }}>Most urgent:</span> Nailing down the Riverside concept and financial rationale.
+              </p>
+            </div>
+          </RevealText>
+          {/* Olympic Sport Mission */}
+          <RevealText delay={0.35}>
+            <div style={{ borderLeft: `2px solid ${colors.textDim}`, paddingLeft: '16px' }}>
+              <p style={{ fontFamily: "'Instrument Serif', Georgia, serif", fontSize: '18px', color: colors.white, margin: 0 }}>
+                Olympic Sport Mission
+              </p>
+              <p style={{ fontFamily: "'DM Sans', sans-serif", fontSize: '14px', color: colors.textMuted, margin: '4px 0 0 0', lineHeight: 1.5 }}>
+                Long-term push for freediving & spearfishing legitimacy. <span style={{ color: colors.textMuted }}>Next move:</span> One flagship story around Worlds and your record-holder.
+              </p>
+            </div>
+          </RevealText>
+          {/* Throw Flasher */}
+          <RevealText delay={0.4}>
+            <div style={{ borderLeft: `2px solid ${colors.textDim}`, paddingLeft: '16px' }}>
+              <p style={{ fontFamily: "'Instrument Serif', Georgia, serif", fontSize: '18px', color: colors.white, margin: 0 }}>
+                Throw Flasher
+              </p>
+              <p style={{ fontFamily: "'DM Sans', sans-serif", fontSize: '14px', color: colors.textMuted, margin: '4px 0 0 0', lineHeight: 1.5 }}>
+                Hardware product with proven traction—5K unit distribution deal in hand. <span style={{ color: colors.textMuted }}>Next move:</span> Document the American Dive case study for scale.
+              </p>
+            </div>
+          </RevealText>
+          {/* Fish Fertilizer */}
+          <RevealText delay={0.45}>
+            <div style={{ borderLeft: `2px solid ${colors.textDim}`, paddingLeft: '16px' }}>
+              <p style={{ fontFamily: "'Instrument Serif', Georgia, serif", fontSize: '18px', color: colors.white, margin: 0 }}>
+                Fish Fertilizer Venture
+              </p>
+              <p style={{ fontFamily: "'DM Sans', sans-serif", fontSize: '14px', color: colors.textMuted, margin: '4px 0 0 0', lineHeight: 1.5 }}>
+                Adjacent opportunity with strong distribution access through your network. <span style={{ color: colors.textMuted }}>Next move:</span> Decide go/no-go and clarify your role.
+              </p>
+            </div>
+          </RevealText>
+          {/* Family Office */}
+          <RevealText delay={0.5}>
+            <div style={{ borderLeft: `2px solid ${colors.textDim}`, paddingLeft: '16px' }}>
+              <p style={{ fontFamily: "'Instrument Serif', Georgia, serif", fontSize: '18px', color: colors.white, margin: 0 }}>
+                Family Office
+              </p>
+              <p style={{ fontFamily: "'DM Sans', sans-serif", fontSize: '14px', color: colors.textMuted, margin: '4px 0 0 0', lineHeight: 1.5 }}>
+                Investment arm designed to fund solutions to family health problems. <span style={{ color: colors.textMuted }}>Next move:</span> Draft a 1-page thesis tying it to your long-term goal.
+              </p>
+            </div>
+          </RevealText>
+          {/* CDMO Day Job */}
+          <RevealText delay={0.55}>
+            <div style={{ borderLeft: `2px solid ${colors.textDim}`, paddingLeft: '16px', opacity: 0.7 }}>
+              <p style={{ fontFamily: "'Instrument Serif', Georgia, serif", fontSize: '18px', color: colors.white, margin: 0 }}>
+                CDMO Day Job
+              </p>
+              <p style={{ fontFamily: "'DM Sans', sans-serif", fontSize: '14px', color: colors.textMuted, margin: '4px 0 0 0', lineHeight: 1.5 }}>
+                Strategic relations at a med device CDMO—cashflow and network. <span style={{ color: colors.textDim }}>Mode:</span> Maintain performance without over-investing.
+              </p>
+            </div>
+          </RevealText>
+        </div>
       </IntroSection>
 
       {/* Section 2: Compelling opportunities */}
