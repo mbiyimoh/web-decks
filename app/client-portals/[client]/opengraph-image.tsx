@@ -9,16 +9,36 @@ export const size = {
 };
 export const contentType = 'image/png';
 
-// Brand colors
+// Brand colors from 33 Strategies design system
 const GOLD = '#d4a54a';
 const BG_PRIMARY = '#0a0a0f';
 const TEXT_PRIMARY = '#f5f5f5';
-const TEXT_MUTED = '#71717a';
-const TEXT_DIM = '#52525b';
+const TEXT_MUTED = '#888888';
+const TEXT_DIM = '#555555';
+
+// Load brand fonts
+async function loadFonts() {
+  const [instrumentSerifResponse, dmSansResponse, jetBrainsMonoResponse] = await Promise.all([
+    fetch(new URL('https://fonts.gstatic.com/s/instrumentserif/v4/jizBRFtNs2ka5fXjeivQ4LroWlx-2zIZj1bIkNo.woff2')),
+    fetch(new URL('https://fonts.gstatic.com/s/dmsans/v15/rP2Hp2ywxg089UriCZOIHTWEBlw.woff2')),
+    fetch(new URL('https://fonts.gstatic.com/s/jetbrainsmono/v18/tDbY2o-flEEny0FZhsfKu5WU4zr3E_BX0PnT8RD8yKxjPVmUsaaDhw.woff2')),
+  ]);
+
+  const [instrumentSerifFont, dmSansFont, jetBrainsMonoFont] = await Promise.all([
+    instrumentSerifResponse.arrayBuffer(),
+    dmSansResponse.arrayBuffer(),
+    jetBrainsMonoResponse.arrayBuffer(),
+  ]);
+
+  return { instrumentSerifFont, dmSansFont, jetBrainsMonoFont };
+}
 
 export default async function Image({ params }: { params: { client: string } }) {
   const client = getClient(params.client);
   const clientName = client?.name || 'Client Portal';
+
+  // Load fonts
+  const { instrumentSerifFont, dmSansFont, jetBrainsMonoFont } = await loadFonts();
 
   return new ImageResponse(
     (
@@ -34,7 +54,7 @@ export default async function Image({ params }: { params: { client: string } }) 
           padding: '60px 80px',
           position: 'relative',
           overflow: 'hidden',
-          fontFamily: 'system-ui, -apple-system, sans-serif',
+          fontFamily: 'DM Sans, sans-serif',
         }}
       >
         {/* Background glow effect - top right */}
@@ -74,8 +94,7 @@ export default async function Image({ params }: { params: { client: string } }) 
           <span
             style={{
               fontSize: '48px',
-              fontFamily: 'Georgia, serif',
-              fontStyle: 'italic',
+              fontFamily: 'Instrument Serif, Georgia, serif',
               color: GOLD,
             }}
           >
@@ -84,9 +103,9 @@ export default async function Image({ params }: { params: { client: string } }) 
           <span
             style={{
               fontSize: '20px',
-              fontFamily: 'monospace',
+              fontFamily: 'JetBrains Mono, monospace',
               color: TEXT_MUTED,
-              letterSpacing: '0.25em',
+              letterSpacing: '0.2em',
               textTransform: 'uppercase',
             }}
           >
@@ -104,10 +123,10 @@ export default async function Image({ params }: { params: { client: string } }) 
         >
           <span
             style={{
-              fontSize: '26px',
-              fontFamily: 'monospace',
+              fontSize: '24px',
+              fontFamily: 'JetBrains Mono, monospace',
               color: GOLD,
-              letterSpacing: '0.25em',
+              letterSpacing: '0.2em',
               textTransform: 'uppercase',
             }}
           >
@@ -116,7 +135,7 @@ export default async function Image({ params }: { params: { client: string } }) 
           <span
             style={{
               fontSize: '120px',
-              fontFamily: 'Georgia, serif',
+              fontFamily: 'Instrument Serif, Georgia, serif',
               color: TEXT_PRIMARY,
               lineHeight: 1.0,
             }}
@@ -144,6 +163,7 @@ export default async function Image({ params }: { params: { client: string } }) 
           <span
             style={{
               fontSize: '28px',
+              fontFamily: 'DM Sans, sans-serif',
               color: TEXT_DIM,
             }}
           >
@@ -166,6 +186,26 @@ export default async function Image({ params }: { params: { client: string } }) 
     ),
     {
       ...size,
+      fonts: [
+        {
+          name: 'Instrument Serif',
+          data: instrumentSerifFont,
+          style: 'normal',
+          weight: 400,
+        },
+        {
+          name: 'DM Sans',
+          data: dmSansFont,
+          style: 'normal',
+          weight: 400,
+        },
+        {
+          name: 'JetBrains Mono',
+          data: jetBrainsMonoFont,
+          style: 'normal',
+          weight: 400,
+        },
+      ],
     }
   );
 }
