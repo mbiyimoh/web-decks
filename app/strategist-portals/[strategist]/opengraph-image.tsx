@@ -16,29 +16,15 @@ const TEXT_PRIMARY = '#f5f5f5';
 const TEXT_MUTED = '#888888';
 const TEXT_DIM = '#555555';
 
-// Load brand fonts
-async function loadFonts() {
-  const [instrumentSerifResponse, dmSansResponse, jetBrainsMonoResponse] = await Promise.all([
-    fetch(new URL('https://fonts.gstatic.com/s/instrumentserif/v4/jizBRFtNs2ka5fXjeivQ4LroWlx-2zIZj1bIkNo.woff2')),
-    fetch(new URL('https://fonts.gstatic.com/s/dmsans/v15/rP2Hp2ywxg089UriCZOIHTWEBlw.woff2')),
-    fetch(new URL('https://fonts.gstatic.com/s/jetbrainsmono/v18/tDbY2o-flEEny0FZhsfKu5WU4zr3E_BX0PnT8RD8yKxjPVmUsaaDhw.woff2')),
-  ]);
-
-  const [instrumentSerifFont, dmSansFont, jetBrainsMonoFont] = await Promise.all([
-    instrumentSerifResponse.arrayBuffer(),
-    dmSansResponse.arrayBuffer(),
-    jetBrainsMonoResponse.arrayBuffer(),
-  ]);
-
-  return { instrumentSerifFont, dmSansFont, jetBrainsMonoFont };
-}
+// Font stacks that approximate brand fonts with system fallbacks
+// (External font loading can timeout in serverless environments)
+const FONT_DISPLAY = 'Georgia, Times New Roman, serif'; // Approximates Instrument Serif
+const FONT_MONO = 'ui-monospace, SFMono-Regular, Menlo, monospace'; // Approximates JetBrains Mono
+const FONT_BODY = 'system-ui, -apple-system, sans-serif'; // Approximates DM Sans
 
 export default async function Image({ params }: { params: { strategist: string } }) {
   const strategist = getStrategist(params.strategist);
   const strategistName = strategist?.name || 'Strategist Portal';
-
-  // Load fonts
-  const { instrumentSerifFont, dmSansFont, jetBrainsMonoFont } = await loadFonts();
 
   return new ImageResponse(
     (
@@ -54,7 +40,7 @@ export default async function Image({ params }: { params: { strategist: string }
           padding: '60px 80px',
           position: 'relative',
           overflow: 'hidden',
-          fontFamily: 'DM Sans, sans-serif',
+          fontFamily: FONT_BODY,
         }}
       >
         {/* Background glow effect - top right */}
@@ -94,7 +80,7 @@ export default async function Image({ params }: { params: { strategist: string }
           <span
             style={{
               fontSize: '48px',
-              fontFamily: 'Instrument Serif, Georgia, serif',
+              fontFamily: FONT_DISPLAY,
               color: GOLD,
             }}
           >
@@ -103,7 +89,7 @@ export default async function Image({ params }: { params: { strategist: string }
           <span
             style={{
               fontSize: '20px',
-              fontFamily: 'JetBrains Mono, monospace',
+              fontFamily: FONT_MONO,
               color: TEXT_MUTED,
               letterSpacing: '0.2em',
               textTransform: 'uppercase',
@@ -124,7 +110,7 @@ export default async function Image({ params }: { params: { strategist: string }
           <span
             style={{
               fontSize: '24px',
-              fontFamily: 'JetBrains Mono, monospace',
+              fontFamily: FONT_MONO,
               color: GOLD,
               letterSpacing: '0.2em',
               textTransform: 'uppercase',
@@ -135,7 +121,7 @@ export default async function Image({ params }: { params: { strategist: string }
           <span
             style={{
               fontSize: '120px',
-              fontFamily: 'Instrument Serif, Georgia, serif',
+              fontFamily: FONT_DISPLAY,
               color: TEXT_PRIMARY,
               lineHeight: 1.0,
             }}
@@ -163,7 +149,7 @@ export default async function Image({ params }: { params: { strategist: string }
           <span
             style={{
               fontSize: '28px',
-              fontFamily: 'DM Sans, sans-serif',
+              fontFamily: FONT_BODY,
               color: TEXT_DIM,
             }}
           >
@@ -186,26 +172,6 @@ export default async function Image({ params }: { params: { strategist: string }
     ),
     {
       ...size,
-      fonts: [
-        {
-          name: 'Instrument Serif',
-          data: instrumentSerifFont,
-          style: 'normal',
-          weight: 400,
-        },
-        {
-          name: 'DM Sans',
-          data: dmSansFont,
-          style: 'normal',
-          weight: 400,
-        },
-        {
-          name: 'JetBrains Mono',
-          data: jetBrainsMonoFont,
-          style: 'normal',
-          weight: 400,
-        },
-      ],
     }
   );
 }
