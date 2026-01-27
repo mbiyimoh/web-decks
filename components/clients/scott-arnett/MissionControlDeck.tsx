@@ -1229,45 +1229,70 @@ interface OnboardingTooltipProps {
 }
 
 const OnboardingTooltip = ({ config, currentStep, totalSteps, onNext, onSkip }: OnboardingTooltipProps) => {
-  // Position styles based on tooltip position
-  const getPositionStyles = (): React.CSSProperties => {
-    switch (config.id) {
-      case 'priority-zones':
-        return {
-          position: 'fixed',
-          top: '60%',
-          left: '50%',
-          transform: 'translateX(-50%)',
-        };
-      case 'next-hour':
-        return {
-          position: 'fixed',
-          top: '40%',
-          left: '50%',
-          transform: 'translateX(-50%)',
-        };
-      case 'scoring-framework':
-        return {
-          position: 'fixed',
-          top: '50%',
-          right: '10%',
-          transform: 'translateY(-50%)',
-        };
-      case 'project-details':
-        return {
-          position: 'fixed',
-          top: '65%',
-          left: '25%',
-        };
-      default:
-        return {
-          position: 'fixed',
-          top: '50%',
-          left: '50%',
-          transform: 'translate(-50%, -50%)',
-        };
-    }
-  };
+  const [position, setPosition] = useState({ top: 0, left: 0 });
+  const [isReady, setIsReady] = useState(false);
+
+  // Calculate position based on target element
+  useEffect(() => {
+    const calculatePosition = () => {
+      const targetElement = document.getElementById(config.target);
+      if (!targetElement) {
+        // Fallback to center if target not found
+        setPosition({
+          top: window.innerHeight / 2,
+          left: window.innerWidth / 2,
+        });
+        setIsReady(true);
+        return;
+      }
+
+      const rect = targetElement.getBoundingClientRect();
+      const tooltipWidth = 320;
+      const tooltipHeight = 200; // Approximate
+      const margin = 16;
+
+      let top = 0;
+      let left = 0;
+
+      switch (config.position) {
+        case 'top':
+          top = rect.top - tooltipHeight - margin;
+          left = rect.left + rect.width / 2 - tooltipWidth / 2;
+          break;
+        case 'bottom':
+          top = rect.bottom + margin;
+          left = rect.left + rect.width / 2 - tooltipWidth / 2;
+          break;
+        case 'right':
+          top = rect.top + rect.height / 2 - tooltipHeight / 2;
+          left = rect.right + margin;
+          break;
+        case 'left':
+          top = rect.top + rect.height / 2 - tooltipHeight / 2;
+          left = rect.left - tooltipWidth - margin;
+          break;
+      }
+
+      // Keep tooltip within viewport bounds
+      const padding = 24;
+      top = Math.max(padding, Math.min(top, window.innerHeight - tooltipHeight - padding));
+      left = Math.max(padding, Math.min(left, window.innerWidth - tooltipWidth - padding));
+
+      setPosition({ top, left });
+      setIsReady(true);
+    };
+
+    // Small delay to ensure DOM is ready
+    const timer = setTimeout(calculatePosition, 100);
+    window.addEventListener('resize', calculatePosition);
+
+    return () => {
+      clearTimeout(timer);
+      window.removeEventListener('resize', calculatePosition);
+    };
+  }, [config.target, config.position]);
+
+  if (!isReady) return null;
 
   return (
     <motion.div
@@ -1276,7 +1301,9 @@ const OnboardingTooltip = ({ config, currentStep, totalSteps, onNext, onSkip }: 
       exit={{ opacity: 0, scale: 0.95 }}
       transition={{ duration: 0.25 }}
       style={{
-        ...getPositionStyles(),
+        position: 'fixed',
+        top: `${position.top}px`,
+        left: `${position.left}px`,
         zIndex: 100,
         maxWidth: '320px',
         backgroundColor: colors.surface,
@@ -1284,7 +1311,7 @@ const OnboardingTooltip = ({ config, currentStep, totalSteps, onNext, onSkip }: 
         borderRadius: '12px',
         padding: '20px',
         boxShadow: `0 20px 40px rgba(0,0,0,0.5), ${colors.goldGlow}`,
-      } as React.CSSProperties}
+      }}
     >
       {/* Step indicator */}
       <div style={{
@@ -1451,7 +1478,12 @@ const generateRecommendations = (projects: Project[]) => {
 
 // Main Mission Control component
 export default function MissionControlDeck() {
-  const [phase, setPhase] = useState<Phase>('intro');
+  // Persist phase in localStorage so users don't re-watch intro on refresh
+  const [phase, setPhase] = useState<Phase>(() => {
+    if (typeof window === 'undefined') return 'intro';
+    const saved = localStorage.getItem('mission-control-phase');
+    return (saved as Phase) || 'intro';
+  });
   const [tooltipStep, setTooltipStep] = useState(0);
   const [selectedProject, setSelectedProject] = useState<Project | null>(null);
   const [showMaintenance, setShowMaintenance] = useState(false);
@@ -1469,6 +1501,7 @@ export default function MissionControlDeck() {
   // Handle intro completion
   const handleIntroComplete = useCallback(() => {
     setPhase('dashboard-with-tooltips');
+    localStorage.setItem('mission-control-phase', 'dashboard-with-tooltips');
     window.scrollTo({ top: 0, behavior: 'instant' });
   }, []);
 
@@ -1478,11 +1511,21 @@ export default function MissionControlDeck() {
       setTooltipStep(prev => prev + 1);
     } else {
       setPhase('dashboard');
+      localStorage.setItem('mission-control-phase', 'dashboard');
     }
   }, [tooltipStep]);
 
   const handleTooltipSkip = useCallback(() => {
     setPhase('dashboard');
+    localStorage.setItem('mission-control-phase', 'dashboard');
+  }, []);
+
+  // Reset tour handler (for testing/demo)
+  const handleResetTour = useCallback(() => {
+    setPhase('intro');
+    setTooltipStep(0);
+    localStorage.setItem('mission-control-phase', 'intro');
+    window.scrollTo({ top: 0, behavior: 'smooth' });
   }, []);
 
   // Render intro experience
@@ -1743,11 +1786,41 @@ export default function MissionControlDeck() {
           marginTop: '48px',
           paddingTop: '24px',
           borderTop: `1px solid ${colors.border}`,
-          textAlign: 'center'
+          display: 'flex',
+          justifyContent: 'space-between',
+          alignItems: 'center'
         }}>
           <span style={{ color: colors.textDim, fontSize: '14px', fontFamily: "'DM Sans', sans-serif" }}>
             <span style={{ color: colors.gold, fontFamily: "'Instrument Serif', Georgia, serif" }}>33</span> Strategies
           </span>
+          {phase === 'dashboard' && (
+            <button
+              onClick={handleResetTour}
+              style={{
+                padding: '6px 12px',
+                fontSize: '11px',
+                color: colors.textDim,
+                border: `1px solid ${colors.border}`,
+                borderRadius: '6px',
+                background: 'transparent',
+                cursor: 'pointer',
+                fontFamily: "'JetBrains Mono', monospace",
+                textTransform: 'uppercase',
+                letterSpacing: '0.05em',
+                transition: 'all 0.2s ease',
+              }}
+              onMouseEnter={(e) => {
+                e.currentTarget.style.borderColor = colors.goldDim;
+                e.currentTarget.style.color = colors.textMuted;
+              }}
+              onMouseLeave={(e) => {
+                e.currentTarget.style.borderColor = colors.border;
+                e.currentTarget.style.color = colors.textDim;
+              }}
+            >
+              Replay Tour
+            </button>
+          )}
         </div>
       </div>
     </div>
