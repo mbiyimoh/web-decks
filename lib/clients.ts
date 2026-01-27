@@ -47,6 +47,11 @@ const WSBCFinalProposal = dynamic(
   { ssr: true }
 );
 
+const MissionControlDeck = dynamic(
+  () => import('@/components/clients/scott-arnett/MissionControlDeck'),
+  { ssr: true }
+);
+
 export const clients: Record<string, ClientEntry> = {
   'tradeblock': {
     id: 'tradeblock',
@@ -112,6 +117,23 @@ export const clients: Record<string, ClientEntry> = {
         addedOn: '2024-12-27',
         tagOverride: 'DEMO + PROPOSAL',
         component: WSBCFinalProposal,
+      },
+    ],
+  },
+  'scott-arnett': {
+    id: 'scott-arnett',
+    name: 'Scott Arnett',
+    passwordEnvVar: 'SCOTT_ARNETT_PASSWORD',
+    emailEnvVar: 'SCOTT_ARNETT_EMAIL',
+    content: [
+      {
+        slug: 'mission-control',
+        type: 'deck',
+        title: 'What If? A New Approach Mission Control',
+        description: 'Interactive prototype for managing your portfolio of ventures and priorities',
+        addedOn: '2026-01-26',
+        tagOverride: 'PROTOTYPE',
+        component: MissionControlDeck,
       },
     ],
   },
