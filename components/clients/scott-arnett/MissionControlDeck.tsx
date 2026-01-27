@@ -1095,91 +1095,132 @@ const IntroExperience = ({ onComplete }: { onComplete: () => void }) => {
             Eight projects. One vision.
           </h2>
         </RevealText>
-        <div style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
+        <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
           {/* Med Device Startup */}
           <RevealText delay={0.2}>
-            <div style={{ borderLeft: `2px solid ${colors.gold}`, paddingLeft: '16px' }}>
-              <p style={{ fontFamily: "'Instrument Serif', Georgia, serif", fontSize: '18px', color: colors.white, margin: 0 }}>
+            <div style={{
+              background: colors.surface,
+              borderRadius: '12px',
+              padding: '16px 20px',
+              borderLeft: `3px solid ${colors.gold}`,
+            }}>
+              <p style={{ fontFamily: "'Instrument Serif', Georgia, serif", fontSize: '17px', color: colors.white, margin: 0 }}>
                 Med Device Startup
               </p>
-              <p style={{ fontFamily: "'DM Sans', sans-serif", fontSize: '14px', color: colors.textMuted, margin: '4px 0 0 0', lineHeight: 1.5 }}>
+              <p style={{ fontFamily: "'DM Sans', sans-serif", fontSize: '13px', color: colors.textMuted, margin: '6px 0 0 0', lineHeight: 1.5 }}>
                 FDA-targeted product racing toward clearance. <span style={{ color: colors.gold }}>Most urgent:</span> Sequencing the launch plan before the March FDA date.
               </p>
             </div>
           </RevealText>
           {/* Verso-Sphere + Athletes */}
           <RevealText delay={0.25}>
-            <div style={{ borderLeft: `2px solid ${colors.gold}`, paddingLeft: '16px' }}>
-              <p style={{ fontFamily: "'Instrument Serif', Georgia, serif", fontSize: '18px', color: colors.white, margin: 0 }}>
+            <div style={{
+              background: colors.surface,
+              borderRadius: '12px',
+              padding: '16px 20px',
+              borderLeft: `3px solid ${colors.gold}`,
+            }}>
+              <p style={{ fontFamily: "'Instrument Serif', Georgia, serif", fontSize: '17px', color: colors.white, margin: 0 }}>
                 Verso-Sphere + Athletes
               </p>
-              <p style={{ fontFamily: "'DM Sans', sans-serif", fontSize: '14px', color: colors.textMuted, margin: '4px 0 0 0', lineHeight: 1.5 }}>
+              <p style={{ fontFamily: "'DM Sans', sans-serif", fontSize: '13px', color: colors.textMuted, margin: '6px 0 0 0', lineHeight: 1.5 }}>
                 Freediving & spearfishing shop supporting elite athletes, including your son. <span style={{ color: colors.gold }}>Most urgent:</span> World Championships in New Zealand this March.
               </p>
             </div>
           </RevealText>
           {/* Deep Dive Pools */}
           <RevealText delay={0.3}>
-            <div style={{ borderLeft: `2px solid ${colors.gold}`, paddingLeft: '16px' }}>
-              <p style={{ fontFamily: "'Instrument Serif', Georgia, serif", fontSize: '18px', color: colors.white, margin: 0 }}>
+            <div style={{
+              background: colors.surface,
+              borderRadius: '12px',
+              padding: '16px 20px',
+              borderLeft: `3px solid ${colors.gold}`,
+            }}>
+              <p style={{ fontFamily: "'Instrument Serif', Georgia, serif", fontSize: '17px', color: colors.white, margin: 0 }}>
                 Deep Dive Pools + ASR
               </p>
-              <p style={{ fontFamily: "'DM Sans', sans-serif", fontSize: '14px', color: colors.textMuted, margin: '4px 0 0 0', lineHeight: 1.5 }}>
+              <p style={{ fontFamily: "'DM Sans', sans-serif", fontSize: '13px', color: colors.textMuted, margin: '6px 0 0 0', lineHeight: 1.5 }}>
                 45m pools inside adventure resorts—infrastructure that compounds. <span style={{ color: colors.gold }}>Most urgent:</span> Nailing down the Riverside concept and financial rationale.
               </p>
             </div>
           </RevealText>
           {/* Olympic Sport Mission */}
           <RevealText delay={0.35}>
-            <div style={{ borderLeft: `2px solid ${colors.textDim}`, paddingLeft: '16px' }}>
-              <p style={{ fontFamily: "'Instrument Serif', Georgia, serif", fontSize: '18px', color: colors.white, margin: 0 }}>
+            <div style={{
+              background: colors.surface,
+              borderRadius: '12px',
+              padding: '16px 20px',
+              borderLeft: `3px solid ${colors.textDim}`,
+            }}>
+              <p style={{ fontFamily: "'Instrument Serif', Georgia, serif", fontSize: '17px', color: colors.white, margin: 0 }}>
                 Olympic Sport Mission
               </p>
-              <p style={{ fontFamily: "'DM Sans', sans-serif", fontSize: '14px', color: colors.textMuted, margin: '4px 0 0 0', lineHeight: 1.5 }}>
+              <p style={{ fontFamily: "'DM Sans', sans-serif", fontSize: '13px', color: colors.textMuted, margin: '6px 0 0 0', lineHeight: 1.5 }}>
                 Long-term push for freediving & spearfishing legitimacy. <span style={{ color: colors.textMuted }}>Next move:</span> One flagship story around Worlds and your record-holder.
               </p>
             </div>
           </RevealText>
           {/* Throw Flasher */}
           <RevealText delay={0.4}>
-            <div style={{ borderLeft: `2px solid ${colors.textDim}`, paddingLeft: '16px' }}>
-              <p style={{ fontFamily: "'Instrument Serif', Georgia, serif", fontSize: '18px', color: colors.white, margin: 0 }}>
+            <div style={{
+              background: colors.surface,
+              borderRadius: '12px',
+              padding: '16px 20px',
+              borderLeft: `3px solid ${colors.textDim}`,
+            }}>
+              <p style={{ fontFamily: "'Instrument Serif', Georgia, serif", fontSize: '17px', color: colors.white, margin: 0 }}>
                 Throw Flasher
               </p>
-              <p style={{ fontFamily: "'DM Sans', sans-serif", fontSize: '14px', color: colors.textMuted, margin: '4px 0 0 0', lineHeight: 1.5 }}>
+              <p style={{ fontFamily: "'DM Sans', sans-serif", fontSize: '13px', color: colors.textMuted, margin: '6px 0 0 0', lineHeight: 1.5 }}>
                 Hardware product with proven traction—5K unit distribution deal in hand. <span style={{ color: colors.textMuted }}>Next move:</span> Document the American Dive case study for scale.
               </p>
             </div>
           </RevealText>
           {/* Fish Fertilizer */}
           <RevealText delay={0.45}>
-            <div style={{ borderLeft: `2px solid ${colors.textDim}`, paddingLeft: '16px' }}>
-              <p style={{ fontFamily: "'Instrument Serif', Georgia, serif", fontSize: '18px', color: colors.white, margin: 0 }}>
+            <div style={{
+              background: colors.surface,
+              borderRadius: '12px',
+              padding: '16px 20px',
+              borderLeft: `3px solid ${colors.textDim}`,
+            }}>
+              <p style={{ fontFamily: "'Instrument Serif', Georgia, serif", fontSize: '17px', color: colors.white, margin: 0 }}>
                 Fish Fertilizer Venture
               </p>
-              <p style={{ fontFamily: "'DM Sans', sans-serif", fontSize: '14px', color: colors.textMuted, margin: '4px 0 0 0', lineHeight: 1.5 }}>
+              <p style={{ fontFamily: "'DM Sans', sans-serif", fontSize: '13px', color: colors.textMuted, margin: '6px 0 0 0', lineHeight: 1.5 }}>
                 Adjacent opportunity with strong distribution access through your network. <span style={{ color: colors.textMuted }}>Next move:</span> Decide go/no-go and clarify your role.
               </p>
             </div>
           </RevealText>
           {/* Family Office */}
           <RevealText delay={0.5}>
-            <div style={{ borderLeft: `2px solid ${colors.textDim}`, paddingLeft: '16px' }}>
-              <p style={{ fontFamily: "'Instrument Serif', Georgia, serif", fontSize: '18px', color: colors.white, margin: 0 }}>
+            <div style={{
+              background: colors.surface,
+              borderRadius: '12px',
+              padding: '16px 20px',
+              borderLeft: `3px solid ${colors.textDim}`,
+            }}>
+              <p style={{ fontFamily: "'Instrument Serif', Georgia, serif", fontSize: '17px', color: colors.white, margin: 0 }}>
                 Family Office
               </p>
-              <p style={{ fontFamily: "'DM Sans', sans-serif", fontSize: '14px', color: colors.textMuted, margin: '4px 0 0 0', lineHeight: 1.5 }}>
+              <p style={{ fontFamily: "'DM Sans', sans-serif", fontSize: '13px', color: colors.textMuted, margin: '6px 0 0 0', lineHeight: 1.5 }}>
                 Investment arm designed to fund solutions to family health problems. <span style={{ color: colors.textMuted }}>Next move:</span> Draft a 1-page thesis tying it to your long-term goal.
               </p>
             </div>
           </RevealText>
           {/* CDMO Day Job */}
           <RevealText delay={0.55}>
-            <div style={{ borderLeft: `2px solid ${colors.textDim}`, paddingLeft: '16px', opacity: 0.7 }}>
-              <p style={{ fontFamily: "'Instrument Serif', Georgia, serif", fontSize: '18px', color: colors.white, margin: 0 }}>
+            <div style={{
+              background: colors.surface,
+              borderRadius: '12px',
+              padding: '16px 20px',
+              borderLeft: `3px solid ${colors.textDim}`,
+              opacity: 0.7,
+            }}>
+              <p style={{ fontFamily: "'Instrument Serif', Georgia, serif", fontSize: '17px', color: colors.white, margin: 0 }}>
                 CDMO Day Job
               </p>
-              <p style={{ fontFamily: "'DM Sans', sans-serif", fontSize: '14px', color: colors.textMuted, margin: '4px 0 0 0', lineHeight: 1.5 }}>
+              <p style={{ fontFamily: "'DM Sans', sans-serif", fontSize: '13px', color: colors.textMuted, margin: '6px 0 0 0', lineHeight: 1.5 }}>
                 Strategic relations at a med device CDMO—cashflow and network. <span style={{ color: colors.textDim }}>Mode:</span> Maintain performance without over-investing.
               </p>
             </div>
@@ -1266,7 +1307,7 @@ const IntroExperience = ({ onComplete }: { onComplete: () => void }) => {
             margin: 0,
             fontWeight: 400,
           }}>
-            How do I help Scott better <em style={{ fontStyle: 'italic', color: colors.gold }}>organize</em> and{' '}
+            How do we help Scott better <em style={{ fontStyle: 'italic', color: colors.gold }}>organize</em> and{' '}
             <em style={{ fontStyle: 'italic', color: colors.gold }}>visualize</em> everything he&apos;s building—
           </h2>
         </RevealText>
