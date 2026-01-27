@@ -112,7 +112,7 @@ const projectsData: Project[] = [
   },
   {
     id: 'versus_dive_shop',
-    name: 'Versus Beer + Athletes',
+    name: 'Verso-Sphere + Athletes',
     category: 'Sports / Passion',
     tier: 1,
     summary: 'Free diving & spearfishing dive shop supporting Team USA at World Championships in New Zealand (March). Son on junior team.',
