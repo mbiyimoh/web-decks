@@ -129,7 +129,7 @@ export const clients: Record<string, ClientEntry> = {
       {
         slug: 'mission-control',
         type: 'deck',
-        title: 'What If? A New Approach Mission Control',
+        title: 'What If? A New Approach to Mission Control',
         description: 'Interactive prototype for managing your portfolio of ventures and priorities',
         addedOn: '2026-01-26',
         tagOverride: 'PROTOTYPE',
