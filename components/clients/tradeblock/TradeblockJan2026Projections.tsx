@@ -165,6 +165,53 @@ const MissionCard = ({ number, title, description, status, delay = 0 }: {
   );
 };
 
+const EmailVersionCard = ({ version, title, campaign, description, metrics, isHighlighted }: {
+  version: string;
+  title: string;
+  campaign?: string;
+  description: string;
+  metrics?: {
+    audience: string;
+    openRate: string;
+    ctr: string;
+    tradeLift: string;
+  };
+  isHighlighted?: boolean;
+}) => (
+  <div className={`rounded-xl p-5 border ${isHighlighted ? 'border-emerald-500/50 bg-emerald-500/5' : 'border-zinc-800 bg-zinc-900/50'}`}>
+    <div className="flex items-center gap-3 mb-2">
+      <div className={`w-8 h-8 rounded-full flex items-center justify-center text-sm font-bold ${isHighlighted ? 'bg-emerald-500/20 text-emerald-400' : 'bg-zinc-800 text-zinc-400'}`}>
+        {version}
+      </div>
+      <div>
+        <p className={`font-medium ${isHighlighted ? 'text-emerald-400' : 'text-white'}`}>{title}</p>
+      </div>
+    </div>
+    {campaign && <p className="text-zinc-500 text-xs mb-2 italic">&quot;{campaign}&quot;</p>}
+    <p className="text-zinc-400 text-sm mb-4">{description}</p>
+    {metrics && (
+      <div className="grid grid-cols-4 gap-2 pt-3 border-t border-zinc-800">
+        <div className="text-center">
+          <p className={`text-sm font-bold ${isHighlighted ? 'text-emerald-400' : 'text-white'}`}>{metrics.audience}</p>
+          <p className="text-zinc-500 text-xs">Audience</p>
+        </div>
+        <div className="text-center">
+          <p className={`text-sm font-bold ${isHighlighted ? 'text-emerald-400' : 'text-white'}`}>{metrics.openRate}</p>
+          <p className="text-zinc-500 text-xs">Open rate</p>
+        </div>
+        <div className="text-center">
+          <p className={`text-sm font-bold ${isHighlighted ? 'text-emerald-400' : 'text-white'}`}>{metrics.ctr}</p>
+          <p className="text-zinc-500 text-xs">CTR</p>
+        </div>
+        <div className="text-center">
+          <p className={`text-sm font-bold ${isHighlighted ? 'text-emerald-400' : 'text-white'}`}>{metrics.tradeLift}</p>
+          <p className="text-zinc-500 text-xs">Trade lift</p>
+        </div>
+      </div>
+    )}
+  </div>
+);
+
 const ChannelBadge = ({ icon, name, frequency }: {
   icon: string;
   name: string;
@@ -199,24 +246,24 @@ const CorrelationChart = () => {
   const ref = useRef(null);
   const isInView = useInView(ref, { once: false, margin: "-10%" });
 
-  // Weekly transaction data (approximate from the chart: Oct 26 - Jan 18)
+  // Weekly transaction data (Oct 26 - Jan 18, 13 weeks)
   const weeklyData = [
     { week: 'Oct 26', transactions: 195, push: 0, email: 0, phase: 'baseline' },
     { week: 'Nov 2', transactions: 188, push: 0, email: 0, phase: 'baseline' },
-    { week: 'Nov 9', transactions: 175, push: 0, email: 0, phase: 'baseline' },
-    { week: 'Nov 16', transactions: 182, push: 0, email: 0, phase: 'baseline' },
-    { week: 'Nov 23', transactions: 198, push: 2, email: 0, phase: 'baseline' },
-    { week: 'Nov 30', transactions: 215, push: 4, email: 0, phase: 'ramp' },
-    { week: 'Dec 7', transactions: 238, push: 8, email: 0, phase: 'ramp' },
-    { week: 'Dec 14', transactions: 252, push: 15, email: 0, phase: 'ramp' },
-    { week: 'Dec 21', transactions: 245, push: 18, email: 0, phase: 'active' },
-    { week: 'Dec 28', transactions: 225, push: 12, email: 0, phase: 'active' },
-    { week: 'Jan 4', transactions: 285, push: 22, email: 8, phase: 'active' },
-    { week: 'Jan 11', transactions: 320, push: 28, email: 12, phase: 'active' },
-    { week: 'Jan 18', transactions: 295, push: 24, email: 10, phase: 'active' },
+    { week: 'Nov 9', transactions: 210, push: 0, email: 0, phase: 'baseline' },
+    { week: 'Nov 16', transactions: 205, push: 4, email: 0, phase: 'baseline' },
+    { week: 'Nov 23', transactions: 195, push: 4, email: 0, phase: 'baseline' },
+    { week: 'Nov 30', transactions: 220, push: 12, email: 0, phase: 'ramp' },
+    { week: 'Dec 7', transactions: 235, push: 15, email: 0, phase: 'ramp' },
+    { week: 'Dec 14', transactions: 248, push: 18, email: 0, phase: 'ramp' },
+    { week: 'Dec 21', transactions: 265, push: 20, email: 5, phase: 'active' },
+    { week: 'Dec 28', transactions: 278, push: 22, email: 8, phase: 'active' },
+    { week: 'Jan 4', transactions: 295, push: 20, email: 10, phase: 'active' },
+    { week: 'Jan 11', transactions: 310, push: 25, email: 12, phase: 'active' },
+    { week: 'Jan 18', transactions: 320, push: 20, email: 6, phase: 'active' },
   ];
 
-  const maxTransactions = 340;
+  const maxTransactions = 350;
 
   return (
     <motion.div
@@ -227,11 +274,10 @@ const CorrelationChart = () => {
       className="rounded-xl border border-zinc-800 p-6"
       style={{ background: 'rgba(24, 24, 27, 0.5)' }}
     >
-      {/* Header */}
       <div className="flex items-center justify-between mb-2">
         <div>
-          <p className="text-white font-medium">90-Day View: Comms Ramp → Transaction Lift</p>
-          <p className="text-zinc-500 text-xs">Weekly transactions with campaign activity timeline</p>
+          <p className="text-white font-medium">Weekly Transaction Volume</p>
+          <p className="text-zinc-500 text-xs">With campaign activity timeline</p>
         </div>
       </div>
 
@@ -255,10 +301,11 @@ const CorrelationChart = () => {
       <div className="relative">
         {/* Y-axis labels */}
         <div className="absolute left-0 top-0 h-64 w-8 flex flex-col justify-between text-xs text-zinc-600">
-          <span>340</span>
-          <span>255</span>
-          <span>170</span>
-          <span>85</span>
+          <span>350</span>
+          <span>280</span>
+          <span>210</span>
+          <span>140</span>
+          <span>70</span>
           <span>0</span>
         </div>
 
@@ -266,7 +313,7 @@ const CorrelationChart = () => {
         <div className="ml-10 h-64 flex items-end gap-1 relative">
           {/* Grid lines */}
           <div className="absolute inset-0 flex flex-col justify-between pointer-events-none">
-            {[...Array(5)].map((_, i) => (
+            {[...Array(6)].map((_, i) => (
               <div key={i} className="border-t border-zinc-800/50 w-full" />
             ))}
           </div>
@@ -393,12 +440,12 @@ export default function TradeblockJan2026Projections() {
   const sections = [
     { id: 'title', label: 'Title' },
     { id: 'momentum', label: 'Momentum' },
-    { id: 'correlation', label: 'Correlation' },
-    { id: 'sprint', label: '120-Day Sprint' },
-    { id: 'mission1', label: 'Mission 1' },
-    { id: 'mission2', label: 'Mission 2' },
-    { id: 'mission3', label: 'Mission 3' },
-    { id: 'outcomes', label: 'Trajectory' },
+    { id: 'channels', label: 'Channels' },
+    { id: 'signal-testing', label: 'Signal Testing' },
+    { id: 'signal-product', label: 'Signal → Product' },
+    { id: 'sprint', label: 'The Sprint' },
+    { id: 'growth', label: 'Growing Userbase' },
+    { id: 'trajectory', label: 'Trajectory' },
     { id: 'raise', label: 'The Raise' },
     { id: 'close', label: 'Close' },
   ];
@@ -452,28 +499,27 @@ export default function TradeblockJan2026Projections() {
 
       {/* ==================== SLIDE 1: Title ==================== */}
       <Section id="title" className="relative overflow-hidden">
-        <div className="absolute inset-0" style={{ background: 'linear-gradient(135deg, #18181b 0%, #000 50%, #18181b 100%)' }} />
         <div className="absolute inset-0 opacity-30">
-          <div className="absolute top-1/4 left-1/4 w-64 h-64 rounded-full blur-3xl" style={{ background: 'rgba(245, 158, 11, 0.15)' }} />
+          <div className="absolute top-1/4 left-1/4 w-96 h-96 rounded-full blur-3xl" style={{ background: 'rgba(245, 158, 11, 0.15)' }} />
+          <div className="absolute bottom-1/4 right-1/4 w-64 h-64 rounded-full blur-3xl" style={{ background: 'rgba(245, 158, 11, 0.1)' }} />
         </div>
 
-        <div className="relative z-10 max-w-3xl">
+        <div className="relative z-10 max-w-4xl">
           <RevealText>
-            <p className="uppercase tracking-widest text-xs mb-4" style={{ color: '#f59e0b' }}>
-              Investor Update &bull; January 2026
-            </p>
+            <p className="text-amber-400 text-sm uppercase tracking-widest mb-4">Q1 2025 Investor Update</p>
           </RevealText>
 
           <RevealText delay={0.1}>
-            <h1 className="font-display text-4xl md:text-5xl lg:text-6xl font-bold mb-6 leading-tight">
-              <span className="text-white">THE</span>{' '}
-              <span className="text-gradient">120-DAY SPRINT</span>
+            <h1 className="font-display text-5xl md:text-7xl font-bold mb-6 leading-tight">
+              The{' '}
+              <span className="text-gradient">120-Day</span>{' '}
+              Sprint
             </h1>
           </RevealText>
 
           <RevealText delay={0.2}>
             <p className="text-lg md:text-xl text-zinc-400 max-w-xl leading-relaxed">
-              From leverage to lift-off—here&apos;s what&apos;s happening now and where it&apos;s headed.
+              Transaction momentum is building. Here&apos;s what&apos;s driving it—and the plan to accelerate.
             </p>
           </RevealText>
 
@@ -493,132 +539,73 @@ export default function TradeblockJan2026Projections() {
         </div>
       </Section>
 
-      {/* ==================== SLIDE 2: Momentum ==================== */}
+      {/* ==================== SLIDE 2: Transaction Momentum ==================== */}
       <Section id="momentum" className="relative">
-        <div className="max-w-3xl">
+        <div className="max-w-4xl">
           <RevealText>
-            <p className="text-amber-400 text-sm uppercase tracking-widest mb-3">The Update</p>
+            <p className="text-amber-400 text-sm uppercase tracking-widest mb-3">The Numbers</p>
           </RevealText>
 
           <RevealText delay={0.1}>
             <h2 className="font-display text-3xl md:text-4xl font-bold mb-6">
-              We showed you the leverage.{' '}
-              <span className="text-gradient">Now it&apos;s working.</span>
+              Transaction volume is climbing.
             </h2>
           </RevealText>
 
           <RevealText delay={0.2}>
-            <p className="text-zinc-400 text-lg mb-8">
-              Transactions are climbing. Comms are driving action. The playbook we built is delivering results.
-            </p>
-          </RevealText>
-
-          {/* Transaction Momentum */}
-          <RevealText delay={0.25}>
-            <div className="rounded-xl border border-amber-500/30 p-5 mb-6" style={{ background: 'rgba(245, 158, 11, 0.05)' }}>
-              <p className="text-amber-400 text-xs uppercase tracking-widest mb-1">Transaction Momentum</p>
-              <p className="text-zinc-500 text-xs mb-4">Validated transactions per month</p>
-              <div className="flex items-center justify-center gap-4 md:gap-8">
+            <div className="rounded-xl border border-amber-500/30 p-6 mb-6" style={{ background: 'rgba(245, 158, 11, 0.05)' }}>
+              <p className="text-amber-400 text-xs uppercase tracking-widest mb-6">Pairs of Shoes Traded Per Month</p>
+              <div className="flex items-end justify-center gap-6 md:gap-12">
                 <div className="text-center">
-                  <p className="text-zinc-500 text-xs mb-1">Nov</p>
-                  <p className="text-2xl font-bold text-zinc-400">927</p>
+                  <p className="text-zinc-500 text-sm mb-2">Nov</p>
+                  <p className="text-4xl md:text-5xl font-bold text-zinc-400">1,369</p>
                 </div>
-                <div className="text-zinc-600 text-xl">→</div>
+                <div className="text-zinc-600 text-2xl pb-4">→</div>
                 <div className="text-center">
-                  <p className="text-zinc-500 text-xs mb-1">Dec</p>
-                  <p className="text-2xl font-bold text-zinc-300">1,053</p>
-                  <p className="text-emerald-400 text-xs">+14%</p>
+                  <p className="text-zinc-500 text-sm mb-2">Dec</p>
+                  <p className="text-4xl md:text-5xl font-bold text-zinc-300">1,523</p>
+                  <p className="text-emerald-400 text-sm mt-1">+11%</p>
                 </div>
-                <div className="text-zinc-600 text-xl">→</div>
+                <div className="text-zinc-600 text-2xl pb-4">→</div>
                 <div className="text-center">
-                  <p className="text-zinc-500 text-xs mb-1">Jan<br /><span className="text-[10px]">(current pace)</span></p>
-                  <p className="text-2xl font-bold text-white">1,090*</p>
-                  <p className="text-emerald-400 text-xs">+4%</p>
+                  <p className="text-zinc-500 text-sm mb-2">Jan (proj)</p>
+                  <p className="text-4xl md:text-5xl font-bold text-white">1,812</p>
+                  <p className="text-emerald-400 text-sm mt-1">+19%</p>
                 </div>
               </div>
-              <p className="text-zinc-500 text-sm mt-4 text-center">
-                Steady climb as comms volume increases
-              </p>
-              <p className="text-zinc-600 text-xs mt-2 text-center">
-                *Despite 5-day full app outage. This figure would be ~1,250 if daily averages were applied to those days.
+              <p className="text-zinc-500 text-xs mt-6 text-center">
+                * Dec pro forma excluding 5-day domain/infrastructure outage
               </p>
             </div>
           </RevealText>
 
-          {/* Email Results */}
           <RevealText delay={0.3}>
-            <div className="rounded-xl border border-emerald-500/30 p-5 mb-4" style={{ background: 'rgba(16, 185, 129, 0.05)' }}>
-              <div className="flex items-center justify-between mb-4">
-                <p className="text-emerald-400 font-medium">Email Results</p>
-                <span className="text-zinc-500 text-xs">20 campaigns &bull; Jan 8-22</span>
+            <div className="grid grid-cols-2 gap-4">
+              <div className="rounded-xl p-5 border border-zinc-800" style={{ background: 'rgba(24, 24, 27, 0.5)' }}>
+                <p className="text-3xl font-bold text-emerald-400 mb-1">+32%</p>
+                <p className="text-zinc-300 text-sm font-medium">Nov → Jan growth</p>
+                <p className="text-zinc-500 text-xs mt-1">Consistent month-over-month acceleration</p>
               </div>
-              <div className="grid grid-cols-3 gap-4 mb-4">
-                <div className="text-center">
-                  <p className="text-3xl font-bold text-white">83%</p>
-                  <p className="text-zinc-500 text-xs">of product emails drove trade lift</p>
-                </div>
-                <div className="text-center">
-                  <p className="text-3xl font-bold text-emerald-400">~14+</p>
-                  <p className="text-zinc-500 text-xs">incremental trades from 5 campaigns</p>
-                </div>
-                <div className="text-center">
-                  <p className="text-3xl font-bold text-white">+41%</p>
-                  <p className="text-zinc-500 text-xs">avg offer uplift</p>
-                </div>
+              <div className="rounded-xl p-5 border border-zinc-800" style={{ background: 'rgba(24, 24, 27, 0.5)' }}>
+                <p className="text-3xl font-bold text-amber-400 mb-1">+19%</p>
+                <p className="text-zinc-300 text-sm font-medium">Dec → Jan lift</p>
+                <p className="text-zinc-500 text-xs mt-1">MoM growth accelerating</p>
               </div>
-              <div className="pt-4 border-t border-zinc-800">
-                <p className="text-zinc-500 text-xs mb-2">Standout campaigns:</p>
-                <div className="flex flex-wrap gap-2">
-                  <span className="text-xs px-2 py-1 rounded-full bg-zinc-800 text-zinc-300">Kobe 5 CC: +690% trades</span>
-                  <span className="text-xs px-2 py-1 rounded-full bg-zinc-800 text-zinc-300">Gamma Blue: +429% trades</span>
-                  <span className="text-xs px-2 py-1 rounded-full bg-zinc-800 text-zinc-300">Travis Scott: +67% trades</span>
-                </div>
-              </div>
-            </div>
-          </RevealText>
-
-          {/* Push Results */}
-          <RevealText delay={0.4}>
-            <div className="rounded-xl border border-blue-500/30 p-5 mb-6" style={{ background: 'rgba(59, 130, 246, 0.05)' }}>
-              <div className="flex items-center justify-between mb-4">
-                <p className="text-blue-400 font-medium">Push Results</p>
-                <span className="text-zinc-500 text-xs">61 targeted campaigns &bull; Dec-Jan</span>
-              </div>
-              <div className="grid grid-cols-2 gap-4">
-                <div className="text-center">
-                  <p className="text-3xl font-bold text-white">84%</p>
-                  <p className="text-zinc-500 text-xs">positive offer lift</p>
-                </div>
-                <div className="text-center">
-                  <p className="text-3xl font-bold text-white">+270%</p>
-                  <p className="text-zinc-500 text-xs">best trade lift (p&lt;0.0001)</p>
-                </div>
-              </div>
-            </div>
-          </RevealText>
-
-          <RevealText delay={0.5}>
-            <div className="pl-4 py-3 border-l-2 border-emerald-500" style={{ background: 'linear-gradient(to right, rgba(16, 185, 129, 0.1), transparent)' }}>
-              <p className="text-zinc-300">
-                This isn&apos;t cherry-picked results—<span className="text-white font-medium">it&apos;s the pattern.</span> Signal-first,
-                behavior-triggered comms consistently drive action.
-              </p>
             </div>
           </RevealText>
         </div>
       </Section>
 
-      {/* ==================== SLIDE 3: Correlation Chart ==================== */}
-      <Section id="correlation" className="relative">
+      {/* ==================== SLIDE 3: Where Is Momentum Coming From? ==================== */}
+      <Section id="channels" className="relative">
         <div className="max-w-4xl">
           <RevealText>
-            <p className="text-amber-400 text-sm uppercase tracking-widest mb-3">The Data</p>
+            <p className="text-amber-400 text-sm uppercase tracking-widest mb-3">The Why</p>
           </RevealText>
 
           <RevealText delay={0.1}>
-            <h2 className="font-display text-3xl md:text-4xl font-bold mb-6">
-              The correlation is clear:{' '}
-              <span className="text-gradient">more comms = more trades.</span>
+            <h2 className="font-display text-3xl md:text-4xl font-bold mb-8">
+              Where is momentum coming from?
             </h2>
           </RevealText>
 
@@ -627,17 +614,234 @@ export default function TradeblockJan2026Projections() {
           </RevealText>
 
           <RevealText delay={0.3}>
-            <div className="mt-6 pl-4 py-3 border-l-2 border-emerald-500" style={{ background: 'linear-gradient(to right, rgba(16, 185, 129, 0.1), transparent)' }}>
+            <div className="mt-8 rounded-xl border border-zinc-800 p-6" style={{ background: 'rgba(24, 24, 27, 0.5)' }}>
+              <p className="text-zinc-400 text-xs uppercase tracking-widest mb-4">Channel Results • Dec–Jan</p>
+
+              <div className="grid md:grid-cols-2 gap-6">
+                <div className="p-4 rounded-lg border border-emerald-500/20" style={{ background: 'rgba(16, 185, 129, 0.05)' }}>
+                  <div className="flex items-center justify-between mb-3">
+                    <p className="text-emerald-400 font-medium">📧 Email</p>
+                    <span className="text-zinc-500 text-xs">20 campaigns</span>
+                  </div>
+                  <div className="grid grid-cols-2 gap-4">
+                    <div>
+                      <p className="text-2xl font-bold text-white">83%</p>
+                      <p className="text-zinc-500 text-xs">drove trade lift</p>
+                    </div>
+                    <div>
+                      <p className="text-2xl font-bold text-emerald-400">+41%</p>
+                      <p className="text-zinc-500 text-xs">avg offer uplift</p>
+                    </div>
+                  </div>
+                </div>
+
+                <div className="p-4 rounded-lg border border-blue-500/20" style={{ background: 'rgba(59, 130, 246, 0.05)' }}>
+                  <div className="flex items-center justify-between mb-3">
+                    <p className="text-blue-400 font-medium">🔔 Push</p>
+                    <span className="text-zinc-500 text-xs">61 campaigns</span>
+                  </div>
+                  <div className="grid grid-cols-2 gap-4">
+                    <div>
+                      <p className="text-2xl font-bold text-white">84%</p>
+                      <p className="text-zinc-500 text-xs">positive offer lift</p>
+                    </div>
+                    <div>
+                      <p className="text-2xl font-bold text-blue-400">+270%</p>
+                      <p className="text-zinc-500 text-xs">best trade lift</p>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              <div className="mt-4 pt-4 border-t border-zinc-800">
+                <p className="text-zinc-400 text-sm">
+                  <span className="text-white font-medium">81 targeted campaigns</span> in two weeks →
+                  consistent, measurable trade lift. This isn&apos;t cherry-picked—it&apos;s the pattern.
+                </p>
+              </div>
+            </div>
+          </RevealText>
+        </div>
+      </Section>
+
+      {/* ==================== SLIDE 4: Signal-Testing System ==================== */}
+      <Section id="signal-testing" className="relative">
+        <div className="max-w-4xl">
+          <RevealText>
+            <p className="text-amber-400 text-sm uppercase tracking-widest mb-3">Zooming Out: The System</p>
+          </RevealText>
+
+          <RevealText delay={0.1}>
+            <h2 className="font-display text-3xl md:text-4xl font-bold mb-4">
+              A rapid signal-testing engine{' '}
+              <span className="text-gradient">inside our existing base.</span>
+            </h2>
+          </RevealText>
+
+          <RevealText delay={0.15}>
+            <p className="text-zinc-400 text-lg mb-8">
+              We&apos;ve evolved from generic broadcasts to signal-first targeting. Here&apos;s the progression:
+            </p>
+          </RevealText>
+
+          <div className="space-y-4">
+            <RevealText delay={0.2}>
+              <EmailVersionCard
+                version="v1"
+                title="Generic launch email"
+                campaign="Throwback Thursday - White Cement 3"
+                description="Broad announcement to entire base. Impressive-looking aggregate stats, but users have the same question: What about in MY size? What's relevant to ME?"
+                metrics={{ audience: '50,094', openRate: '39.6%', ctr: '0.22%', tradeLift: 'Nominal' }}
+              />
+            </RevealText>
+
+            <RevealText delay={0.3}>
+              <div className="flex justify-center py-2">
+                <div className="text-zinc-600 text-xl">↓</div>
+              </div>
+            </RevealText>
+
+            <RevealText delay={0.35}>
+              <EmailVersionCard
+                version="v2"
+                title="Size-personalized"
+                campaign="Who's hunting kicks in YOUR size?"
+                description="Personalized to show who's most active in your size. Better, but still doesn't account for whether their activity is actually relevant to what you want."
+                metrics={{ audience: '14,782', openRate: '49.7%', ctr: '2.24%', tradeLift: '+22%' }}
+              />
+            </RevealText>
+
+            <RevealText delay={0.45}>
+              <div className="flex justify-center py-2">
+                <div className="text-zinc-600 text-xl">↓</div>
+              </div>
+            </RevealText>
+
+            <RevealText delay={0.5}>
+              <EmailVersionCard
+                version="v3"
+                title="Signal-first, partner-focused"
+                campaign="Jordan 4 Brick by Brick? Fresh supply on the block."
+                description="Only sent to users showing recent intent signal. Points directly to BEST trade partners—ranked by trade count and reputation. One-click to act."
+                metrics={{ audience: '2,971', openRate: '54.3%', ctr: '4.01%', tradeLift: '+167%' }}
+                isHighlighted={true}
+              />
+            </RevealText>
+          </div>
+
+          <RevealText delay={0.6}>
+            <div className="mt-8 pl-4 py-3 border-l-2 border-emerald-500" style={{ background: 'linear-gradient(to right, rgba(16, 185, 129, 0.1), transparent)' }}>
               <p className="text-zinc-300">
-                Now we have the infrastructure to do this at scale—
-                <span className="text-white font-medium"> without adding headcount.</span>
+                <span className="text-white font-medium">The insight:</span> Don&apos;t just show users data about a shoe.
+                Show them <span className="text-emerald-400 font-medium">who to trade with</span> and make it effortless to act.
               </p>
             </div>
           </RevealText>
         </div>
       </Section>
 
-      {/* ==================== SLIDE 4: 120-Day Sprint Overview ==================== */}
+      {/* ==================== SLIDE 5: Kicker - Signal-First in Product ==================== */}
+      <Section id="signal-product" className="relative overflow-hidden">
+        <div className="absolute inset-0 opacity-20">
+          <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-96 h-96 rounded-full blur-3xl" style={{ background: 'rgba(16, 185, 129, 0.2)' }} />
+        </div>
+
+        <div className="relative z-10 max-w-5xl">
+          <RevealText>
+            <p className="text-emerald-400 text-sm uppercase tracking-widest mb-3">The Kicker</p>
+          </RevealText>
+
+          <RevealText delay={0.1}>
+            <h2 className="font-display text-3xl md:text-4xl font-bold mb-6">
+              This pattern belongs in the{' '}
+              <span className="text-gradient">core product.</span>
+            </h2>
+          </RevealText>
+
+          <RevealText delay={0.2}>
+            <p className="text-zinc-400 text-lg mb-8">
+              If signal-first targeting works this well in email,
+              it should be even more powerful where the most users and activity already are—the app itself.
+            </p>
+          </RevealText>
+
+          <RevealText delay={0.3}>
+            <div className="grid md:grid-cols-2 gap-8 items-start">
+              {/* Left: Description */}
+              <div className="rounded-xl border border-zinc-800 p-6" style={{ background: 'rgba(24, 24, 27, 0.5)' }}>
+                <div className="flex items-center justify-center gap-6 mb-6">
+                  <div className="text-center p-4 rounded-lg border border-zinc-700" style={{ background: 'rgba(24, 24, 27, 0.5)' }}>
+                    <p className="text-2xl mb-2">📧</p>
+                    <p className="text-zinc-400 text-sm">Email learnings</p>
+                    <p className="text-emerald-400 text-xs">Signal-first works</p>
+                  </div>
+                  <div className="text-amber-400 text-3xl">→</div>
+                  <div className="text-center p-4 rounded-lg border border-emerald-500/30" style={{ background: 'rgba(16, 185, 129, 0.1)' }}>
+                    <p className="text-2xl mb-2">📱</p>
+                    <p className="text-white text-sm font-medium">Core product</p>
+                    <p className="text-emerald-400 text-xs">Widest surface area</p>
+                  </div>
+                </div>
+
+                <div className="border-t border-zinc-800 pt-6">
+                  <p className="text-zinc-500 text-xs uppercase tracking-widest mb-4">What this looks like in-app:</p>
+                  <div className="space-y-3">
+                    <div className="flex items-start gap-3">
+                      <div className="w-6 h-6 rounded-full bg-emerald-500/20 flex items-center justify-center flex-shrink-0 mt-0.5">
+                        <span className="text-emerald-400 text-xs">1</span>
+                      </div>
+                      <div>
+                        <p className="text-white font-medium text-sm">Best trading partners view</p>
+                        <p className="text-zinc-500 text-xs">Replace generic &quot;Available offers&quot; with signal-ranked recommendations</p>
+                      </div>
+                    </div>
+                    <div className="flex items-start gap-3">
+                      <div className="w-6 h-6 rounded-full bg-emerald-500/20 flex items-center justify-center flex-shrink-0 mt-0.5">
+                        <span className="text-emerald-400 text-xs">2</span>
+                      </div>
+                      <div>
+                        <p className="text-white font-medium text-sm">Ranked by recent activity + reputation</p>
+                        <p className="text-zinc-500 text-xs">Surface users who traded this shoe TODAY, sorted by trade count</p>
+                      </div>
+                    </div>
+                    <div className="flex items-start gap-3">
+                      <div className="w-6 h-6 rounded-full bg-emerald-500/20 flex items-center justify-center flex-shrink-0 mt-0.5">
+                        <span className="text-emerald-400 text-xs">3</span>
+                      </div>
+                      <div>
+                        <p className="text-white font-medium text-sm">One-click multi-offer + DM</p>
+                        <p className="text-zinc-500 text-xs">Send offers to multiple best partners simultaneously</p>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              {/* Right: Phone mockup placeholder */}
+              <div className="rounded-xl border border-dashed border-zinc-700 p-6 flex flex-col items-center justify-center min-h-[400px]" style={{ background: 'rgba(24, 24, 27, 0.3)' }}>
+                <div className="w-48 h-80 rounded-3xl border-2 border-zinc-700 bg-zinc-900/50 flex items-center justify-center">
+                  <div className="text-center">
+                    <p className="text-zinc-600 text-4xl mb-3">📱</p>
+                    <p className="text-zinc-500 text-sm">Phone mockup</p>
+                    <p className="text-zinc-600 text-xs">placeholder</p>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </RevealText>
+
+          <RevealText delay={0.4}>
+            <div className="mt-8 pl-4 py-3 border-l-2 border-amber-500" style={{ background: 'linear-gradient(to right, rgba(245, 158, 11, 0.1), transparent)' }}>
+              <p className="text-zinc-300">
+                <span className="text-white font-medium">Same pattern that worked in email.</span>{' '}
+                Now applied where it touches the most users and activity.
+              </p>
+            </div>
+          </RevealText>
+        </div>
+      </Section>
+
+      {/* ==================== SLIDE 6: 120-Day Sprint Overview ==================== */}
       <Section id="sprint" className="relative overflow-hidden">
         <div className="absolute inset-0 opacity-20">
           <div className="absolute top-1/3 right-1/4 w-96 h-96 rounded-full blur-3xl" style={{ background: 'rgba(245, 158, 11, 0.1)' }} />
@@ -650,7 +854,7 @@ export default function TradeblockJan2026Projections() {
 
           <RevealText delay={0.1}>
             <h2 className="font-display text-3xl md:text-4xl font-bold mb-4">
-              We&apos;re now in Day 20 of a{' '}
+              The{' '}
               <span className="text-gradient">120-day sprint.</span>
             </h2>
           </RevealText>
@@ -672,301 +876,118 @@ export default function TradeblockJan2026Projections() {
 
           <RevealText delay={0.2}>
             <p className="text-xl text-zinc-300 mb-8">
-              Three missions. One goal: <span className="text-white font-semibold">accelerate past break-even.</span>
+              Three initiatives. Two customer types. One goal: <span className="text-white font-semibold">accelerate past break-even.</span>
             </p>
           </RevealText>
 
-          <div className="grid md:grid-cols-3 gap-4">
-            <MissionCard
-              number="1"
-              title="Channel Activation"
-              description="Light up marketing & engagement channels at full capacity. Increase engagement from existing customers."
-              status="in-progress"
-              delay={0.3}
-            />
-            <MissionCard
-              number="2"
-              title="Signal-First Trading"
-              description="Redesign the core trading flow around intent signals. Help users find the right people, not just create offers."
-              status="development"
-              delay={0.4}
-            />
-            <MissionCard
-              number="3"
-              title="Ads Revamp"
-              description="Reignite paid growth with economics that actually work. Target: 60-day payback period."
-              status="preparing"
-              delay={0.5}
-            />
-          </div>
+          <RevealText delay={0.25}>
+            <div className="grid md:grid-cols-2 gap-6 mb-8">
+              <div className="rounded-xl border border-zinc-800 p-5" style={{ background: 'rgba(24, 24, 27, 0.5)' }}>
+                <p className="text-amber-400 text-xs uppercase tracking-widest mb-2">Inside the Container</p>
+                <p className="text-white font-medium text-lg mb-2">Existing & Past Customers</p>
+                <p className="text-zinc-400 text-sm mb-4">Reactivate the base. Increase engagement. Convert more offers to trades.</p>
+                <div className="flex gap-2">
+                  <span className="text-xs px-2 py-1 rounded-full bg-amber-500/20 text-amber-400 border border-amber-500/30">Channels</span>
+                  <span className="text-xs px-2 py-1 rounded-full bg-emerald-500/20 text-emerald-400 border border-emerald-500/30">Product</span>
+                </div>
+              </div>
+              <div className="rounded-xl border border-zinc-800 p-5" style={{ background: 'rgba(24, 24, 27, 0.5)' }}>
+                <p className="text-blue-400 text-xs uppercase tracking-widest mb-2">Outside the Container</p>
+                <p className="text-white font-medium text-lg mb-2">Net New Customers</p>
+                <p className="text-zinc-400 text-sm mb-4">Feed and enlarge the container. Sustainable top-of-funnel growth.</p>
+                <div className="flex gap-2">
+                  <span className="text-xs px-2 py-1 rounded-full bg-blue-500/20 text-blue-400 border border-blue-500/30">Ads</span>
+                </div>
+              </div>
+            </div>
+          </RevealText>
 
-          <RevealText delay={0.6}>
-            <p className="text-zinc-400 text-center mt-8">
-              All three leverage the AI infrastructure we built. All-in customer acquisition costs
-              are <span className="text-white">dramatically lower</span> than the last time we ran paid growth.
+          <RevealText delay={0.3}>
+            <div className="grid md:grid-cols-3 gap-4">
+              <MissionCard
+                number="1"
+                title="Channel Activation"
+                description="Scale email + push to 3x volume. Already proving trade lift."
+                status="in-progress"
+                delay={0}
+              />
+              <MissionCard
+                number="2"
+                title="Signal-First Product"
+                description="Best trading partners. One-click multi-offer. The email pattern, in-app."
+                status="development"
+                delay={0.1}
+              />
+              <MissionCard
+                number="3"
+                title="Net New Growth"
+                description="Revive paid with AI-enabled economics. Landing page funnel."
+                status="preparing"
+                delay={0.2}
+              />
+            </div>
+          </RevealText>
+        </div>
+      </Section>
+
+      {/* ==================== SLIDE 7: Growing the Userbase ==================== */}
+      <Section id="growth" className="relative">
+        <div className="max-w-4xl">
+          <RevealText>
+            <p className="text-blue-400 text-sm uppercase tracking-widest mb-3">Growing the Userbase</p>
+          </RevealText>
+
+          <RevealText delay={0.1}>
+            <h2 className="font-display text-3xl md:text-4xl font-bold mb-6">
+              Net new growth:{' '}
+              <span className="text-gradient">Feed the container</span>
+            </h2>
+          </RevealText>
+
+          <RevealText delay={0.2}>
+            <p className="text-zinc-400 text-lg mb-8">
+              Revive paid acquisition with fundamentally better economics. AI-enabled, founder-managed.
             </p>
           </RevealText>
-        </div>
-      </Section>
-
-      {/* ==================== SLIDE 7: Mission 1 Deep Dive ==================== */}
-      <Section id="mission1" className="relative">
-        <div className="max-w-3xl">
-          <RevealText>
-            <div className="flex items-center gap-3 mb-4">
-              <div className="w-8 h-8 rounded-full bg-amber-500/20 border border-amber-500/30 flex items-center justify-center">
-                <span className="text-amber-400 font-bold text-sm">1</span>
-              </div>
-              <p className="text-amber-400 text-sm uppercase tracking-widest">Mission 1</p>
-            </div>
-          </RevealText>
-
-          <RevealText delay={0.1}>
-            <h2 className="font-display text-3xl md:text-4xl font-bold mb-6">
-              Orchestrated, behavior-triggered engagement.
-            </h2>
-          </RevealText>
-
-          <RevealText delay={0.2}>
-            <div className="rounded-xl border border-zinc-800 p-5 mb-6" style={{ background: 'rgba(24, 24, 27, 0.5)' }}>
-              <p className="text-zinc-500 uppercase tracking-widest text-xs mb-3">The Hypothesis</p>
-              <p className="text-white text-lg">
-                More comms = more activity = more transactions.
-              </p>
-              <p className="text-zinc-400 mt-2">
-                But the key is <span className="text-amber-400">relevance</span>—reacting to user behavior and intent,
-                not blasting broad-based messages (which annoyed people).
-              </p>
-            </div>
-          </RevealText>
 
           <RevealText delay={0.3}>
-            <div className="rounded-xl border border-zinc-800 p-5 mb-6" style={{ background: 'rgba(24, 24, 27, 0.5)' }}>
-              <p className="text-zinc-500 uppercase tracking-widest text-xs mb-4">What&apos;s Live Now</p>
-              <div className="grid grid-cols-2 gap-3">
-                <ChannelBadge icon="📱" name="Push" frequency="Daily, action-based" />
-                <ChannelBadge icon="✉️" name="Email" frequency="3-4x per week, targeted" />
-                <ChannelBadge icon="🐦" name="Twitter" frequency="3-4 tweets per day" />
-                <ChannelBadge icon="📸" name="Instagram" frequency="1 post + 2 stories daily" />
+            <div className="rounded-xl border border-zinc-800 p-6 mb-6" style={{ background: 'rgba(24, 24, 27, 0.5)' }}>
+              <p className="text-zinc-500 text-xs uppercase tracking-widest mb-4">The New Funnel</p>
+              <div className="flex items-center justify-between gap-4 mb-6">
+                <div className="flex-1 text-center p-3 rounded-lg border border-zinc-700">
+                  <p className="text-xl mb-1">🎬</p>
+                  <p className="text-white text-sm font-medium">Video ads</p>
+                  <p className="text-zinc-500 text-xs">Show the trading experience</p>
+                </div>
+                <div className="text-zinc-600">→</div>
+                <div className="flex-1 text-center p-3 rounded-lg border border-zinc-700">
+                  <p className="text-xl mb-1">🌐</p>
+                  <p className="text-white text-sm font-medium">Landing page</p>
+                  <p className="text-zinc-500 text-xs">Not app store (cheaper)</p>
+                </div>
+                <div className="text-zinc-600">→</div>
+                <div className="flex-1 text-center p-3 rounded-lg border border-zinc-700">
+                  <p className="text-xl mb-1">👟</p>
+                  <p className="text-white text-sm font-medium">Pick a shoe</p>
+                  <p className="text-zinc-500 text-xs">See real signal data</p>
+                </div>
+                <div className="text-zinc-600">→</div>
+                <div className="flex-1 text-center p-3 rounded-lg border border-emerald-500/30" style={{ background: 'rgba(16, 185, 129, 0.1)' }}>
+                  <p className="text-xl mb-1">📱</p>
+                  <p className="text-emerald-400 text-sm font-medium">Download</p>
+                  <p className="text-zinc-500 text-xs">Educated user</p>
+                </div>
               </div>
-              <div className="mt-4 pt-4 border-t border-zinc-800">
-                <p className="text-zinc-400 text-sm">
-                  All run by <span className="text-white">one person</span> + the automation system.
-                </p>
-              </div>
+              <p className="text-zinc-400 text-sm">
+                Users arrive understanding what trading is and already interested in a specific shoe. Better conversion, better retention.
+              </p>
             </div>
           </RevealText>
 
           <RevealText delay={0.4}>
-            <div className="rounded-lg p-4 border border-zinc-800" style={{ background: 'rgba(24, 24, 27, 0.3)' }}>
-              <div className="flex items-center justify-between">
-                <div className="flex items-center gap-3">
-                  <p className="text-zinc-500 text-xs uppercase">Status</p>
-                  <div className="flex items-center gap-2">
-                    <div className="w-2 h-2 rounded-full bg-amber-400 animate-pulse" />
-                    <p className="text-white font-medium">In Progress</p>
-                  </div>
-                </div>
-                <p className="text-zinc-500 text-sm">Ramping volume</p>
-              </div>
-            </div>
-          </RevealText>
-        </div>
-      </Section>
-
-      {/* ==================== SLIDE 8: Mission 2 Deep Dive ==================== */}
-      <Section id="mission2" className="relative">
-        <div className="max-w-3xl">
-          <RevealText>
-            <div className="flex items-center gap-3 mb-4">
-              <div className="w-8 h-8 rounded-full bg-purple-500/20 border border-purple-500/30 flex items-center justify-center">
-                <span className="text-purple-400 font-bold text-sm">2</span>
-              </div>
-              <p className="text-purple-400 text-sm uppercase tracking-widest">Mission 2</p>
-            </div>
-          </RevealText>
-
-          <RevealText delay={0.1}>
-            <h2 className="font-display text-3xl md:text-4xl font-bold mb-6">
-              Stop helping users create offers.{' '}
-              <span className="text-gradient">Start helping them find the right people.</span>
-            </h2>
-          </RevealText>
-
-          <RevealText delay={0.2}>
-            <div className="grid md:grid-cols-2 gap-4 mb-8">
-              <div className="rounded-xl p-5 border border-zinc-800" style={{ background: 'rgba(24, 24, 27, 0.5)' }}>
-                <p className="text-zinc-500 text-xs uppercase tracking-widest mb-3">Old Flow</p>
-                <p className="text-zinc-400">
-                  &quot;What shoe do you want? Create an offer. <span className="text-zinc-600">Hope someone bites.&quot;</span>
-                </p>
-              </div>
-              <div className="rounded-xl p-5 border border-emerald-500/30" style={{ background: 'rgba(16, 185, 129, 0.05)' }}>
-                <p className="text-emerald-400 text-xs uppercase tracking-widest mb-3">New Flow</p>
-                <p className="text-white">
-                  &quot;What shoe do you want? Here are the people most likely to give it to you—
-                  <span className="text-emerald-400"> ranked by intent signals.&quot;</span>
-                </p>
-              </div>
-            </div>
-          </RevealText>
-
-          <RevealText delay={0.3}>
-            <div className="rounded-xl border border-zinc-800 p-5 mb-6" style={{ background: 'rgba(24, 24, 27, 0.5)' }}>
-              <p className="text-zinc-500 uppercase tracking-widest text-xs mb-4">The Intent Hierarchy</p>
-              <div className="space-y-4">
-                <IntentTier
-                  number="1"
-                  title="Currently offering this shoe in other trades"
-                  description="Highest signal—they're actively trying to move it"
-                />
-                <IntentTier
-                  number="2"
-                  title='Marked as "looking to move"'
-                  description="Explicit intent to trade"
-                />
-                <IntentTier
-                  number="3"
-                  title="Strong trading history + complementary wishlist"
-                  description="Track record + mutual interest"
-                />
-              </div>
-            </div>
-          </RevealText>
-
-          <RevealText delay={0.4}>
-            <div className="rounded-xl border border-emerald-500/30 p-5 mb-6" style={{ background: 'rgba(16, 185, 129, 0.05)' }}>
-              <p className="text-emerald-400 font-medium mb-3">We&apos;ve Already Proven This Works</p>
-              <p className="text-zinc-400 text-sm mb-4">
-                Signal-first targeting in email/push consistently drives trades—across categories, across framings:
-              </p>
-              <div className="grid grid-cols-3 gap-3 mb-4">
-                <div className="text-center p-3 rounded-lg border border-zinc-800" style={{ background: 'rgba(24, 24, 27, 0.3)' }}>
-                  <p className="text-2xl font-bold text-white">83%</p>
-                  <p className="text-zinc-500 text-xs">of product emails drove trade lift</p>
-                </div>
-                <div className="text-center p-3 rounded-lg border border-zinc-800" style={{ background: 'rgba(24, 24, 27, 0.3)' }}>
-                  <p className="text-2xl font-bold text-white">5</p>
-                  <p className="text-zinc-500 text-xs">categories tested (Jordans, Kobes, Travis)</p>
-                </div>
-                <div className="text-center p-3 rounded-lg border border-zinc-800" style={{ background: 'rgba(24, 24, 27, 0.3)' }}>
-                  <p className="text-2xl font-bold text-emerald-400">+270%</p>
-                  <p className="text-zinc-500 text-xs">best push trade lift</p>
-                </div>
-              </div>
-              <div className="flex flex-wrap gap-2">
-                <span className="text-xs px-2 py-1 rounded-full bg-emerald-500/20 text-emerald-400">Kobe 5 CC: +690%</span>
-                <span className="text-xs px-2 py-1 rounded-full bg-emerald-500/20 text-emerald-400">Gamma Blue: +429%</span>
-                <span className="text-xs px-2 py-1 rounded-full bg-emerald-500/20 text-emerald-400">Black Cat: +77%</span>
-                <span className="text-xs px-2 py-1 rounded-full bg-emerald-500/20 text-emerald-400">Travis Scott: +67%</span>
-              </div>
-            </div>
-          </RevealText>
-
-          <RevealText delay={0.5}>
-            <div className="pl-4 py-3 border-l-2 border-purple-500" style={{ background: 'linear-gradient(to right, rgba(168, 85, 247, 0.1), transparent)' }}>
-              <p className="text-zinc-300">
-                This is currently only in email/push.{' '}
-                <span className="text-white font-medium">Now we&apos;re embedding it in the core product.</span>
-              </p>
-              <p className="text-zinc-500 text-sm mt-2">Expected impact: +15-21% CVR improvement</p>
-            </div>
-          </RevealText>
-
-          <RevealText delay={0.6}>
-            <div className="grid grid-cols-2 gap-4 mt-6">
-              <div className="rounded-lg p-4 border border-zinc-800" style={{ background: 'rgba(24, 24, 27, 0.3)' }}>
-                <p className="text-zinc-500 text-xs uppercase mb-2">Status</p>
-                <div className="flex items-center gap-2">
-                  <div className="w-2 h-2 rounded-full bg-purple-400" />
-                  <p className="text-white font-medium">In Development</p>
-                </div>
-              </div>
-              <div className="rounded-lg p-4 border border-zinc-800" style={{ background: 'rgba(24, 24, 27, 0.3)' }}>
-                <p className="text-zinc-500 text-xs uppercase mb-2">Target Launch</p>
-                <p className="text-white font-medium">March 1</p>
-              </div>
-            </div>
-          </RevealText>
-        </div>
-      </Section>
-
-      {/* ==================== SLIDE 9: Mission 3 Deep Dive ==================== */}
-      <Section id="mission3" className="relative">
-        <div className="max-w-3xl">
-          <RevealText>
-            <div className="flex items-center gap-3 mb-4">
-              <div className="w-8 h-8 rounded-full bg-blue-500/20 border border-blue-500/30 flex items-center justify-center">
-                <span className="text-blue-400 font-bold text-sm">3</span>
-              </div>
-              <p className="text-blue-400 text-sm uppercase tracking-widest">Mission 3</p>
-            </div>
-          </RevealText>
-
-          <RevealText delay={0.1}>
-            <h2 className="font-display text-3xl md:text-4xl font-bold mb-6">
-              Make paid growth{' '}
-              <span className="text-gradient">economically viable</span> again.
-            </h2>
-          </RevealText>
-
-          <RevealText delay={0.2}>
-            <div className="rounded-xl border border-red-500/30 p-5 mb-6" style={{ background: 'rgba(239, 68, 68, 0.05)' }}>
-              <p className="text-red-400 text-xs uppercase tracking-widest mb-3">The Problem Last Time</p>
-              <div className="flex items-center gap-4">
-                <div className="text-center">
-                  <p className="text-2xl font-bold text-zinc-400">$2-3</p>
-                  <p className="text-zinc-600 text-xs">CAC on paper</p>
-                </div>
-                <div className="text-zinc-600">+</div>
-                <div className="text-center">
-                  <p className="text-2xl font-bold text-zinc-400">Team</p>
-                  <p className="text-zinc-600 text-xs">Overhead</p>
-                </div>
-                <div className="text-zinc-600">=</div>
-                <div className="text-center">
-                  <p className="text-2xl font-bold text-red-400">$6+</p>
-                  <p className="text-zinc-600 text-xs">All-in cost</p>
-                </div>
-              </div>
-              <p className="text-zinc-500 text-sm mt-4 text-center">The math didn&apos;t work.</p>
-            </div>
-          </RevealText>
-
-          <RevealText delay={0.3}>
-            <div className="rounded-xl border border-emerald-500/30 p-5 mb-6" style={{ background: 'rgba(16, 185, 129, 0.05)' }}>
-              <p className="text-emerald-400 text-xs uppercase tracking-widest mb-3">What&apos;s Different Now</p>
-              <p className="text-white text-lg mb-2">
-                AI-enabled, founder-managed → <span className="text-emerald-400">Labor cost = $0</span>
-              </p>
-              <p className="text-zinc-400">Even flat ad performance = economics work again.</p>
-            </div>
-          </RevealText>
-
-          <RevealText delay={0.4}>
-            <div className="grid md:grid-cols-2 gap-4 mb-6">
-              <div className="rounded-xl p-5 border border-zinc-800" style={{ background: 'rgba(24, 24, 27, 0.5)' }}>
-                <p className="text-zinc-500 text-xs uppercase tracking-widest mb-3">Tactical Shift #1</p>
-                <p className="text-white font-medium mb-2">Landing Page Funnel</p>
-                <p className="text-zinc-400 text-sm">
-                  Not direct app store. Cheaper clicks. Warmer users who understand trading first.
-                </p>
-              </div>
-              <div className="rounded-xl p-5 border border-zinc-800" style={{ background: 'rgba(24, 24, 27, 0.5)' }}>
-                <p className="text-zinc-500 text-xs uppercase tracking-widest mb-3">Tactical Shift #2</p>
-                <p className="text-white font-medium mb-2">Video Creative</p>
-                <p className="text-zinc-400 text-sm">
-                  Not static images. Better demonstrates the product. Speaks to the audience.
-                </p>
-              </div>
-            </div>
-          </RevealText>
-
-          <RevealText delay={0.5}>
-            <div className="rounded-xl border border-amber-500/30 p-6" style={{ background: 'rgba(245, 158, 11, 0.05)' }}>
-              <p className="text-amber-400 text-xs uppercase tracking-widest mb-4 text-center">The Payback Math</p>
-
-              <div className="overflow-hidden rounded-lg border border-zinc-800 mb-4">
+            <div className="rounded-xl border border-amber-500/30 p-6 mb-6" style={{ background: 'rgba(245, 158, 11, 0.05)' }}>
+              <p className="text-amber-400 text-xs uppercase tracking-widest mb-4">The Economics</p>
+              <div className="overflow-hidden rounded-lg border border-zinc-800">
                 <table className="w-full text-sm">
                   <thead>
                     <tr className="border-b border-zinc-800" style={{ background: 'rgba(24, 24, 27, 0.5)' }}>
@@ -992,22 +1013,17 @@ export default function TradeblockJan2026Projections() {
                   </tbody>
                 </table>
               </div>
-
-              <div className="text-center">
-                <p className="text-zinc-300">Hit that → <span className="text-white font-medium">Paid growth is self-sustaining</span></p>
-              </div>
+              <p className="text-zinc-400 text-sm mt-4 text-center">
+                50-60% cost reduction by removing people-cost. <span className="text-white font-medium">Hit that → paid growth is self-sustaining.</span>
+              </p>
             </div>
           </RevealText>
 
-          <RevealText delay={0.6}>
-            <div className="grid grid-cols-2 gap-4 mt-6">
+          <RevealText delay={0.5}>
+            <div className="grid grid-cols-2 gap-4">
               <div className="rounded-lg p-4 border border-zinc-800" style={{ background: 'rgba(24, 24, 27, 0.3)' }}>
                 <p className="text-zinc-500 text-xs uppercase mb-2">Status</p>
-                <div className="flex items-center gap-2">
-                  <div className="w-2 h-2 rounded-full bg-blue-400" />
-                  <p className="text-white font-medium">Preparing</p>
-                </div>
-                <p className="text-zinc-500 text-xs mt-1">Testing creative</p>
+                <p className="text-white font-medium">Testing creative</p>
               </div>
               <div className="rounded-lg p-4 border border-zinc-800" style={{ background: 'rgba(24, 24, 27, 0.3)' }}>
                 <p className="text-zinc-500 text-xs uppercase mb-2">Target Launch</p>
@@ -1019,7 +1035,7 @@ export default function TradeblockJan2026Projections() {
       </Section>
 
       {/* ==================== SLIDE 8: Projected Trajectory ==================== */}
-      <Section id="outcomes" className="relative">
+      <Section id="trajectory" className="relative">
         <div className="max-w-5xl">
           <RevealText>
             <p className="text-amber-400 text-sm uppercase tracking-widest mb-3">Projected Trajectory</p>
@@ -1090,7 +1106,7 @@ export default function TradeblockJan2026Projections() {
 
           {/* Outcomes Table */}
           <RevealText delay={0.4}>
-            <div className="overflow-hidden rounded-xl border border-zinc-800" style={{ background: 'rgba(24, 24, 27, 0.3)' }}>
+            <div className="overflow-hidden rounded-xl border border-zinc-800 mb-6" style={{ background: 'rgba(24, 24, 27, 0.3)' }}>
               <table className="w-full text-sm">
                 <thead>
                   <tr className="border-b border-zinc-700" style={{ background: 'rgba(24, 24, 27, 0.7)' }}>
@@ -1104,46 +1120,6 @@ export default function TradeblockJan2026Projections() {
                   </tr>
                 </thead>
                 <tbody>
-                  {/* Driver Metrics Section */}
-                  <tr className="border-b border-zinc-800/50">
-                    <td className="p-4 text-zinc-500 text-xs uppercase tracking-wider" colSpan={7} style={{ background: 'rgba(245, 158, 11, 0.05)' }}>
-                      Driver Metrics
-                    </td>
-                  </tr>
-                  <tr className="border-b border-zinc-800/50">
-                    <td className="p-4 text-white font-medium">MAU</td>
-                    <td className="p-4 text-center text-zinc-400">20,275</td>
-                    <td className="p-4 text-center text-zinc-300">24,000</td>
-                    <td className="p-4 text-center text-zinc-300">30,700</td>
-                    <td className="p-4 text-center text-zinc-300">30,700</td>
-                    <td className="p-4 text-center text-white font-medium">37,000</td>
-                    <td className="p-4 text-center text-emerald-400 font-medium">+85%</td>
-                  </tr>
-                  <tr className="border-b border-zinc-800/50">
-                    <td className="p-4 text-white font-medium">Offers/User</td>
-                    <td className="p-4 text-center text-zinc-400">1.48</td>
-                    <td className="p-4 text-center text-zinc-300">1.62</td>
-                    <td className="p-4 text-center text-zinc-300">1.75</td>
-                    <td className="p-4 text-center text-zinc-300">1.75</td>
-                    <td className="p-4 text-center text-white font-medium">1.76</td>
-                    <td className="p-4 text-center text-emerald-400 font-medium">+24%</td>
-                  </tr>
-                  <tr className="border-b border-zinc-800/50">
-                    <td className="p-4 text-white font-medium">CVR</td>
-                    <td className="p-4 text-center text-zinc-400">3.43%</td>
-                    <td className="p-4 text-center text-zinc-300">3.85%</td>
-                    <td className="p-4 text-center text-zinc-300">4.27%</td>
-                    <td className="p-4 text-center text-zinc-300">4.27%</td>
-                    <td className="p-4 text-center text-white font-medium">4.27%</td>
-                    <td className="p-4 text-center text-emerald-400 font-medium">+27%</td>
-                  </tr>
-
-                  {/* Outcomes Section */}
-                  <tr className="border-b border-zinc-800/50">
-                    <td className="p-4 text-zinc-500 text-xs uppercase tracking-wider" colSpan={7} style={{ background: 'rgba(16, 185, 129, 0.05)' }}>
-                      Outcomes
-                    </td>
-                  </tr>
                   <tr className="border-b border-zinc-800/50">
                     <td className="p-4 text-white font-medium">Transactions</td>
                     <td className="p-4 text-center text-zinc-400">1,030</td>
@@ -1152,6 +1128,15 @@ export default function TradeblockJan2026Projections() {
                     <td className="p-4 text-center text-zinc-300">2,290</td>
                     <td className="p-4 text-center text-white font-medium">2,780</td>
                     <td className="p-4 text-center text-emerald-400 font-medium">+170%</td>
+                  </tr>
+                  <tr className="border-b border-zinc-800/50">
+                    <td className="p-4 text-white font-medium">Net Sales</td>
+                    <td className="p-4 text-center text-zinc-400">$48K</td>
+                    <td className="p-4 text-center text-zinc-300">$70K</td>
+                    <td className="p-4 text-center text-zinc-300">$91K</td>
+                    <td className="p-4 text-center text-zinc-300">$108K</td>
+                    <td className="p-4 text-center text-white font-medium">$136K</td>
+                    <td className="p-4 text-center text-emerald-400 font-medium">+183%</td>
                   </tr>
                   <tr className="border-b border-zinc-800/50">
                     <td className="p-4 text-white font-medium">Gross Margin</td>
@@ -1173,6 +1158,53 @@ export default function TradeblockJan2026Projections() {
                   </tr>
                 </tbody>
               </table>
+            </div>
+          </RevealText>
+
+          {/* Historical Context + Breakeven - Side by Side */}
+          <RevealText delay={0.5}>
+            <div className="grid md:grid-cols-2 gap-6 mb-6">
+              {/* MAU Context */}
+              <div className="rounded-xl border border-zinc-800 p-5" style={{ background: 'rgba(24, 24, 27, 0.5)' }}>
+                <p className="text-zinc-500 text-xs uppercase tracking-widest mb-4">MAU Context</p>
+                <div className="grid grid-cols-3 gap-4">
+                  <div>
+                    <p className="text-zinc-400 text-sm">Historical Peak</p>
+                    <p className="text-white font-bold text-2xl">60-70K</p>
+                  </div>
+                  <div>
+                    <p className="text-zinc-400 text-sm">Current</p>
+                    <p className="text-amber-400 font-bold text-2xl">~20K</p>
+                  </div>
+                  <div>
+                    <p className="text-zinc-400 text-sm">Dec Target</p>
+                    <p className="text-emerald-400 font-bold text-2xl">37K</p>
+                    <p className="text-zinc-500 text-xs">~55% of peak</p>
+                  </div>
+                </div>
+              </div>
+
+              {/* Revenue Context */}
+              <div className="rounded-xl border border-zinc-800 p-5" style={{ background: 'rgba(24, 24, 27, 0.5)' }}>
+                <p className="text-zinc-500 text-xs uppercase tracking-widest mb-4">Revenue Context</p>
+                <div className="grid grid-cols-3 gap-4">
+                  <div>
+                    <p className="text-zinc-400 text-sm">Historical Peak</p>
+                    <p className="text-white font-bold text-2xl">$300K+</p>
+                    <p className="text-zinc-500 text-xs">/month</p>
+                  </div>
+                  <div>
+                    <p className="text-zinc-400 text-sm">Current</p>
+                    <p className="text-amber-400 font-bold text-2xl">~$48K</p>
+                    <p className="text-zinc-500 text-xs">/month</p>
+                  </div>
+                  <div>
+                    <p className="text-zinc-400 text-sm">Dec Target</p>
+                    <p className="text-emerald-400 font-bold text-2xl">$136K</p>
+                    <p className="text-zinc-500 text-xs">~45% of peak</p>
+                  </div>
+                </div>
+              </div>
             </div>
           </RevealText>
 
@@ -1210,7 +1242,7 @@ export default function TradeblockJan2026Projections() {
         </div>
       </Section>
 
-      {/* ==================== SLIDE 12: The Raise (Modified) ==================== */}
+      {/* ==================== SLIDE 9: The Raise ==================== */}
       <Section id="raise" className="relative overflow-hidden">
         <div className="absolute inset-0 opacity-20">
           <div className="absolute bottom-1/4 left-1/3 w-96 h-96 rounded-full blur-3xl" style={{ background: 'rgba(245, 158, 11, 0.15)' }} />
@@ -1222,64 +1254,92 @@ export default function TradeblockJan2026Projections() {
           </RevealText>
 
           <RevealText delay={0.1}>
-            <h2 className="font-display text-3xl md:text-4xl font-bold mb-8">
+            <h2 className="font-display text-3xl md:text-4xl font-bold mb-6">
               <span className="text-gradient">$500K</span> internal round.{' '}
               <span className="text-white">Now open.</span>
             </h2>
           </RevealText>
 
           <RevealText delay={0.2}>
-            <div className="rounded-xl border border-amber-500/30 p-6" style={{ background: 'rgba(245, 158, 11, 0.05)' }}>
-              <p className="text-zinc-500 uppercase tracking-widest text-xs mb-4 text-center">The Path to Break-Even</p>
-              <div className="grid md:grid-cols-3 gap-4 mb-4">
-                <div className="text-center">
-                  <p className="text-zinc-500 text-xs mb-1">Operational break-even</p>
-                  <p className="text-xl font-bold text-white">June 2026</p>
-                </div>
-                <div className="text-center">
-                  <p className="text-zinc-500 text-xs mb-1">Overall break-even (with debt)</p>
-                  <p className="text-xl font-bold text-white">Sept 2026</p>
-                </div>
-                <div className="text-center">
-                  <p className="text-zinc-500 text-xs mb-1">Cash to get there</p>
-                  <p className="text-xl font-bold text-zinc-400">~$128K</p>
-                </div>
+            <p className="text-zinc-400 text-lg mb-8">
+              Bridge to profitability. Fuel the sprint. Capture the opportunity.
+            </p>
+          </RevealText>
+
+          <RevealText delay={0.3}>
+            <div className="grid grid-cols-3 gap-4">
+              <div className="rounded-xl p-4 border border-zinc-800 text-center" style={{ background: 'rgba(24, 24, 27, 0.5)' }}>
+                <p className="text-2xl font-bold text-amber-400">$500K</p>
+                <p className="text-zinc-400 text-sm">Round size</p>
               </div>
-              <div className="pt-4 border-t border-zinc-800 text-center">
-                <p className="text-white">
-                  We&apos;re raising <span className="text-gradient font-bold">$500K</span> to{' '}
-                  <span className="text-amber-400 font-semibold">invest</span>, not just survive.
-                </p>
+              <div className="rounded-xl p-4 border border-zinc-800 text-center" style={{ background: 'rgba(24, 24, 27, 0.5)' }}>
+                <p className="text-2xl font-bold text-white">~$128K</p>
+                <p className="text-zinc-400 text-sm">Cash to breakeven</p>
+              </div>
+              <div className="rounded-xl p-4 border border-zinc-800 text-center" style={{ background: 'rgba(24, 24, 27, 0.5)' }}>
+                <p className="text-2xl font-bold text-emerald-400">Sept &apos;26</p>
+                <p className="text-zinc-400 text-sm">Overall breakeven</p>
               </div>
             </div>
           </RevealText>
         </div>
       </Section>
 
-      {/* ==================== SLIDE 13: Close (Modified) ==================== */}
+      {/* ==================== SLIDE 10: Close ==================== */}
       <Section id="close" className="relative overflow-hidden">
-        <div className="absolute inset-0" style={{ background: 'linear-gradient(135deg, #18181b 0%, #000 50%, #18181b 100%)' }} />
         <div className="absolute inset-0 opacity-30">
-          <div className="absolute bottom-0 left-1/2 transform -translate-x-1/2 w-96 h-48 rounded-full blur-3xl" style={{ background: 'rgba(245, 158, 11, 0.2)' }} />
+          <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[600px] h-[600px] rounded-full blur-3xl" style={{ background: 'radial-gradient(circle, rgba(245, 158, 11, 0.2) 0%, transparent 70%)' }} />
         </div>
 
-        <div className="relative z-10 max-w-2xl text-center mx-auto">
+        <div className="relative z-10 max-w-3xl">
           <RevealText>
-            <h2 className="font-display text-3xl md:text-4xl lg:text-5xl font-bold mb-6 leading-tight">
-              We built the weapon.{' '}
-              <span className="text-gradient">We&apos;re using it.</span>
+            <h2 className="font-display text-4xl md:text-5xl font-bold mb-8 leading-tight">
+              Momentum is building.{' '}
+              <span className="text-gradient">The plan is working.</span>
             </h2>
           </RevealText>
 
-          <RevealText delay={0.1}>
-            <p className="text-xl text-zinc-300 mb-8">
-              Now we&apos;re ready to scale.
-            </p>
+          <RevealText delay={0.2}>
+            <div className="space-y-4 mb-12">
+              <div className="flex items-center gap-3">
+                <div className="w-6 h-6 rounded-full bg-emerald-500/20 flex items-center justify-center">
+                  <svg className="w-4 h-4 text-emerald-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+                  </svg>
+                </div>
+                <p className="text-zinc-300">Transaction volume climbing: +32% Nov → Jan</p>
+              </div>
+              <div className="flex items-center gap-3">
+                <div className="w-6 h-6 rounded-full bg-emerald-500/20 flex items-center justify-center">
+                  <svg className="w-4 h-4 text-emerald-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+                  </svg>
+                </div>
+                <p className="text-zinc-300">Signal-first pattern proven in channels</p>
+              </div>
+              <div className="flex items-center gap-3">
+                <div className="w-6 h-6 rounded-full bg-emerald-500/20 flex items-center justify-center">
+                  <svg className="w-4 h-4 text-emerald-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+                  </svg>
+                </div>
+                <p className="text-zinc-300">Three-part sprint: Channels → Product → Growth</p>
+              </div>
+              <div className="flex items-center gap-3">
+                <div className="w-6 h-6 rounded-full bg-emerald-500/20 flex items-center justify-center">
+                  <svg className="w-4 h-4 text-emerald-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+                  </svg>
+                </div>
+                <p className="text-zinc-300">Clear path to breakeven by September 2026</p>
+              </div>
+            </div>
           </RevealText>
 
-          <RevealText delay={0.2}>
-            <div className="mt-12 opacity-50">
-              <p className="text-zinc-600 text-sm uppercase tracking-widest">Tradeblock</p>
+          <RevealText delay={0.3}>
+            <div className="pt-8 border-t border-zinc-800">
+              <p className="text-zinc-400 mb-4">Questions? Let&apos;s talk.</p>
+              <p className="text-white font-medium">beems@tradeblock.us</p>
             </div>
           </RevealText>
         </div>
