@@ -1042,10 +1042,16 @@ export default function TradeblockJan2026Projections() {
           </RevealText>
 
           <RevealText delay={0.1}>
-            <h2 className="font-display text-3xl md:text-4xl font-bold mb-8">
+            <h2 className="font-display text-3xl md:text-4xl font-bold mb-4">
               Three missions.{' '}
               <span className="text-gradient">Three levers.</span>
             </h2>
+          </RevealText>
+
+          <RevealText delay={0.15}>
+            <p className="text-zinc-400 text-lg mb-8">
+              Lighting up all our channels, moving to signal-first patterns in both comms and product, and revitalizing our growth engine will have a meaningful impact on the three core levers of our business: active users, the offers each of them creates, and the conversion rate of those offers.
+            </p>
           </RevealText>
 
           {/* Driver Metrics Impact Summary */}
