@@ -42,6 +42,11 @@ const IPFrameworkDeck = dynamic(
   { ssr: true }
 );
 
+const PLYAPersonasStoryboards = dynamic(
+  () => import('@/components/clients/plya/PLYAPersonasStoryboards'),
+  { ssr: true }
+);
+
 const WSBCFinalProposal = dynamic(
   () => import('@/components/clients/wsbc/WSBCFinalProposal'),
   { ssr: true }
@@ -100,6 +105,16 @@ export const clients: Record<string, ClientEntry> = {
         description: 'How we think about intellectual property in the context of client engagements',
         addedOn: '2024-12-24',
         component: IPFrameworkDeck,
+      },
+      {
+        slug: 'personas-storyboards',
+        type: 'document',
+        title: 'Validated Personas and Their Journey Maps',
+        description: 'Meet Jordan and Alex — your two core users, mapped from current frustrations to the PLYA experience',
+        addedOn: '2026-01-29',
+        tagOverride: 'PERSONAS',
+        component: PLYAPersonasStoryboards,
+        shareable: true,
       },
     ],
   },
