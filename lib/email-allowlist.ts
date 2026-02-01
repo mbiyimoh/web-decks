@@ -12,8 +12,7 @@ const ALLOWED_DOMAIN = '33strategies.ai';
 // Static allowlist for external users (clients, contractors)
 // Edit this array directly to add/remove allowed emails
 const EMAIL_ALLOWLIST: readonly string[] = [
-  // 'contractor@example.com',
-  // 'client@theircompany.com',
+  'acutler@gmail.com',
 ] as const;
 
 export function isEmailAllowed(email: string): boolean {
