@@ -1342,12 +1342,14 @@ export default function TradeblockJan2026Projections() {
             </div>
           </RevealText>
 
+          {/* CTA removed for ops update version
           <RevealText delay={0.3}>
             <div className="pt-8 border-t border-zinc-800">
               <p className="text-zinc-400 mb-4">Questions? Let&apos;s talk.</p>
               <p className="text-white font-medium">beems@tradeblock.us</p>
             </div>
           </RevealText>
+          */}
         </div>
       </Section>
     </div>
