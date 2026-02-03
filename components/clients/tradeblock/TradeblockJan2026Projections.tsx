@@ -446,7 +446,6 @@ export default function TradeblockJan2026Projections() {
     { id: 'sprint', label: 'The Sprint' },
     { id: 'growth', label: 'Growing Userbase' },
     { id: 'trajectory', label: 'Trajectory' },
-    { id: 'raise', label: 'The Raise' },
     { id: 'close', label: 'Close' },
   ];
 
@@ -506,7 +505,7 @@ export default function TradeblockJan2026Projections() {
 
         <div className="relative z-10 max-w-4xl">
           <RevealText>
-            <p className="text-amber-400 text-sm uppercase tracking-widest mb-4">Q1 2025 Investor Update</p>
+            <p className="text-amber-400 text-sm uppercase tracking-widest mb-4">Q1 2025 Update</p>
           </RevealText>
 
           <RevealText delay={0.1}>
@@ -1248,7 +1247,7 @@ export default function TradeblockJan2026Projections() {
         </div>
       </Section>
 
-      {/* ==================== SLIDE 9: The Raise ==================== */}
+      {/* ==================== SLIDE 9: The Raise (hidden for ops update version) ====================
       <Section id="raise" className="relative overflow-hidden">
         <div className="absolute inset-0 opacity-20">
           <div className="absolute bottom-1/4 left-1/3 w-96 h-96 rounded-full blur-3xl" style={{ background: 'rgba(245, 158, 11, 0.15)' }} />
@@ -1290,6 +1289,7 @@ export default function TradeblockJan2026Projections() {
           </RevealText>
         </div>
       </Section>
+      */}
 
       {/* ==================== SLIDE 10: Close ==================== */}
       <Section id="close" className="relative overflow-hidden">
