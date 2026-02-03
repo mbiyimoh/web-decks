@@ -505,7 +505,7 @@ export default function TradeblockJan2026Projections() {
 
         <div className="relative z-10 max-w-4xl">
           <RevealText>
-            <p className="text-amber-400 text-sm uppercase tracking-widest mb-4">Q1 2025 Update</p>
+            <p className="text-amber-400 text-sm uppercase tracking-widest mb-4">Q1 2026 Update</p>
           </RevealText>
 
           <RevealText delay={0.1}>
