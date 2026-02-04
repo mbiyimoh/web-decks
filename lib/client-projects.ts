@@ -21,6 +21,7 @@ export const clientProjects: Record<string, ProjectData | null> = {
   plya: plyaFitnessApp,
   tradeblock: null,
   wsbc: null,
+  'noggin-guru': null,
 };
 
 // ============================================================================

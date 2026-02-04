@@ -57,6 +57,11 @@ const MissionControlDeck = dynamic(
   { ssr: true }
 );
 
+const NogginGuruProposal = dynamic(
+  () => import('@/components/clients/noggin-guru/NogginGuruProposal'),
+  { ssr: true }
+);
+
 export const clients: Record<string, ClientEntry> = {
   'tradeblock': {
     id: 'tradeblock',
@@ -149,6 +154,22 @@ export const clients: Record<string, ClientEntry> = {
         addedOn: '2026-01-26',
         tagOverride: 'PROTOTYPE',
         component: MissionControlDeck,
+      },
+    ],
+  },
+  'noggin-guru': {
+    id: 'noggin-guru',
+    name: 'Noggin Guru',
+    passwordEnvVar: 'NOGGIN_GURU_PASSWORD',
+    emailEnvVar: 'NOGGIN_GURU_EMAIL',
+    content: [
+      {
+        slug: 'ai-fellowship-proposal',
+        type: 'proposal',
+        title: 'Build Champions, Not Dependency',
+        description: 'AI Fellowship Program — 8 weeks, 3 champions, capability transfer',
+        addedOn: '2026-02-04',
+        component: NogginGuruProposal,
       },
     ],
   },

@@ -27,3 +27,6 @@ export const BG_ELEVATED = '#0d0d14';
 export const TEXT_PRIMARY = '#f5f5f5';
 export const TEXT_MUTED = '#888888';
 export const TEXT_DIM = '#555555';
+
+// Borders
+export const BORDER = 'rgba(255,255,255,0.08)';
