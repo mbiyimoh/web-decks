@@ -3,89 +3,6 @@ import { PROFILE_STRUCTURE, FIELD_DISPLAY_NAMES } from './profile-structure';
 import type { ProfileWithSections } from './types';
 
 /**
- * Create a new profile with the complete 6-section structure for a user.
- * Returns existing profile if one already exists (idempotent).
- */
-export async function seedProfileForUser(
-  userId: string,
-  userName: string
-): Promise<ProfileWithSections> {
-  // Check if profile already exists
-  const existing = await prisma.clarityProfile.findUnique({
-    where: { userId },
-    include: {
-      sections: {
-        orderBy: { order: 'asc' },
-        include: {
-          subsections: {
-            orderBy: { order: 'asc' },
-            include: {
-              fields: {
-                include: {
-                  sources: true,
-                },
-              },
-            },
-          },
-        },
-      },
-    },
-  });
-
-  if (existing) {
-    return existing as ProfileWithSections;
-  }
-
-  // Create profile with full structure in a single transaction
-  const profile = await prisma.clarityProfile.create({
-    data: {
-      userId,
-      name: userName,
-      sections: {
-        create: Object.entries(PROFILE_STRUCTURE).map(([sectionKey, section]) => ({
-          key: sectionKey,
-          name: section.name,
-          icon: section.icon,
-          order: section.order,
-          subsections: {
-            create: Object.entries(section.subsections).map(([subsectionKey, subsection]) => ({
-              key: subsectionKey,
-              name: subsection.name,
-              order: subsection.order,
-              fields: {
-                create: subsection.fields.map((fieldKey: string) => ({
-                  key: fieldKey,
-                  name: FIELD_DISPLAY_NAMES[fieldKey] || formatFieldKey(fieldKey),
-                })),
-              },
-            })),
-          },
-        })),
-      },
-    },
-    include: {
-      sections: {
-        orderBy: { order: 'asc' },
-        include: {
-          subsections: {
-            orderBy: { order: 'asc' },
-            include: {
-              fields: {
-                include: {
-                  sources: true,
-                },
-              },
-            },
-          },
-        },
-      },
-    },
-  });
-
-  return profile as ProfileWithSections;
-}
-
-/**
  * Format a field key as a display name (fallback)
  * e.g., "decision_making" -> "Decision Making"
  */
@@ -94,6 +11,82 @@ function formatFieldKey(key: string): string {
     .split('_')
     .map((word) => word.charAt(0).toUpperCase() + word.slice(1))
     .join(' ');
+}
+
+/**
+ * Build the nested create data for the 6-section profile structure.
+ * Shared by seedProfileForUser and initializeCanvasStructure.
+ */
+function buildProfileStructureCreateData() {
+  return Object.entries(PROFILE_STRUCTURE).map(([sectionKey, section]) => ({
+    key: sectionKey,
+    name: section.name,
+    icon: section.icon,
+    order: section.order,
+    subsections: {
+      create: Object.entries(section.subsections).map(([subsectionKey, subsection]) => ({
+        key: subsectionKey,
+        name: subsection.name,
+        order: subsection.order,
+        fields: {
+          create: subsection.fields.map((fieldKey: string) => ({
+            key: fieldKey,
+            name: FIELD_DISPLAY_NAMES[fieldKey] || formatFieldKey(fieldKey),
+          })),
+        },
+      })),
+    },
+  }));
+}
+
+/** Shared include for full profile with nested sections */
+const profileInclude = {
+  sections: {
+    orderBy: { order: 'asc' as const },
+    include: {
+      subsections: {
+        orderBy: { order: 'asc' as const },
+        include: {
+          fields: {
+            include: {
+              sources: true,
+            },
+          },
+        },
+      },
+    },
+  },
+};
+
+/**
+ * Create a new profile with the complete 6-section structure for a user.
+ * Returns existing profile if one already exists (idempotent).
+ */
+export async function seedProfileForUser(
+  userId: string,
+  userName: string
+): Promise<ProfileWithSections> {
+  const existing = await prisma.clarityProfile.findUnique({
+    where: { userId },
+    include: profileInclude,
+  });
+
+  if (existing) {
+    return existing as ProfileWithSections;
+  }
+
+  const profile = await prisma.clarityProfile.create({
+    data: {
+      userId,
+      name: userName,
+      sections: {
+        create: buildProfileStructureCreateData(),
+      },
+    },
+    include: profileInclude,
+  });
+
+  return profile as ProfileWithSections;
 }
 
 /**
@@ -188,59 +181,37 @@ export async function createMinimalProfile(user: {
  * Idempotent - safe to call multiple times.
  *
  * Call this when user explicitly enters Clarity Canvas for the first time.
+ * Uses atomic update with nested creates (same pattern as seedProfileForUser)
+ * to avoid PgBouncer transaction timeout issues.
  */
 export async function initializeCanvasStructure(profileId: string) {
   const profile = await prisma.clarityProfile.findUnique({
     where: { id: profileId },
+    include: { sections: true },
   });
 
-  if (!profile || profile.isCanvasInitialized) {
-    return profile;
+  if (!profile) return null;
+  if (profile.isCanvasInitialized) return profile;
+
+  // Clean up partial data from any previous failed attempts
+  if (profile.sections.length > 0) {
+    await prisma.profileSection.deleteMany({
+      where: { profileId },
+    });
   }
 
-  // Create all sections/subsections/fields in a transaction
-  await prisma.$transaction(async (tx) => {
-    for (const [sectionKey, section] of Object.entries(PROFILE_STRUCTURE)) {
-      const createdSection = await tx.profileSection.create({
-        data: {
-          profileId,
-          key: sectionKey,
-          name: section.name,
-          icon: section.icon,
-          order: section.order,
-        },
-      });
-
-      for (const [subsectionKey, subsection] of Object.entries(section.subsections)) {
-        const createdSubsection = await tx.profileSubsection.create({
-          data: {
-            sectionId: createdSection.id,
-            key: subsectionKey,
-            name: subsection.name,
-            order: subsection.order,
-          },
-        });
-
-        for (const fieldKey of subsection.fields) {
-          await tx.profileField.create({
-            data: {
-              subsectionId: createdSubsection.id,
-              key: fieldKey,
-              name: FIELD_DISPLAY_NAMES[fieldKey] || formatFieldKey(fieldKey),
-            },
-          });
-        }
-      }
-    }
-
-    await tx.clarityProfile.update({
-      where: { id: profileId },
-      data: { isCanvasInitialized: true },
-    });
-  });
-
-  return prisma.clarityProfile.findUnique({
+  // Atomic update: create all sections + mark initialized in one Prisma operation.
+  // No explicit transaction needed — Prisma handles nested creates atomically.
+  const updated = await prisma.clarityProfile.update({
     where: { id: profileId },
-    include: { sections: { include: { subsections: { include: { fields: true } } } } },
+    data: {
+      isCanvasInitialized: true,
+      sections: {
+        create: buildProfileStructureCreateData(),
+      },
+    },
+    include: profileInclude,
   });
+
+  return updated;
 }

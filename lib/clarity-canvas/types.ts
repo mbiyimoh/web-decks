@@ -71,7 +71,7 @@ export interface ExtractionChunk {
   insights?: string[];
 }
 
-// Brain dump API response
+/** @deprecated Use ExtractOnlyResponse + CommitRecommendationsResponse instead. */
 export interface BrainDumpResponse {
   extractedChunks: ExtractionChunk[];
   updatedProfile: ProfileWithSections;
@@ -140,4 +140,108 @@ export interface ProfileApiResponse {
 export interface CreateProfileResponse {
   profile: ProfileWithSections;
   isNew: boolean;
+}
+
+// === Reviewable Recommendations Types ===
+
+// Recommendation state for review screen
+export type RecommendationStatus = 'pending' | 'approved' | 'rejected' | 'refined';
+
+export interface Recommendation {
+  id: string;
+  chunk: ExtractionChunk;
+  status: RecommendationStatus;
+  refinedContent?: string;
+  refinedSummary?: string;
+}
+
+// Extract API response (extract-only mode — no DB writes)
+export interface ExtractOnlyResponse {
+  extractedChunks: ExtractionChunk[];
+  overallThemes: string[];
+  suggestedFollowUps: string[];
+  extractionMetadata?: ExtractionMetadata;
+}
+
+// Commit API request
+export interface CommitRecommendationsRequest {
+  recommendations: {
+    targetSection: string;
+    targetSubsection: string;
+    targetField: string;
+    content: string;
+    summary: string;
+    confidence: number;
+    sourceType: 'VOICE' | 'TEXT';
+  }[];
+}
+
+// Commit API response
+export interface CommitRecommendationsResponse {
+  updatedProfile: ProfileWithSections;
+  scores: ProfileScores;
+  previousScores: ProfileScores;
+  savedCount: number;
+  droppedCount: number;
+}
+
+// Refine API request
+export interface RefineRecommendationRequest {
+  currentContent: string;
+  currentSummary: string;
+  prompt: string;
+  fieldKey: string;
+}
+
+// Refine API response
+export interface RefineRecommendationResponse {
+  refinedContent: string;
+  refinedSummary: string;
+}
+
+// === Pillar Pages & Contextual Input Types ===
+
+// Scoped extraction request
+export interface ScopedExtractRequest {
+  transcript: string;
+  sourceType: 'VOICE' | 'TEXT';
+  scope?: {
+    section: string;
+    subsection?: string;
+  };
+}
+
+// File upload response
+export interface FileUploadResponse {
+  text: string;
+  filename: string;
+  charCount: number;
+  fileType: string;
+  wasTruncated: boolean;
+}
+
+// Celebration data for pillar score improvement
+export interface CelebrationData {
+  previousScore: number;
+  newScore: number;
+  fieldsUpdated: number;
+  pillarName: string;
+  pillarIcon: string;
+}
+
+// === Extraction Metadata Types ===
+
+// Describes a change made during gap analysis
+export interface GapAnalysisChange {
+  type: 'added' | 'improved' | 'consolidated' | 'recategorized' | 'confidence_adjusted';
+  description: string;
+  fieldKey?: string;
+}
+
+// Metadata about the extraction process
+export interface ExtractionMetadata {
+  firstPassChunkCount: number;
+  finalChunkCount: number;
+  gapAnalysisApplied: boolean;
+  changes: GapAnalysisChange[];
 }

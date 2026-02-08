@@ -6,11 +6,10 @@ allowed-tools: Bash(git:*), Bash(railway:*), Bash(curl:*), Read, Edit, Task
 
 Push changes to GitHub and verify that Railway deployments complete successfully. If errors are detected, investigate and fix them, then repeat until clean deployment.
 
-## Railway Services
+## Railway Service
 
-This project has two Railway services:
-- `conversational-docshare-frontend` - React/Vite frontend
-- `conversational-docshare-backend` - Express.js backend
+This project has one Railway service:
+- `web-decks` - Next.js 14 full-stack application (33strategies.ai)
 
 ## Workflow Steps
 
@@ -34,11 +33,10 @@ sleep 30
 
 ### Step 3: Check Railway Logs
 
-Check both services for errors in parallel:
+Check the service for errors:
 
 ```bash
-railway logs --service conversational-docshare-frontend 2>&1 | tail -50
-railway logs --service conversational-docshare-backend 2>&1 | tail -50
+railway logs --service web-decks 2>&1 | tail -50
 ```
 
 Look for:
@@ -63,32 +61,29 @@ Common issues:
 
 ### Step 5: Verify Health
 
-Once logs show successful deployment, verify health endpoints:
+Once logs show successful deployment, verify health endpoint:
 
 ```bash
-# Frontend (should return HTML or 200)
-curl -s -o /dev/null -w "%{http_code}" https://conversational-docshare-frontend-production.up.railway.app/
+# Health check (should return 200 with JSON response)
+curl -s -o /dev/null -w "%{http_code}" https://web-decks-production.up.railway.app/api/health
 
-# Backend health check
-curl -s https://conversational-docshare-backend-production.up.railway.app/health
+# Or check the custom domain
+curl -s -o /dev/null -w "%{http_code}" https://33strategies.ai/api/health
 ```
 
 Expected results:
-- Frontend: HTTP 200
-- Backend: `{"status":"ok"}` or similar health response
+- HTTP 200 from health endpoint
 
 ### Step 6: Report
 
 Provide a concise summary:
 - Push status
-- Frontend deployment status
-- Backend deployment status
+- Deployment status
 - Any errors encountered and fixes applied
 - Final health check results
 
 ## Efficiency Notes
 
-- Run log checks in parallel for both services
 - Only show relevant log excerpts (errors and success indicators)
 - Skip verbose explanations during iteration loops
 - Report final status concisely

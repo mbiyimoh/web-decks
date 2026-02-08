@@ -12,7 +12,7 @@ interface PasswordGateProps {
   clientId: string;
   clientName: string;
   returnTo?: string;
-  portalType?: 'client' | 'strategist';
+  portalType?: 'client' | 'strategist' | 'central-command';
 }
 
 export default function PasswordGate({ clientId, clientName, returnTo, portalType = 'client' }: PasswordGateProps) {
@@ -29,11 +29,21 @@ export default function PasswordGate({ clientId, clientName, returnTo, portalTyp
 
     try {
       // Unified auth endpoints check credentials against all clients
-      const authPath = portalType === 'strategist' ? 'strategist-auth' : 'client-auth';
+      const authPath = portalType === 'strategist'
+        ? 'strategist-auth'
+        : portalType === 'central-command'
+          ? 'central-command/auth'
+          : 'client-auth';
+
+      // Central Command only requires password, others require email + password
+      const requestBody = portalType === 'central-command'
+        ? { password }
+        : { email, password };
+
       const response = await fetch(`/api/${authPath}`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ email, password }),
+        body: JSON.stringify(requestBody),
       });
 
       if (response.ok) {
@@ -70,7 +80,11 @@ export default function PasswordGate({ clientId, clientName, returnTo, portalTyp
             className="uppercase tracking-[0.2em] text-xs mb-3 font-mono"
             style={{ color: GOLD }}
           >
-            {portalType === 'strategist' ? 'Strategist Portal' : 'Client Portal'}
+            {portalType === 'strategist'
+              ? 'Strategist Portal'
+              : portalType === 'central-command'
+                ? 'Central Command'
+                : 'Client Portal'}
           </p>
           <h1 className="text-3xl md:text-4xl text-white font-display">
             {clientName}
@@ -78,27 +92,30 @@ export default function PasswordGate({ clientId, clientName, returnTo, portalTyp
         </div>
 
         <form onSubmit={handleSubmit} className="space-y-4">
-          <div>
-            <input
-              type="email"
-              value={email}
-              onChange={(e) => setEmail(e.target.value)}
-              placeholder="Enter email"
-              className="w-full px-4 py-3 rounded-xl text-white font-body focus:outline-none transition-colors"
-              style={{
-                background: 'rgba(255, 255, 255, 0.03)',
-                border: '1px solid rgba(255, 255, 255, 0.08)',
-              }}
-              onFocus={(e) => {
-                e.target.style.borderColor = GOLD;
-              }}
-              onBlur={(e) => {
-                e.target.style.borderColor = 'rgba(255, 255, 255, 0.08)';
-              }}
-              disabled={loading}
-              autoFocus
-            />
-          </div>
+          {/* Hide email input for Central Command (password-only auth) */}
+          {portalType !== 'central-command' && (
+            <div>
+              <input
+                type="email"
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
+                placeholder="Enter email"
+                className="w-full px-4 py-3 rounded-xl text-white font-body focus:outline-none transition-colors"
+                style={{
+                  background: 'rgba(255, 255, 255, 0.03)',
+                  border: '1px solid rgba(255, 255, 255, 0.08)',
+                }}
+                onFocus={(e) => {
+                  e.target.style.borderColor = GOLD;
+                }}
+                onBlur={(e) => {
+                  e.target.style.borderColor = 'rgba(255, 255, 255, 0.08)';
+                }}
+                disabled={loading}
+                autoFocus
+              />
+            </div>
+          )}
 
           <div>
             <input
@@ -118,6 +135,7 @@ export default function PasswordGate({ clientId, clientName, returnTo, portalTyp
                 e.target.style.borderColor = 'rgba(255, 255, 255, 0.08)';
               }}
               disabled={loading}
+              autoFocus={portalType === 'central-command'}
             />
           </div>
 
@@ -133,7 +151,11 @@ export default function PasswordGate({ clientId, clientName, returnTo, portalTyp
 
           <button
             type="submit"
-            disabled={loading || !email || !password}
+            disabled={
+              loading ||
+              !password ||
+              (portalType !== 'central-command' && !email)
+            }
             className="w-full px-4 py-3 font-medium font-body rounded-xl transition-all disabled:opacity-50 disabled:cursor-not-allowed"
             style={{
               background: GOLD,

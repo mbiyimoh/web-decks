@@ -1,0 +1,402 @@
+/**
+ * Synthesis Generation for Clarity Companion API
+ *
+ * Generates a structured ~800 token summary of user context
+ * by combining ProfileSection data and Persona records.
+ */
+
+import { prisma } from '@/lib/prisma';
+import { nanoid } from 'nanoid';
+import type {
+  BaseSynthesis,
+  PersonaSummary,
+  GoalSummary,
+  PainPointSummary,
+  ProjectSummary,
+} from './types';
+
+// ============================================================================
+// Token Counting (word-based approximation)
+// ============================================================================
+
+/**
+ * Approximate token count using word-based heuristic.
+ * Average English word is ~1.33 tokens (including punctuation/spacing).
+ */
+export function estimateTokens(text: string): number {
+  if (!text) return 0;
+  const wordCount = text.split(/\s+/).filter(Boolean).length;
+  return Math.ceil(wordCount * 1.33);
+}
+
+export function estimateObjectTokens(obj: unknown): number {
+  const json = JSON.stringify(obj, null, 2);
+  return estimateTokens(json);
+}
+
+// ============================================================================
+// Version Generation
+// ============================================================================
+
+export function generateVersion(): string {
+  const timestamp = Date.now().toString(36);
+  const random = nanoid(4);
+  return `v${timestamp}.${random}`;
+}
+
+// ============================================================================
+// Profile Hash Calculation
+// ============================================================================
+
+export async function calculateProfileHash(userId: string): Promise<string> {
+  const crypto = await import('crypto');
+
+  // Get timestamps that would affect synthesis
+  const profile = await prisma.clarityProfile.findFirst({
+    where: {
+      OR: [{ userId }, { userRecordId: userId }],
+    },
+    include: {
+      sections: true,
+      personas: true,
+    },
+  });
+
+  if (!profile) {
+    return crypto.createHash('sha256').update('empty').digest('hex');
+  }
+
+  const hashInput = {
+    profileUpdatedAt: profile.updatedAt.toISOString(),
+    sections: profile.sections.map((s) => ({
+      key: s.key,
+      score: s.score, // Use score as proxy for content changes
+    })),
+    personas: profile.personas.map((p) => ({
+      id: p.id,
+      updatedAt: p.updatedAt.toISOString(),
+    })),
+  };
+
+  return crypto
+    .createHash('sha256')
+    .update(JSON.stringify(hashInput))
+    .digest('hex')
+    .slice(0, 16); // Short hash for readability
+}
+
+// ============================================================================
+// Synthesis Generation
+// ============================================================================
+
+/**
+ * Generate base synthesis for a user.
+ * Combines ProfileSection fields and Persona records.
+ */
+export async function generateBaseSynthesis(
+  userId: string
+): Promise<BaseSynthesis | null> {
+  // Fetch profile with all nested data
+  const profile = await prisma.clarityProfile.findFirst({
+    where: {
+      OR: [{ userId }, { userRecordId: userId }],
+    },
+    include: {
+      sections: {
+        include: {
+          subsections: {
+            include: {
+              fields: true,
+            },
+          },
+        },
+      },
+      personas: true,
+    },
+  });
+
+  if (!profile) {
+    return null;
+  }
+
+  // Helper to get field value from profile
+  const getField = (
+    sectionKey: string,
+    subsectionKey: string,
+    fieldKey: string
+  ): string | null => {
+    const section = profile.sections.find((s) => s.key === sectionKey);
+    if (!section) return null;
+    const subsection = section.subsections.find(
+      (sub) => sub.key === subsectionKey
+    );
+    if (!subsection) return null;
+    const field = subsection.fields.find((f) => f.key === fieldKey);
+    return field?.summary || field?.fullContext || null;
+  };
+
+  // Build identity from individual and organization sections
+  const identity = {
+    name: profile.name || 'Unknown',
+    role: getField('role', 'responsibilities', 'title') || 'Unknown',
+    company:
+      getField('organization', 'fundamentals', 'company_name') || 'Unknown',
+    industry:
+      getField('organization', 'fundamentals', 'org_industry') || 'Unknown',
+    companyStage: parseCompanyStage(
+      getField('organization', 'fundamentals', 'stage')
+    ),
+  };
+
+  // Build personas from Persona model (NOT ProfileField!)
+  const personas: PersonaSummary[] = profile.personas
+    .filter((p) => p.name) // Only include named personas
+    .slice(0, 3) // Max 3 personas
+    .map((p) => {
+      const goals = p.goals as { priorities?: string[] } | null;
+      const frustrations = p.frustrations as { pastFailures?: string[] } | null;
+
+      return {
+        name: p.name || 'Unnamed Persona',
+        role: extractPersonaRole(p.demographics),
+        primaryGoal: goals?.priorities?.[0] || 'Not specified',
+        topFrustration: frustrations?.pastFailures?.[0] || 'Not specified',
+      };
+    });
+
+  // Build goals from goals section
+  const goals: GoalSummary[] = [];
+  const goalsSection = profile.sections.find((s) => s.key === 'goals');
+  if (goalsSection) {
+    const immediateFields =
+      goalsSection.subsections.find((sub) => sub.key === 'immediate')?.fields ||
+      [];
+
+    for (const field of immediateFields.slice(0, 3)) {
+      if (field.summary || field.fullContext) {
+        goals.push({
+          goal: field.summary || field.fullContext!.slice(0, 100),
+          priority: 'high',
+          timeframe: 'immediate',
+        });
+      }
+    }
+
+    const mediumFields =
+      goalsSection.subsections.find((sub) => sub.key === 'medium')?.fields ||
+      [];
+
+    for (const field of mediumFields.slice(0, 2)) {
+      if (field.summary || field.fullContext) {
+        goals.push({
+          goal: field.summary || field.fullContext!.slice(0, 100),
+          priority: 'medium',
+          timeframe: 'quarterly',
+        });
+      }
+    }
+  }
+
+  // Build pain points from role constraints
+  const painPoints: PainPointSummary[] = [];
+  const roleSection = profile.sections.find((s) => s.key === 'role');
+  if (roleSection) {
+    const constraintFields =
+      roleSection.subsections.find((sub) => sub.key === 'constraints')
+        ?.fields || [];
+
+    for (const field of constraintFields.slice(0, 3)) {
+      if (field.summary || field.fullContext) {
+        painPoints.push({
+          pain: field.summary || field.fullContext!.slice(0, 100),
+          severity: 'significant',
+          category: field.key.replace(/_/g, ' '),
+        });
+      }
+    }
+  }
+
+  // Build decision dynamics from individual thinking
+  const decisionDynamics = {
+    decisionMakers: [identity.name],
+    buyingProcess:
+      getField('individual', 'thinking', 'decision_making') || 'Not specified',
+    keyInfluencers: extractInfluencers(profile),
+  };
+
+  // Build strategic priorities from goals strategy
+  const strategicPriorities: string[] = [];
+  const strategyFields =
+    goalsSection?.subsections.find((sub) => sub.key === 'strategy')?.fields ||
+    [];
+
+  for (const field of strategyFields.slice(0, 5)) {
+    if (field.summary) {
+      strategicPriorities.push(field.summary);
+    }
+  }
+
+  // Build active projects from projects section
+  const activeProjects: ProjectSummary[] = [];
+  const projectsSection = profile.sections.find((s) => s.key === 'projects');
+  if (projectsSection) {
+    // Active initiatives (highest priority)
+    const activeFields =
+      projectsSection.subsections.find((sub) => sub.key === 'active')?.fields ||
+      [];
+
+    for (const field of activeFields) {
+      if (field.summary || field.fullContext) {
+        activeProjects.push({
+          name: field.name || field.key.replace(/_/g, ' '),
+          status: 'active',
+          priority: 'high',
+          description: field.summary || field.fullContext!.slice(0, 150),
+        });
+      }
+    }
+
+    // Upcoming priorities (if we have room for more context)
+    if (activeProjects.length < 4) {
+      const upcomingFields =
+        projectsSection.subsections.find((sub) => sub.key === 'upcoming')
+          ?.fields || [];
+
+      for (const field of upcomingFields.slice(0, 4 - activeProjects.length)) {
+        if (field.summary || field.fullContext) {
+          activeProjects.push({
+            name: field.name || field.key.replace(/_/g, ' '),
+            status: 'planned',
+            priority: 'medium',
+            description: field.summary || field.fullContext!.slice(0, 150),
+          });
+        }
+      }
+    }
+  }
+
+  // Calculate completeness
+  const profileCompleteness = calculateCompleteness(profile);
+
+  // Build synthesis
+  const synthesis: BaseSynthesis = {
+    identity,
+    personas,
+    goals,
+    painPoints,
+    decisionDynamics,
+    strategicPriorities,
+    activeProjects,
+    _meta: {
+      tokenCount: 0, // Will be calculated
+      version: generateVersion(),
+      generatedAt: new Date().toISOString(),
+      profileCompleteness,
+    },
+  };
+
+  // Calculate actual token count
+  synthesis._meta.tokenCount = estimateObjectTokens(synthesis);
+
+  return synthesis;
+}
+
+// ============================================================================
+// Helper Functions
+// ============================================================================
+
+function parseCompanyStage(
+  stage: string | null
+): 'startup' | 'growth' | 'enterprise' | 'unknown' {
+  if (!stage) return 'unknown';
+  const lower = stage.toLowerCase();
+  if (
+    lower.includes('startup') ||
+    lower.includes('seed') ||
+    lower.includes('early')
+  ) {
+    return 'startup';
+  }
+  if (lower.includes('growth') || lower.includes('series')) {
+    return 'growth';
+  }
+  if (
+    lower.includes('enterprise') ||
+    lower.includes('public') ||
+    lower.includes('large')
+  ) {
+    return 'enterprise';
+  }
+  return 'unknown';
+}
+
+function extractPersonaRole(demographics: unknown): string {
+  if (!demographics || typeof demographics !== 'object') {
+    return 'Unknown Role';
+  }
+  const demo = demographics as Record<string, unknown>;
+  return String(demo.role || demo.jobTitle || demo.title || 'Unknown Role');
+}
+
+function extractInfluencers(profile: {
+  sections: Array<{
+    key: string;
+    subsections: Array<{
+      key: string;
+      fields: Array<{
+        key: string;
+        summary: string | null;
+        fullContext: string | null;
+      }>;
+    }>;
+  }>;
+}): string[] {
+  const networkSection = profile.sections.find((s) => s.key === 'network');
+  if (!networkSection) return [];
+
+  const influencers: string[] = [];
+
+  const stakeholders = networkSection.subsections.find(
+    (sub) => sub.key === 'stakeholders'
+  );
+  if (stakeholders) {
+    for (const field of stakeholders.fields) {
+      if (field.summary) {
+        influencers.push(field.summary.slice(0, 50));
+      }
+    }
+  }
+
+  return influencers.slice(0, 3);
+}
+
+function calculateCompleteness(profile: {
+  sections: Array<{
+    subsections: Array<{
+      fields: Array<{ summary: string | null; fullContext: string | null }>;
+    }>;
+  }>;
+  personas: Array<{ name: string | null }>;
+}): number {
+  let totalFields = 0;
+  let filledFields = 0;
+
+  for (const section of profile.sections) {
+    for (const subsection of section.subsections) {
+      for (const field of subsection.fields) {
+        totalFields++;
+        if (field.summary || field.fullContext) {
+          filledFields++;
+        }
+      }
+    }
+  }
+
+  // Bonus for having personas
+  const personaBonus = profile.personas.filter((p) => p.name).length > 0 ? 10 : 0;
+
+  if (totalFields === 0) return personaBonus;
+
+  const fieldPercentage = Math.round((filledFields / totalFields) * 90);
+  return Math.min(100, fieldPercentage + personaBonus);
+}

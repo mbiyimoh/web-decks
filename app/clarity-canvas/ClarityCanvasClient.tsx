@@ -5,9 +5,11 @@ import { motion, AnimatePresence } from 'framer-motion';
 import Link from 'next/link';
 import { VoiceRecorder } from './components/VoiceRecorder';
 import { ProfileVisualization } from './components/ProfileVisualization';
-import type { ProfileWithSections, ProfileScores } from '@/lib/clarity-canvas/types';
+import { RecommendationReview } from './components/RecommendationReview';
+import type { ProfileWithSections, ProfileScores, ExtractOnlyResponse } from '@/lib/clarity-canvas/types';
 
-type FlowStep = 'welcome' | 'brain-dump' | 'recording' | 'processing' | 'profile';
+type FlowStep = 'welcome' | 'brain-dump' | 'recording' | 'processing' | 'review' | 'profile';
+type ProcessingPhase = 'transcribing' | 'analyzing' | 'finalizing';
 
 interface User {
   id?: string;
@@ -28,6 +30,10 @@ export function ClarityCanvasClient({ user }: ClarityCanvasClientProps) {
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [transcript, setTranscript] = useState('');
+  const [processingPhase, setProcessingPhase] = useState<ProcessingPhase>('analyzing');
+  const [extractionResult, setExtractionResult] = useState<ExtractOnlyResponse | null>(null);
+  const [brainDumpSourceType, setBrainDumpSourceType] = useState<'VOICE' | 'TEXT'>('TEXT');
+  // Note: selectedSectionKey removed - navigation now uses pillar page routes
 
   // Fetch existing profile on mount
   useEffect(() => {
@@ -79,8 +85,10 @@ export function ClarityCanvasClient({ user }: ClarityCanvasClientProps) {
 
   const handleRecordingComplete = useCallback(async (audioBlob: Blob, duration: number) => {
     setStep('processing');
+    setProcessingPhase('transcribing');
     setIsLoading(true);
     setError(null);
+    setBrainDumpSourceType('VOICE');
 
     try {
       // Transcribe audio
@@ -99,7 +107,8 @@ export function ClarityCanvasClient({ user }: ClarityCanvasClientProps) {
       const { transcript: transcribedText } = await transcribeResponse.json();
       setTranscript(transcribedText);
 
-      // Extract and update profile
+      // Extract recommendations (no DB writes)
+      setProcessingPhase('analyzing');
       const extractResponse = await fetch('/api/clarity-canvas/extract', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -113,10 +122,10 @@ export function ClarityCanvasClient({ user }: ClarityCanvasClientProps) {
         throw new Error('Failed to extract profile information');
       }
 
-      const extractData = await extractResponse.json();
-      setProfile(extractData.updatedProfile);
-      setScores(extractData.scores);
-      setStep('profile');
+      setProcessingPhase('finalizing');
+      const extractData: ExtractOnlyResponse = await extractResponse.json();
+      setExtractionResult(extractData);
+      setStep('review');
     } catch (err) {
       setError('Failed to process recording. Please try again.');
       console.error(err);
@@ -128,8 +137,10 @@ export function ClarityCanvasClient({ user }: ClarityCanvasClientProps) {
 
   const handleTextSubmit = async (text: string) => {
     setStep('processing');
+    setProcessingPhase('analyzing');
     setIsLoading(true);
     setError(null);
+    setBrainDumpSourceType('TEXT');
 
     try {
       const extractResponse = await fetch('/api/clarity-canvas/extract', {
@@ -145,10 +156,10 @@ export function ClarityCanvasClient({ user }: ClarityCanvasClientProps) {
         throw new Error('Failed to extract profile information');
       }
 
-      const extractData = await extractResponse.json();
-      setProfile(extractData.updatedProfile);
-      setScores(extractData.scores);
-      setStep('profile');
+      setProcessingPhase('finalizing');
+      const extractData: ExtractOnlyResponse = await extractResponse.json();
+      setExtractionResult(extractData);
+      setStep('review');
     } catch (err) {
       setError('Failed to process text. Please try again.');
       console.error(err);
@@ -183,7 +194,30 @@ export function ClarityCanvasClient({ user }: ClarityCanvasClientProps) {
           <RecordingScreen key="recording" onComplete={handleRecordingComplete} />
         )}
 
-        {step === 'processing' && <ProcessingScreen key="processing" />}
+        {step === 'processing' && <ProcessingScreen key="processing" phase={processingPhase} />}
+
+        {step === 'review' && extractionResult && (
+          <RecommendationReview
+            key="review"
+            extractedChunks={extractionResult.extractedChunks}
+            overallThemes={extractionResult.overallThemes}
+            suggestedFollowUps={extractionResult.suggestedFollowUps}
+            sourceType={brainDumpSourceType}
+            extractionMetadata={extractionResult.extractionMetadata}
+            onCommit={(updatedProfile, newScores) => {
+              setPreviousScores(scores);
+              setProfile(updatedProfile);
+              setScores(newScores);
+              setShowScoreAnimation(true);
+              setExtractionResult(null);
+              setStep('profile');
+            }}
+            onBack={() => {
+              setExtractionResult(null);
+              setStep('brain-dump');
+            }}
+          />
+        )}
 
         {step === 'profile' && profile && scores && (
           <ProfileScreen
@@ -382,7 +416,25 @@ function RecordingScreen({
 }
 
 // Processing Screen Component
-function ProcessingScreen() {
+const PROCESSING_PHASES: Record<ProcessingPhase, { label: string; description: string }> = {
+  transcribing: { label: 'Transcribing', description: 'Converting your recording to text...' },
+  analyzing: { label: 'Analyzing', description: 'AI is reading and extracting insights from your brain dump...' },
+  finalizing: { label: 'Finalizing', description: 'Preparing your recommendations for review...' },
+};
+
+const PHASE_ORDER: ProcessingPhase[] = ['transcribing', 'analyzing', 'finalizing'];
+
+function ProcessingScreen({ phase }: { phase: ProcessingPhase }) {
+  const [elapsed, setElapsed] = useState(0);
+
+  useEffect(() => {
+    const interval = setInterval(() => setElapsed((e) => e + 1), 1000);
+    return () => clearInterval(interval);
+  }, []);
+
+  const currentPhaseIndex = PHASE_ORDER.indexOf(phase);
+  const { label, description } = PROCESSING_PHASES[phase];
+
   return (
     <motion.div
       initial={{ opacity: 0 }}
@@ -390,14 +442,47 @@ function ProcessingScreen() {
       exit={{ opacity: 0 }}
       className="min-h-screen flex flex-col items-center justify-center px-6"
     >
-      <div className="text-center">
+      <div className="text-center max-w-md">
         <motion.div
           animate={{ rotate: 360 }}
           transition={{ repeat: Infinity, duration: 2, ease: 'linear' }}
           className="w-16 h-16 border-4 border-[#D4A84B] border-t-transparent rounded-full mx-auto mb-6"
         />
-        <h2 className="text-2xl font-display text-white mb-2">Processing</h2>
-        <p className="text-zinc-400">Extracting insights from your brain dump...</p>
+        <h2 className="text-2xl font-display text-white mb-2">{label}</h2>
+        <motion.p
+          key={phase}
+          initial={{ opacity: 0, y: 5 }}
+          animate={{ opacity: 1, y: 0 }}
+          className="text-zinc-400 mb-8"
+        >
+          {description}
+        </motion.p>
+
+        {/* Phase progress dots */}
+        <div className="flex justify-center gap-3 mb-4">
+          {PHASE_ORDER.map((p, i) => (
+            <div
+              key={p}
+              className={`w-2 h-2 rounded-full transition-colors duration-300 ${
+                i < currentPhaseIndex
+                  ? 'bg-[#D4A84B]'
+                  : i === currentPhaseIndex
+                    ? 'bg-[#D4A84B] animate-pulse'
+                    : 'bg-zinc-700'
+              }`}
+            />
+          ))}
+        </div>
+
+        {elapsed > 15 && (
+          <motion.p
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            className="text-xs text-zinc-600 mt-4"
+          >
+            This can take up to a minute for longer brain dumps...
+          </motion.p>
+        )}
       </div>
     </motion.div>
   );
@@ -438,9 +523,6 @@ function ProfileScreen({
             scores={scores}
             previousScores={previousScores ?? undefined}
             showScoreAnimation={showScoreAnimation}
-            onSectionClick={(sectionKey) => {
-              console.log('Section clicked:', sectionKey);
-            }}
           />
         </div>
 

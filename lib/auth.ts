@@ -2,6 +2,7 @@ import NextAuth from 'next-auth';
 import Google from 'next-auth/providers/google';
 import Credentials from 'next-auth/providers/credentials';
 import { isEmailAllowed } from './email-allowlist';
+import { secureCompare } from './auth-utils';
 import './auth-types'; // Import type extensions
 
 // Validate required environment variables
@@ -32,9 +33,9 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
 
         if (!email || !password) return null;
 
-        // Check password against env var
+        // Check password against env var with timing-safe comparison
         const expectedPassword = process.env.LEARNING_PASSWORD;
-        if (!expectedPassword || password !== expectedPassword) {
+        if (!expectedPassword || !secureCompare(password, expectedPassword)) {
           return null;
         }
 

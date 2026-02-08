@@ -1,6 +1,7 @@
 'use client';
 
 import React from 'react';
+import Link from 'next/link';
 import { motion } from 'framer-motion';
 import type { ProfileWithSections, ProfileScores } from '@/lib/clarity-canvas/types';
 import { getScoreColor } from '@/lib/clarity-canvas/types';
@@ -9,10 +10,9 @@ import { getSectionCompletion, getSubsectionCompletion } from '@/lib/clarity-can
 interface ListViewProps {
   profile: ProfileWithSections;
   scores: ProfileScores;
-  onSectionClick?: (sectionKey: string) => void;
 }
 
-export function ListView({ profile, scores, onSectionClick }: ListViewProps) {
+export function ListView({ profile, scores }: ListViewProps) {
   // Defensive check for empty profile
   if (!profile?.sections || profile.sections.length === 0) {
     return (
@@ -38,17 +38,13 @@ export function ListView({ profile, scores, onSectionClick }: ListViewProps) {
         const scoreColor = getScoreColor(sectionScore);
 
         return (
-          <motion.div
-            key={section.id}
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: index * 0.1, duration: 0.4 }}
-            onClick={() => onSectionClick?.(section.key)}
-            className={`
-              bg-zinc-900/50 border border-zinc-800 rounded-xl p-5
-              ${onSectionClick ? 'cursor-pointer hover:border-zinc-700 transition-colors' : ''}
-            `}
-          >
+          <Link key={section.id} href={`/clarity-canvas/${section.key}`}>
+            <motion.div
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: index * 0.1, duration: 0.4 }}
+              className="bg-zinc-900/50 border border-zinc-800 rounded-xl p-5 cursor-pointer hover:border-zinc-700 transition-colors"
+            >
             {/* Header */}
             <div className="flex items-center justify-between mb-4">
               <div className="flex items-center gap-3">
@@ -114,7 +110,8 @@ export function ListView({ profile, scores, onSectionClick }: ListViewProps) {
                   );
                 })}
             </div>
-          </motion.div>
+            </motion.div>
+          </Link>
         );
       })}
     </motion.div>

@@ -384,7 +384,17 @@ Motion: Fade up on scroll, 0.5s duration, staggered delays
 - One core idea per paragraph
 - Use line breaks to create breathing room
 - Never present a wall of text—chunk content for scanning
+- **Maximum 2 sentences per paragraph** before adding a line break
+- Long uninterrupted text blocks cause reader abandonment
+- Exception: Small detail copy (descriptions, captions) may have 2-3 lines
 - **Rule of thumb:** If body copy has 2+ complete sentences, split into separate `<p>` tags
+
+### Word Widows
+- **Never allow single-word lines** at the end of headlines or paragraphs
+- Minimum 2 words per line on every line break
+- Use `text-wrap: balance` on headlines via Tailwind: `className="text-balance"`
+- Manually adjust line breaks if needed with `<br />` at appropriate points
+- Test on both mobile and desktop viewports for widow prevention
 
 **Implementation pattern:**
 ```tsx

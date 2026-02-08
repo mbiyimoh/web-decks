@@ -40,7 +40,8 @@ model User {
   updatedAt DateTime @updatedAt
 
   // Relations
-  clarityProfile ClarityProfile?
+  clarityProfile     ClarityProfile?
+  companionSynthesis CompanionSynthesis?
 }
 
 enum UserType {
@@ -429,4 +430,295 @@ model ArtifactShareLink {
 
   @@unique([clientId, artifactSlug])  // One link per artifact
   @@index([slug])
+}
+
+// ============================================================================
+// CENTRAL COMMAND — Pipeline Management
+// ============================================================================
+
+model PipelineClient {
+  id       String @id @default(cuid())
+  name     String
+  industry String?
+  color    String  @default("#D4A84B")
+  website  String?
+  contactName     String?
+  contactRole     String?
+  contactEmail    String?
+  contactPhone    String?
+  contactLinkedin String?
+  additionalContacts Json?
+  notes            String? @db.Text
+  notesVersions    Json?
+  notesSource      String?
+  enrichmentStatus   String   @default("pending")
+  enrichmentLastRun  DateTime?
+  enrichmentConfidence Json?
+  enrichmentFindings   Json?
+  enrichmentFindingsVersions Json?
+  enrichmentSuggestedActions String[]
+  rawInputText       String?  @db.Text
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  pipelineRecord PipelineRecord?
+  rubricFeedback RubricFeedback[]
+}
+
+model PipelineRecord {
+  id       String @id @default(cuid())
+  clientId String @unique
+  client   PipelineClient @relation(fields: [clientId], references: [id], onDelete: Cascade)
+  status   String @default("funnel")
+  decision       String @default("pending")
+  decisionReason String?
+  currentStage  String  @default("lead")
+  stageIndex    Int     @default(0)
+  stageEnteredAt DateTime @default(now())
+  stageHistory Json?
+  value          Int?
+  potentialValue Int?
+  scoreStrategic  Int @default(5)
+  scoreValue      Int @default(5)
+  scoreReadiness  Int @default(5)
+  scoreTimeline   Int @default(5)
+  scoreBandwidth  Int @default(5)
+  discoveryComplete  Boolean @default(false)
+  assessmentComplete Boolean @default(false)
+  readinessPercent   Int     @default(0)
+  nextAction         String?
+  nextActionVersions Json?
+  nextActionSource   String?
+  nextActionDate     DateTime?
+  isNew        Boolean  @default(true)
+  productFocus String?
+  closedAt          DateTime?
+  closedReason      String?
+  closedReasonDetail String?
+  lessonsLearned     String?  @db.Text
+  lessonsVersions    Json?
+  lessonsSource      String?
+  reengageDate       DateTime?
+  reengageNotes      String?  @db.Text
+  reengageVersions   Json?
+  reengageSource     String?
+  intakeMethod String?
+  intakeDate   DateTime?
+  portalLink   String?
+  clientStatus String @default("active")
+  // Decision workflow fields
+  decisionBucket   String?   // 'aggressive' | 'slow_burn' | 'back_burner' | 'explicit_no'
+  nextStepNotes    String?   @db.Text
+  decisionMadeAt   DateTime?
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  @@index([status])
+  @@index([currentStage])
+}
+
+model TeamCapacity {
+  id          String @id @default(cuid())
+  name        String
+  role        String?
+  color       String  @default("#3b82f6")
+  utilization Int     @default(0)
+  allocations Json @default("[]")
+  updatedAt DateTime @updatedAt
+}
+
+// ============================================================================
+// SCORING RUBRICS — Learning Loop for Score Calibration
+// ============================================================================
+
+model ScoringRubric {
+  id          String   @id @default(cuid())
+  dimension   String   // 'strategic' | 'value' | 'readiness' | 'timeline' | 'bandwidth'
+  version     Int      @default(1)
+  content     Json     // { description: string, indicators: { high: string[], medium: string[], low: string[] } }
+  isActive    Boolean  @default(true)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  // Link to feedback that triggered this version
+  triggeringFeedbackId String?        @unique
+  triggeringFeedback   RubricFeedback? @relation("TriggeringFeedback", fields: [triggeringFeedbackId], references: [id])
+
+  @@unique([dimension, version])
+  @@index([dimension, isActive])
+}
+
+model RubricFeedback {
+  id              String   @id @default(cuid())
+  dimension       String   // Which score dimension
+  prospectId      String   // Which prospect triggered this
+  originalScore   Int      // AI's original score
+  adjustedScore   Int      // User's adjusted score
+  feedback        String   @db.Text // User's natural language feedback
+  createdAt       DateTime @default(now())
+
+  // Link to rubric version this created (if any)
+  createdRubric   ScoringRubric? @relation("TriggeringFeedback")
+
+  // Reference to prospect
+  prospect        PipelineClient @relation(fields: [prospectId], references: [id], onDelete: Cascade)
+
+  @@index([dimension])
+  @@index([prospectId])
+}
+
+// ============================================================================
+// OAUTH 2.0 AUTHENTICATION — Database-backed credentials and OAuth provider
+// ============================================================================
+
+// Client credentials (replaces env var passwords)
+model ClientCredential {
+  id             String    @id @default(cuid())
+  clientId       String    @unique  // e.g., "tradeblock"
+  hashedPassword String    // bcrypt hash
+  email          String    // For user creation on login
+  displayName    String    // e.g., "Tradeblock"
+  isActive       Boolean   @default(true)
+  failedAttempts Int       @default(0)  // Rate limiting
+  lockedUntil    DateTime? // Account lockout
+  createdAt      DateTime  @default(now())
+  updatedAt      DateTime  @updatedAt
+
+  @@map("client_credentials")
+}
+
+// OAuth clients (applications that can authenticate via OAuth)
+model OAuthClient {
+  id            String   @id @default(cuid())
+  clientId      String   @unique  // e.g., "better-contacts"
+  clientSecret  String   // bcrypt hashed
+  clientName    String   // e.g., "Better Contacts"
+  redirectUris  String[] // Allowed callback URLs
+  grantTypes    String[] // ["authorization_code", "refresh_token"]
+  scope         String   // Space-separated allowed scopes
+  isFirstParty  Boolean  @default(false)  // Skip consent for internal apps
+  isActive      Boolean  @default(true)
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+
+  authCodes     OAuthAuthorizationCode[]
+  accessTokens  OAuthAccessToken[]
+  refreshTokens OAuthRefreshToken[]
+  consents      OAuthUserConsent[]
+
+  @@map("oauth_clients")
+}
+
+// Authorization codes (short-lived, single-use)
+model OAuthAuthorizationCode {
+  code                String   @id
+  clientId            String
+  userId              String
+  redirectUri         String
+  scope               String
+  expiresAt           DateTime
+  codeChallenge       String?  // PKCE
+  codeChallengeMethod String?  // "S256"
+  createdAt           DateTime @default(now())
+
+  client OAuthClient @relation(fields: [clientId], references: [clientId], onDelete: Cascade)
+
+  @@index([expiresAt])
+  @@map("oauth_authorization_codes")
+}
+
+// Access tokens (for revocation lookup if needed - JWTs are self-validating)
+model OAuthAccessToken {
+  id          String   @id @default(cuid())
+  tokenHash   String   @unique  // SHA-256 hash (faster than bcrypt for lookup)
+  clientId    String
+  userId      String?  // Null for client_credentials grant
+  scope       String
+  expiresAt   DateTime
+  createdAt   DateTime @default(now())
+
+  client OAuthClient @relation(fields: [clientId], references: [clientId], onDelete: Cascade)
+
+  @@index([expiresAt])
+  @@index([userId])
+  @@map("oauth_access_tokens")
+}
+
+// Refresh tokens (with rotation support and reuse detection)
+model OAuthRefreshToken {
+  id            String   @id @default(cuid())
+  tokenHash     String   @unique  // bcrypt hash
+  clientId      String
+  userId        String
+  scope         String
+  expiresAt     DateTime
+  revoked       Boolean  @default(false)
+  replacedBy    String?  // Token rotation tracking
+  tokenFamilyId String   // Reuse detection
+  createdAt     DateTime @default(now())
+
+  client OAuthClient @relation(fields: [clientId], references: [clientId], onDelete: Cascade)
+
+  @@index([expiresAt])
+  @@index([tokenFamilyId])
+  @@map("oauth_refresh_tokens")
+}
+
+// User consent records (for third-party OAuth apps)
+model OAuthUserConsent {
+  id        String    @id @default(cuid())
+  userId    String
+  clientId  String
+  scope     String
+  grantedAt DateTime  @default(now())
+  expiresAt DateTime? // Null for permanent consent
+
+  client OAuthClient @relation(fields: [clientId], references: [clientId], onDelete: Cascade)
+
+  @@unique([userId, clientId])
+  @@map("oauth_user_consents")
+}
+
+// ============================================================================
+// CLARITY COMPANION API — Context Delivery for External Products
+// ============================================================================
+
+// Cached synthesis for cross-product use
+model CompanionSynthesis {
+  id            String   @id @default(cuid())
+  userId        String   @unique
+
+  // Base synthesis (structured JSON matching BaseSynthesis interface)
+  baseSynthesis Json     // ~800 tokens of structured summary
+
+  // Metadata
+  profileHash   String   // Hash of source profile data for invalidation
+  tokenCount    Int      // Actual token count
+  version       String   // For cache invalidation (e.g., "v1.2.3")
+
+  // Timestamps
+  generatedAt   DateTime @default(now())
+  expiresAt     DateTime // Synthesis TTL (24 hours default)
+
+  // Relations
+  user          User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@index([expiresAt])
+  @@map("companion_syntheses")
+}
+
+// Track what products have fetched (for analytics)
+model CompanionAccessLog {
+  id          String   @id @default(cuid())
+  userId      String
+  productId   String   // OAuth client ID (e.g., "better-contacts")
+  endpoint    String   // Which endpoint was called
+  section     String?  // If section fetch, which section
+  tokenCount  Int      // Tokens returned
+  cacheHit    Boolean  // Was synthesis cached?
+  latencyMs   Int      // Response time
+  createdAt   DateTime @default(now())
+
+  @@index([userId, createdAt])
+  @@index([productId, createdAt])
+  @@map("companion_access_logs")
 }

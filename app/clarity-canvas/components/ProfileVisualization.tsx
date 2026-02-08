@@ -14,7 +14,6 @@ interface ProfileVisualizationProps {
   scores: ProfileScores;
   previousScores?: ProfileScores;
   showScoreAnimation?: boolean;
-  onSectionClick?: (sectionKey: string) => void;
 }
 
 export function ProfileVisualization({
@@ -22,7 +21,6 @@ export function ProfileVisualization({
   scores,
   previousScores,
   showScoreAnimation = false,
-  onSectionClick,
 }: ProfileVisualizationProps) {
   // Default to list on mobile
   const [view, setView] = useState<ViewMode>('list');
@@ -132,14 +130,12 @@ export function ProfileVisualization({
             key="orbital"
             profile={profile}
             scores={displayScores}
-            onSectionClick={onSectionClick}
           />
         ) : (
           <ListView
             key="list"
             profile={profile}
             scores={displayScores}
-            onSectionClick={onSectionClick}
           />
         )}
       </AnimatePresence>

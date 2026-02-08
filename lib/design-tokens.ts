@@ -30,3 +30,7 @@ export const TEXT_DIM = '#555555';
 
 // Borders
 export const BORDER = 'rgba(255,255,255,0.08)';
+export const BORDER_CARD = '#27272a';
+
+// Secondary text (for muted UI elements)
+export const TEXT_SECONDARY = '#525252';

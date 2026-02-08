@@ -8,8 +8,8 @@ export interface ContactInterest {
 export const CONTACT_INTERESTS: ContactInterest[] = [
   // Products
   { id: 'talking-docs', label: 'TalkingDocs.ai', category: 'product' },
-  { id: 'better-contacts', label: 'Better Contacts', category: 'product' },
-  { id: 'm33t', label: 'M33T', category: 'product' },
+  { id: 'better-contacts', label: 'BetterContacts.ai', category: 'product' },
+  { id: 'm33t', label: 'M33T ("Better Networking")', category: 'product' },
   { id: 'marketing-automation', label: 'Marketing Automation', category: 'product' },
 
   // Services

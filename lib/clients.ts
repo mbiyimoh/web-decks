@@ -189,7 +189,13 @@ export function getClientContent(
   return client.content.find((item) => item.slug === slug);
 }
 
+/**
+ * @deprecated Use verifyClientPassword() instead for secure database-backed authentication.
+ */
 export function getClientPassword(clientId: string): string | undefined {
+  console.warn(
+    '[DEPRECATION] getClientPassword() is deprecated. Use verifyClientPassword() instead.'
+  );
   const client = getClient(clientId);
   if (!client) return undefined;
   return process.env[client.passwordEnvVar];
@@ -203,4 +209,57 @@ export function getClientEmail(clientId: string): string | undefined {
 
 export function getAllClientIds(): string[] {
   return Object.keys(clients);
+}
+
+// =============================================================================
+// Database-backed password verification (replaces env var passwords)
+// =============================================================================
+
+import { verifyCredential } from './client-auth-db';
+import { secureCompare } from './auth-utils';
+
+export interface VerifyPasswordResult {
+  success: boolean;
+  error?: string;
+}
+
+/**
+ * Verify a client password against the database with rate limiting.
+ * Falls back to env var during migration period.
+ */
+export async function verifyClientPassword(
+  clientId: string,
+  password: string
+): Promise<VerifyPasswordResult> {
+  // Try database first
+  const result = await verifyCredential(clientId, password);
+
+  if (result.success) {
+    return { success: true };
+  }
+
+  if (result.error === 'locked') {
+    return {
+      success: false,
+      error: `Account locked. Try again in ${result.lockoutRemaining} seconds.`,
+    };
+  }
+
+  if (result.error === 'inactive') {
+    return { success: false, error: 'Account inactive' };
+  }
+
+  // Fallback to env var during migration period (with timing-safe comparison)
+  const client = getClient(clientId);
+  if (client?.passwordEnvVar) {
+    const envPassword = process.env[client.passwordEnvVar];
+    if (envPassword && secureCompare(password, envPassword)) {
+      console.warn(
+        `[DEPRECATION] Client ${clientId} authenticated via env var. Migrate to database.`
+      );
+      return { success: true };
+    }
+  }
+
+  return { success: false, error: 'Invalid credentials' };
 }

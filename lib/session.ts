@@ -4,6 +4,7 @@ export interface SessionData {
   isLoggedIn: boolean;
   clientId?: string;      // Which client portal is authenticated
   strategistId?: string;  // Which strategist portal is authenticated
+  isCentralCommand?: boolean; // Central Command admin dashboard
   // User info for client portal users (enables Clarity Canvas access)
   userId?: string;        // Database User.id
   userEmail?: string;     // For display/verification
@@ -55,6 +56,13 @@ export function isSessionValidForStrategist(
 ): boolean {
   // Case-insensitive comparison - session stores lowercase strategistId
   return session.isLoggedIn === true && session.strategistId === strategistId.toLowerCase();
+}
+
+/**
+ * Check if session is valid for Central Command
+ */
+export function isSessionValidForCentralCommand(session: SessionData): boolean {
+  return session.isLoggedIn === true && session.isCentralCommand === true;
 }
 
 // ============================================================================

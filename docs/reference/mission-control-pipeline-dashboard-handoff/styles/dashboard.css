@@ -1,0 +1,478 @@
+/* 
+ * Mission Control Dashboard — Optional External Styles
+ * 
+ * The dashboard uses inline styles by default for portability.
+ * This file provides CSS custom properties and utility classes
+ * if you prefer external styles or want to integrate with existing CSS.
+ */
+
+/* ============ CSS Custom Properties ============ */
+
+:root {
+  /* Backgrounds */
+  --33-bg: #111111;
+  --33-surface: #1a1a1a;
+  --33-surface-raised: #242424;
+  --33-border: #27272a;
+  
+  /* Text */
+  --33-text-primary: #fafafa;
+  --33-text-secondary: #a1a1aa;
+  --33-text-muted: #71717a;
+  
+  /* Accents */
+  --33-gold: #D4A84B;
+  --33-gold-dim: rgba(212, 168, 75, 0.15);
+  --33-green: #4ADE80;
+  --33-green-dim: rgba(74, 222, 128, 0.15);
+  --33-red: #ef4444;
+  --33-red-dim: rgba(239, 68, 68, 0.15);
+  
+  /* Typography */
+  --33-font-body: 'DM Sans', system-ui, -apple-system, sans-serif;
+  --33-font-mono: 'Space Mono', 'JetBrains Mono', monospace;
+  
+  /* Spacing */
+  --33-radius-sm: 4px;
+  --33-radius-md: 8px;
+  --33-radius-lg: 12px;
+  --33-radius-xl: 16px;
+}
+
+/* ============ Base Styles ============ */
+
+.mission-control {
+  min-height: 100vh;
+  background-color: var(--33-bg);
+  color: var(--33-text-primary);
+  font-family: var(--33-font-body);
+}
+
+/* ============ Header ============ */
+
+.mc-header {
+  border-bottom: 1px solid var(--33-border);
+  background-color: var(--33-surface);
+}
+
+.mc-header-inner {
+  max-width: 1400px;
+  margin: 0 auto;
+  padding: 16px 24px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.mc-logo {
+  width: 40px;
+  height: 40px;
+  background: linear-gradient(135deg, var(--33-gold), #c49a3d);
+  border-radius: 10px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: 700;
+  font-size: 16px;
+}
+
+.mc-pipeline-value {
+  font-family: var(--33-font-mono);
+  font-size: 20px;
+  font-weight: 700;
+  color: var(--33-gold);
+}
+
+/* ============ Sections ============ */
+
+.mc-section {
+  margin-bottom: 48px;
+}
+
+.mc-section-header {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 16px 0;
+  border-bottom: 1px solid var(--33-border);
+}
+
+.mc-section-number {
+  width: 28px;
+  height: 28px;
+  background: linear-gradient(135deg, var(--33-gold), #c49a3d);
+  border-radius: 6px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: 700;
+  font-size: 14px;
+}
+
+.mc-section-number--purple {
+  background: linear-gradient(135deg, #8b5cf6, #7c3aed);
+}
+
+.mc-section-number--gray {
+  background: linear-gradient(135deg, #71717a, #52525b);
+}
+
+/* ============ Tables ============ */
+
+.mc-table {
+  width: 100%;
+  border-collapse: collapse;
+}
+
+.mc-table th {
+  text-align: left;
+  padding: 12px 16px;
+  font-size: 11px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: var(--33-text-muted);
+  border-bottom: 1px solid var(--33-border);
+}
+
+.mc-table td {
+  padding: 16px;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.03);
+  vertical-align: middle;
+}
+
+.mc-table tr {
+  cursor: pointer;
+  transition: background-color 0.15s ease;
+}
+
+.mc-table tr:hover {
+  background-color: rgba(255, 255, 255, 0.02);
+}
+
+/* ============ Stage Dots ============ */
+
+.mc-stage-dots {
+  display: flex;
+  gap: 4px;
+}
+
+.mc-stage-dot {
+  width: 12px;
+  height: 12px;
+  border-radius: 50%;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.mc-stage-dot:hover {
+  transform: scale(1.3);
+}
+
+.mc-stage-dot--complete {
+  background-color: var(--33-green);
+}
+
+.mc-stage-dot--current {
+  background-color: var(--33-gold);
+  box-shadow: 0 0 0 3px var(--33-gold-dim);
+}
+
+.mc-stage-dot--pending {
+  background-color: #3f3f46;
+}
+
+/* ============ Progress Bar ============ */
+
+.mc-progress {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.mc-progress-track {
+  flex: 1;
+  max-width: 60px;
+  height: 6px;
+  background-color: var(--33-border);
+  border-radius: 3px;
+  overflow: hidden;
+}
+
+.mc-progress-fill {
+  height: 100%;
+  border-radius: 3px;
+  transition: width 0.3s ease;
+}
+
+.mc-progress-fill--green {
+  background-color: var(--33-green);
+}
+
+.mc-progress-fill--gold {
+  background-color: var(--33-gold);
+}
+
+.mc-progress-fill--red {
+  background-color: var(--33-red);
+}
+
+/* ============ Badges ============ */
+
+.mc-badge {
+  display: inline-flex;
+  align-items: center;
+  padding: 2px 8px;
+  border-radius: 4px;
+  font-size: 10px;
+  font-weight: 600;
+}
+
+.mc-badge--high {
+  background-color: var(--33-green-dim);
+  color: var(--33-green);
+}
+
+.mc-badge--medium {
+  background-color: var(--33-gold-dim);
+  color: var(--33-gold);
+}
+
+.mc-badge--low {
+  background-color: var(--33-red-dim);
+  color: var(--33-red);
+}
+
+.mc-badge--new {
+  font-size: 9px;
+  padding: 2px 6px;
+  background-color: var(--33-gold-dim);
+  color: var(--33-gold);
+}
+
+/* ============ Stoplight ============ */
+
+.mc-stoplight {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.mc-stoplight-dot {
+  width: 12px;
+  height: 12px;
+  border-radius: 50%;
+}
+
+.mc-stoplight-dot--yes {
+  background-color: #22c55e;
+}
+
+.mc-stoplight-dot--no {
+  background-color: #ef4444;
+}
+
+.mc-stoplight-dot--pending {
+  background-color: #eab308;
+}
+
+/* ============ Cards ============ */
+
+.mc-card {
+  background-color: var(--33-surface);
+  border: 1px solid var(--33-border);
+  border-radius: var(--33-radius-lg);
+  padding: 20px;
+}
+
+.mc-intake-step {
+  display: flex;
+  align-items: flex-start;
+  gap: 16px;
+}
+
+.mc-intake-step-number {
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: 600;
+  font-size: 14px;
+  flex-shrink: 0;
+  background-color: var(--33-border);
+}
+
+/* ============ Capacity Cards ============ */
+
+.mc-capacity-bar {
+  height: 8px;
+  background-color: var(--33-border);
+  border-radius: 4px;
+  overflow: hidden;
+  display: flex;
+}
+
+.mc-capacity-segment {
+  height: 100%;
+  transition: width 0.3s ease;
+}
+
+/* ============ Buttons ============ */
+
+.mc-btn {
+  padding: 10px 20px;
+  border: none;
+  border-radius: var(--33-radius-md);
+  font-weight: 600;
+  font-size: 13px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  transition: all 0.15s ease;
+}
+
+.mc-btn--primary {
+  background: linear-gradient(135deg, var(--33-gold), #c49a3d);
+  color: #000;
+}
+
+.mc-btn--primary:hover {
+  filter: brightness(1.1);
+}
+
+.mc-btn--secondary {
+  background-color: var(--33-border);
+  color: var(--33-text-secondary);
+}
+
+.mc-btn--secondary:hover {
+  background-color: #3f3f46;
+}
+
+.mc-btn--success {
+  background: linear-gradient(135deg, var(--33-green), #22c55e);
+  color: #000;
+}
+
+/* ============ Modal ============ */
+
+.mc-modal-backdrop {
+  position: fixed;
+  inset: 0;
+  background-color: rgba(0, 0, 0, 0.8);
+  backdrop-filter: blur(4px);
+  z-index: 100;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 16px;
+}
+
+.mc-modal {
+  background-color: var(--33-surface);
+  border: 1px solid var(--33-border);
+  border-radius: var(--33-radius-xl);
+  max-width: 600px;
+  width: 100%;
+  max-height: 85vh;
+  overflow-y: auto;
+}
+
+.mc-modal-header {
+  padding: 24px;
+  border-bottom: 1px solid var(--33-border);
+}
+
+.mc-modal-body {
+  padding: 24px;
+}
+
+/* ============ Avatar ============ */
+
+.mc-avatar {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: 600;
+  border-radius: var(--33-radius-md);
+}
+
+.mc-avatar--sm {
+  width: 24px;
+  height: 24px;
+  font-size: 10px;
+}
+
+.mc-avatar--md {
+  width: 36px;
+  height: 36px;
+  font-size: 12px;
+}
+
+.mc-avatar--lg {
+  width: 48px;
+  height: 48px;
+  font-size: 16px;
+}
+
+/* ============ Utilities ============ */
+
+.mc-mono {
+  font-family: var(--33-font-mono);
+}
+
+.mc-text-gold {
+  color: var(--33-gold);
+}
+
+.mc-text-green {
+  color: var(--33-green);
+}
+
+.mc-text-red {
+  color: var(--33-red);
+}
+
+.mc-text-muted {
+  color: var(--33-text-muted);
+}
+
+.mc-text-secondary {
+  color: var(--33-text-secondary);
+}
+
+/* ============ New Prospect Highlight ============ */
+
+.mc-row--new {
+  border-left: 3px solid var(--33-gold);
+}
+
+/* ============ Responsive ============ */
+
+@media (max-width: 1024px) {
+  .mc-header-inner {
+    padding: 12px 16px;
+  }
+  
+  .mc-section {
+    margin-bottom: 32px;
+  }
+  
+  .mc-table {
+    display: block;
+    overflow-x: auto;
+  }
+}
+
+@media (max-width: 768px) {
+  .mc-intake-grid {
+    grid-template-columns: 1fr !important;
+  }
+  
+  .mc-capacity-grid {
+    grid-template-columns: 1fr !important;
+  }
+}

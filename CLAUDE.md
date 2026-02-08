@@ -203,6 +203,113 @@ Premium presentations with scroll-triggered animations, used for:
 - `Card`, `CodeBlock` — Content containers
 - `ProgressBar`, `NavDots` — Navigation elements
 
+### 6. Central Command (`/central-command`)
+
+Internal admin dashboard for sales pipeline management. Password-protected via iron-session.
+
+**Features:**
+- AI-powered prospect intake from text dumps (meeting notes, call transcripts)
+- 8-stage pipeline tracking (Lead → Kickoff)
+- Prompt-based field editing with version history
+- Team capacity management
+- Closed deal tracking with lessons learned
+
+**Key Files:**
+- `app/central-command/page.tsx` — Server Component with auth + data fetch
+- `app/central-command/CentralCommandClient.tsx` — Main client component
+- `app/central-command/components/` — All UI components (11 total)
+- `lib/central-command/` — Business logic, schemas, prompts, queries, utils
+
+**Database Models:**
+- `PipelineClient` — Company info + enrichment fields + primary contact
+  - `enrichmentFindings Json?` — 6 synthesis sections (companyOverview, goalsAndVision, painAndBlockers, decisionDynamics, strategicAssessment, recommendedApproach)
+  - `enrichmentFindingsVersions Json?` — Per-section version history: `{ companyOverview: Version[], ... }`
+- `PipelineRecord` — Pipeline status, stage tracking, scores, version-tracked fields
+- `TeamCapacity` — Team member utilization and allocation data
+
+**API Routes:**
+- `POST /api/central-command/auth` — Password authentication
+- `POST /api/central-command/extract` — AI extraction from text dump (gpt-4o)
+- `POST /api/central-command/refine` — Prompt-based single-field refinement (gpt-4o-mini)
+- `POST /api/central-command/refine-synthesis` — Global multi-section synthesis refinement (gpt-4o-mini)
+- `POST /api/central-command/transcribe` — Voice transcription with CC auth (Whisper-1)
+- `GET/POST /api/central-command/prospects` — List all / create new
+- `GET/PATCH /api/central-command/prospects/[id]` — Detail / update (handles stage, close, versions, synthesis)
+- `GET /api/central-command/team` — List team members
+- `PATCH /api/central-command/team/[id]` — Update team member
+
+**Environment:**
+- `CENTRAL_COMMAND_PASSWORD` — Required for auth
+
+#### Synthesis Refinement (New)
+
+Iterative AI-powered improvement of the 6 Client Intelligence synthesis sections. Two modes: global (multi-section) and targeted (single-section).
+
+**Key Patterns:**
+- **Client-side version building** — Use `buildSynthesisVersionUpdate()` to construct full version object before PATCH
+- **Server-side merge** — Both `enrichmentFindings` and `enrichmentFindingsVersions` use `{ ...existing, ...updates }` to prevent overwrites
+- **Per-section versioning** — Each section tracks up to 10 versions independently
+- **Dual refinement modes** — Global bar affects multiple sections, inline input affects one section
+
+**Gotchas:**
+- `parseVersions()` accepts `unknown` — don't use `as unknown` cast (TypeScript naturally allows `Version[] | undefined`)
+- Empty `updatedSections` from AI needs user-friendly error message in client
+- `z.record()` requires both key and value schemas: `z.record(z.string(), z.object({...}))`
+- PATCH handler must merge, not replace, to avoid race condition data loss
+
+**Key Files:**
+- `app/central-command/components/EditableSynthesisBlock.tsx` — Per-section editing with states: VIEW/EDIT/REFINING/HISTORY
+- `app/central-command/components/SynthesisGlobalRefine.tsx` — Global prompt bar + inline voice recording
+- `lib/central-command/utils.ts` — `buildSynthesisVersionUpdate()` client-side utility
+- `docs/developer-guides/synthesis-refinement-guide.md` — Full tutorial
+
+#### Intelligent Scoring with Learning Loop (New)
+
+AI-powered prospect scoring across 5 dimensions with human feedback calibration. The system learns from score adjustments to improve future extractions.
+
+**Score Dimensions (1-10 scale):**
+- `strategic` — Logo/brand value, network potential, referral value
+- `value` — Revenue potential, budget signals, growth opportunity
+- `readiness` — Pain urgency, active search, readiness to buy
+- `timeline` — Forcing functions, deadlines, urgency signals
+- `bandwidth` — Capacity fit, scope complexity (higher = easier for us)
+
+**Key Features:**
+- **Inline score editing** — Click any score to adjust with rationale
+- **Learning loop** — Feedback triggers LLM-powered rubric refinement
+- **Dynamic rubrics** — Extraction prompts use current calibrated rubrics
+- **3-tier fallback** — Database → cache → initial rubrics (extraction never fails)
+- **Version tracking** — Scores track version numbers for audit trail
+
+**Architecture:**
+```
+User adjusts score → PATCH /api/central-command/prospects/[id]
+                   → POST /api/central-command/rubric/feedback
+                   → LLM evaluates if rubric needs updating
+                   → New rubric version created (if warranted)
+                   → Future extractions use updated rubrics
+```
+
+**Key Files:**
+- `lib/central-command/rubric.ts` — Rubric CRUD, `getRubricsWithFallback()`, feedback processing
+- `lib/central-command/prompts.ts` — `buildExtractionSystemPrompt(rubrics)` for dynamic injection
+- `lib/central-command/score-display.ts` — Canonical score colors, thresholds, labels
+- `app/central-command/components/ScoreDisplay.tsx` — Inline score editing UI
+- `app/api/central-command/rubric/route.ts` — Get rubrics (with feedback history)
+- `app/api/central-command/rubric/feedback/route.ts` — Submit feedback, trigger learning
+
+**Database Models:**
+- `ScoringRubric` — Active rubric per dimension with high/medium/low indicators
+- `RubricFeedback` — Human correction history linked to triggering rubric
+
+**Gotchas:**
+- `SCORE_KEYS` array in `score-display.ts` is canonical — import from there
+- Rubric cache is module-level, not request-scoped (persists across requests in serverless)
+- `buildExtractionSystemPrompt()` must receive all 5 dimensions (use `INITIAL_RUBRICS` as fallback)
+- Score colors use `SCORE_THRESHOLDS.HIGH` (7+) and `MEDIUM` (4+) constants
+
+**See:** `docs/developer-guides/central-command-scoring-guide.md` for full tutorial
+
 ---
 
 ## Authentication
@@ -258,6 +365,14 @@ npx prisma migrate dev     # Create and apply migrations
 npx prisma db push         # Push schema changes (dev only)
 npx prisma studio          # Database GUI
 ```
+
+### Seed Scripts
+
+```bash
+npx tsx scripts/seed-rubrics.ts  # Seed Central Command scoring rubrics (v1)
+```
+
+**Central Command Scoring Rubrics:** The learning loop for prospect scoring requires initial rubrics to be seeded. Run this after schema migrations on a fresh database. The script is idempotent (skips dimensions that already have active rubrics).
 
 ### Key Models
 
@@ -359,6 +474,9 @@ LEARNING_PASSWORD=...
 
 # OpenAI (for Clarity Canvas)
 OPENAI_API_KEY=...
+
+# Central Command
+CENTRAL_COMMAND_PASSWORD=...
 ```
 
 ### Local URLs
@@ -535,6 +653,21 @@ stm grep "pattern"        # Search tasks
 - `POST /api/share/create` — Create share link (requires portal auth)
 - `POST /api/share/[slug]/auth` — Password verification (public, brute-force protected)
 
+### Central Command
+- `POST /api/central-command/auth` — Password authentication
+- `POST /api/central-command/extract` — AI extraction from text dump (uses dynamic rubrics)
+- `POST /api/central-command/refine` — Prompt-based field refinement
+- `POST /api/central-command/refine-synthesis` — Global multi-section synthesis refinement
+- `POST /api/central-command/transcribe` — Voice transcription (Whisper-1)
+- `GET /api/central-command/prospects` — List all prospects + team data
+- `POST /api/central-command/prospects` — Create new prospect
+- `GET /api/central-command/prospects/[id]` — Prospect detail
+- `PATCH /api/central-command/prospects/[id]` — Update prospect (fields, stage, scores, synthesis)
+- `GET /api/central-command/team` — List team members
+- `PATCH /api/central-command/team/[id]` — Update team member
+- `GET /api/central-command/rubric` — Get all rubrics + feedback history
+- `POST /api/central-command/rubric/feedback` — Submit score feedback (triggers learning loop)
+
 ### Health
 - `GET /api/health` — Railway health check
 
@@ -543,13 +676,17 @@ stm grep "pattern"        # Search tasks
 ## Getting Help
 
 - Check `docs/developer-guides/` for implementation guides:
+  - `central-command-scoring-guide.md` — Scoring learning loop and rubric system
+  - `synthesis-refinement-guide.md` — Central Command synthesis refinement (global + targeted modes)
   - `shareable-artifact-links-guide.md` — Password-protected share links tutorial
   - `scrollytelling-deck-guide.md` — Deck component patterns
   - `learning-module-components.md` — Shared deck components
+  - `33-strategies-question-ui-guide.md` — Question UI patterns
+  - `validation-response-viewer-guide.md` — Validation dashboard patterns
 - Use `/design:audit` for brand compliance
 - Reference `.claude/skills/33-strategies-frontend-design.md` for design decisions
 - Check existing components in `components/` for patterns
 
 ---
 
-*Last Updated: January 2025*
+*Last Updated: February 2026*

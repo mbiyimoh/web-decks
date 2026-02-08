@@ -272,9 +272,9 @@ export default function ContactPageClient() {
             </p>
             <div className="space-y-4">
               {services.map((interest) => (
-                <label key={interest.id} className="flex items-start gap-3 cursor-pointer group">
+                <label key={interest.id} className="flex items-start gap-3 cursor-pointer group w-full">
                   <div
-                    className="w-5 h-5 rounded flex items-center justify-center transition-colors mt-0.5"
+                    className="w-5 h-5 flex-shrink-0 rounded flex items-center justify-center transition-colors mt-0.5"
                     style={{
                       border: checkedInterests.includes(interest.id)
                         ? `2px solid ${GOLD}`
@@ -301,7 +301,7 @@ export default function ContactPageClient() {
                     onChange={() => toggleInterest(interest.id)}
                     className="sr-only"
                   />
-                  <div>
+                  <div className="flex-1">
                     <span style={{ color: TEXT_PRIMARY }}>{interest.label}</span>
                     {interest.description && (
                       <p className="text-sm mt-1" style={{ color: TEXT_DIM }}>

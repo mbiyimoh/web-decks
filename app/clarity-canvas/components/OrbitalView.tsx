@@ -1,6 +1,7 @@
 'use client';
 
 import React, { useState } from 'react';
+import { useRouter } from 'next/navigation';
 import { motion } from 'framer-motion';
 import type { ProfileWithSections, ProfileScores } from '@/lib/clarity-canvas/types';
 import { getScoreColor } from '@/lib/clarity-canvas/types';
@@ -8,7 +9,6 @@ import { getScoreColor } from '@/lib/clarity-canvas/types';
 interface OrbitalViewProps {
   profile: ProfileWithSections;
   scores: ProfileScores;
-  onSectionClick?: (sectionKey: string) => void;
 }
 
 const GOLD = '#D4A84B';
@@ -19,7 +19,8 @@ const ORBIT_RADIUS_MAX = 160;
 const NODE_SIZE_MIN = 32;
 const NODE_SIZE_MAX = 56;
 
-export function OrbitalView({ profile, scores, onSectionClick }: OrbitalViewProps) {
+export function OrbitalView({ profile, scores }: OrbitalViewProps) {
+  const router = useRouter();
   const [hoveredSection, setHoveredSection] = useState<string | null>(null);
 
   // Defensive check for empty profile
@@ -191,10 +192,10 @@ export function OrbitalView({ profile, scores, onSectionClick }: OrbitalViewProp
           return (
             <g
               key={section.id}
-              style={{ cursor: onSectionClick ? 'pointer' : 'default' }}
+              style={{ cursor: 'pointer' }}
               onMouseEnter={() => setHoveredSection(section.key)}
               onMouseLeave={() => setHoveredSection(null)}
-              onClick={() => onSectionClick?.(section.key)}
+              onClick={() => router.push(`/clarity-canvas/${section.key}`)}
             >
               {/* Node breathing animation circle */}
               <motion.circle

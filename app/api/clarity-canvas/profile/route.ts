@@ -78,17 +78,24 @@ export async function POST(): Promise<NextResponse<CreateProfileResponse | { err
   if (existing) {
     // If profile exists but canvas not initialized (from Persona Sharpener), initialize it now
     if (!existing.isCanvasInitialized) {
-      const initialized = await initializeCanvasStructure(existing.id);
-      if (initialized) {
-        // Re-fetch with full structure
-        const refreshed = await prisma.clarityProfile.findUnique({
-          where: { id: existing.id },
-          include: profileInclude,
-        });
-        return NextResponse.json({
-          profile: refreshed as ProfileWithSections,
-          isNew: false,
-        });
+      try {
+        const initialized = await initializeCanvasStructure(existing.id);
+        if (initialized) {
+          return NextResponse.json({
+            profile: initialized as ProfileWithSections,
+            isNew: false,
+          });
+        }
+        return NextResponse.json(
+          { error: 'Failed to initialize canvas structure' },
+          { status: 500 }
+        );
+      } catch (err) {
+        console.error('[profile/route] Canvas initialization failed:', err);
+        return NextResponse.json(
+          { error: 'Canvas initialization failed' },
+          { status: 500 }
+        );
       }
     }
     return NextResponse.json({

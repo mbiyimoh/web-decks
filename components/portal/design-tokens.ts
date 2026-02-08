@@ -17,6 +17,11 @@ export const BG_PRIMARY = '#0a0a0f';
 export const BG_SURFACE = '#111114';
 export const BG_ELEVATED = '#0d0d14';
 
+// Text colors (canonical values from CLAUDE.md design system)
+export const TEXT_PRIMARY = '#f5f5f5';
+export const TEXT_MUTED = '#888888';
+export const TEXT_DIM = '#555555';
+
 // Status colors
 export const STATUS_COLORS = {
   'on-track': { color: GREEN, bg: GREEN_DIM, label: 'ON TRACK' },

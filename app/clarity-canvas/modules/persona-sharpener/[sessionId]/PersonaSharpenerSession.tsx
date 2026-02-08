@@ -812,8 +812,8 @@ export function PersonaSharpenerSession({ user, sessionId }: Props) {
 
                           {/* Additional context */}
                           <div>
-                            <label className="text-sm text-zinc-400 mb-2 block">
-                              Any additional context? (optional)
+                            <label className="text-base font-semibold text-zinc-300 mb-2 block">
+                              Want to add any context? <span className="text-zinc-400 font-normal">(optional but encouraged!)</span>
                             </label>
                             <textarea
                               value={additionalContext}

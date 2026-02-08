@@ -1,168 +1,139 @@
 'use client';
 
+import { useState, useEffect } from 'react';
+import { useReducedMotion, useScroll } from 'framer-motion';
 import { motion } from 'framer-motion';
+import { BG_PRIMARY, GOLD } from '@/lib/design-tokens';
 
-// Brand colors
-const GOLD = '#d4a54a';
-const GOLD_GLOW = 'rgba(212,165,74,0.3)';
+// Layout components
+import { Nav } from './Nav';
+import { StickyCtaBar } from './StickyCtaBar';
 
-// Geometric animation component - concentric rotating rings
-function GeometricAnimation() {
-  const rings = [
-    { radius: 80, dots: 8, duration: 30, direction: 1 },
-    { radius: 120, dots: 12, duration: 45, direction: -1 },
-    { radius: 160, dots: 16, duration: 60, direction: 1 },
-  ];
+// Effects
+import { GoldGlow } from './effects/GoldGlow';
+import { FloatingOrbs } from './effects/FloatingOrbs';
+import { ParticleCanvas } from './effects/ParticleCanvas';
 
+// Content sections
+import { HeroSection } from './sections/HeroSection';
+import { PillarsSection } from './sections/PillarsSection';
+import { DrudgerySection } from './sections/DrudgerySection';
+import { TwoThingsSection } from './sections/TwoThingsSection';
+import { ThreeLayerSection } from './sections/ThreeLayerSection';
+import { LongViewSection } from './sections/LongViewSection';
+import { ProductsPreviewSection } from './sections/ProductsPreviewSection';
+import { CTASection } from './sections/CTASection';
+
+/**
+ * ProgressBar - Scroll progress indicator at top of page
+ */
+function ProgressBar() {
+  const { scrollYProgress } = useScroll();
   return (
-    <div className="absolute inset-0 flex items-center justify-center pointer-events-none overflow-hidden">
-      <div className="w-[400px] h-[400px] md:w-[600px] md:h-[600px] relative">
-        {rings.map((ring, ringIndex) => (
-          <motion.div
-            key={ringIndex}
-            className="absolute inset-0"
-            animate={{ rotate: 360 * ring.direction }}
-            transition={{
-              duration: ring.duration,
-              repeat: Infinity,
-              ease: 'linear',
-            }}
-          >
-            <svg
-              className="w-full h-full"
-              viewBox="0 0 400 400"
-            >
-              {/* Ring circle */}
-              <circle
-                cx="200"
-                cy="200"
-                r={ring.radius}
-                fill="none"
-                stroke="rgba(255,255,255,0.03)"
-                strokeWidth="1"
-              />
-              {/* Dots on ring */}
-              {Array.from({ length: ring.dots }).map((_, dotIndex) => {
-                const angle = (dotIndex / ring.dots) * Math.PI * 2;
-                const x = 200 + Math.cos(angle) * ring.radius;
-                const y = 200 + Math.sin(angle) * ring.radius;
-                return (
-                  <circle
-                    key={dotIndex}
-                    cx={x}
-                    cy={y}
-                    r={dotIndex % 4 === 0 ? 3 : 1.5}
-                    fill={dotIndex % 4 === 0 ? GOLD_GLOW : 'rgba(255,255,255,0.15)'}
-                  />
-                );
-              })}
-            </svg>
-          </motion.div>
-        ))}
-        {/* Center glow - static, not rotating */}
-        <svg
-          className="absolute inset-0 w-full h-full"
-          viewBox="0 0 400 400"
-        >
-          <circle
-            cx="200"
-            cy="200"
-            r="40"
-            fill="url(#centerGlow)"
-          />
-          <defs>
-            <radialGradient id="centerGlow" cx="50%" cy="50%" r="50%">
-              <stop offset="0%" stopColor={GOLD_GLOW} />
-              <stop offset="100%" stopColor="rgba(212,165,74,0)" />
-            </radialGradient>
-          </defs>
-        </svg>
-      </div>
-    </div>
+    <motion.div
+      className="fixed top-0 left-0 right-0 h-[2px] z-[60] origin-left"
+      style={{ scaleX: scrollYProgress, backgroundColor: GOLD }}
+    />
   );
 }
 
+/**
+ * LandingPage - Main orchestrator component for the 33 Strategies homepage
+ *
+ * Features:
+ * - Mobile-first design (375px baseline)
+ * - Progressive enhancement for desktop (particles, hover states)
+ * - Respects prefers-reduced-motion
+ * - Sticky CTA bar on mobile after scrolling past hero
+ */
 export default function LandingPage() {
+  const prefersReducedMotion = useReducedMotion() ?? false;
+  const [showStickyBar, setShowStickyBar] = useState(false);
+  const [isDesktop, setIsDesktop] = useState(false);
+
+  // Detect viewport size for progressive enhancement
+  useEffect(() => {
+    const checkViewport = () => setIsDesktop(window.innerWidth >= 768);
+    checkViewport();
+    window.addEventListener('resize', checkViewport);
+    return () => window.removeEventListener('resize', checkViewport);
+  }, []);
+
+  // Show sticky bar after scrolling past hero
+  useEffect(() => {
+    const handleScroll = () => {
+      setShowStickyBar(window.scrollY > window.innerHeight * 0.8);
+    };
+    window.addEventListener('scroll', handleScroll, { passive: true });
+    return () => window.removeEventListener('scroll', handleScroll);
+  }, []);
+
   return (
-    <div className="min-h-screen bg-[#0a0a0f] text-white flex flex-col items-center justify-center px-6 relative overflow-hidden">
-      {/* Geometric background animation */}
-      <GeometricAnimation />
+    <div
+      className="min-h-screen relative overflow-hidden text-white"
+      style={{ backgroundColor: BG_PRIMARY }}
+    >
+      {/* Global styles */}
+      <style jsx global>{`
+        ::selection {
+          background: ${GOLD}30;
+          color: white;
+        }
 
-      {/* Content */}
-      <div className="relative z-10 text-center max-w-2xl">
-        {/* Wordmark */}
-        <motion.div
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.8, ease: [0.25, 0.4, 0.25, 1] }}
-          className="mb-6"
-        >
-          <span
-            className="text-7xl md:text-9xl font-display tracking-tight"
-            style={{ color: GOLD }}
-          >
-            33
-          </span>
-          <p className="text-zinc-400 uppercase tracking-[0.4em] text-sm md:text-base mt-2 font-mono">
-            Strategies
-          </p>
-        </motion.div>
+        html {
+          scroll-behavior: smooth;
+        }
 
-        {/* Tagline */}
-        <motion.p
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.8, delay: 0.2, ease: [0.25, 0.4, 0.25, 1] }}
-          className="text-xl md:text-2xl text-zinc-300 leading-relaxed mb-12 font-body"
-        >
-          Build brilliant things with brilliant people.
-        </motion.p>
+        @media (prefers-reduced-motion: reduce) {
+          html {
+            scroll-behavior: auto;
+          }
+        }
+      `}</style>
 
-        {/* Coming Soon badge */}
-        <motion.div
-          initial={{ opacity: 0, scale: 0.9 }}
-          animate={{ opacity: 1, scale: 1 }}
-          transition={{ duration: 0.6, delay: 0.4, ease: [0.25, 0.4, 0.25, 1] }}
-          className="inline-block"
-        >
-          <div
-            className="px-6 py-3 bg-zinc-900/80 rounded-full backdrop-blur-sm"
-            style={{ border: `1px solid ${GOLD}40` }}
-          >
-            <span
-              className="font-medium tracking-wide font-mono text-sm"
-              style={{ color: GOLD }}
-            >
-              Coming Soon
-            </span>
-          </div>
-        </motion.div>
+      {/* Progress bar */}
+      <ProgressBar />
 
-        {/* Contact link */}
-        <motion.div
-          initial={{ opacity: 0 }}
-          animate={{ opacity: 1 }}
-          transition={{ duration: 0.8, delay: 0.6 }}
-          className="mt-12"
-        >
-          <a
-            href="mailto:whatsgood@33strategies.ai"
-            className="text-zinc-500 hover:text-zinc-300 text-sm transition-colors font-body"
-          >
-            whatsgood@33strategies.ai
-          </a>
-        </motion.div>
-      </div>
+      {/* Navigation */}
+      <Nav />
+
+      {/* Background effects - mobile baseline (CSS only) */}
+      <GoldGlow />
+      <FloatingOrbs reducedMotion={prefersReducedMotion} />
+
+      {/* Desktop enhancement: Canvas particles */}
+      {isDesktop && !prefersReducedMotion && <ParticleCanvas />}
+
+      {/* Content sections */}
+      <main className="relative z-10" aria-label="33 Strategies landing page content">
+        <HeroSection reducedMotion={prefersReducedMotion} />
+        <PillarsSection reducedMotion={prefersReducedMotion} />
+        <DrudgerySection
+          reducedMotion={prefersReducedMotion}
+          isDesktop={isDesktop}
+        />
+        <TwoThingsSection reducedMotion={prefersReducedMotion} />
+        <ProductsPreviewSection reducedMotion={prefersReducedMotion} />
+        <ThreeLayerSection reducedMotion={prefersReducedMotion} />
+        <LongViewSection reducedMotion={prefersReducedMotion} />
+        <CTASection reducedMotion={prefersReducedMotion} />
+      </main>
+
+      {/* Sticky CTA bar for mobile */}
+      <StickyCtaBar show={showStickyBar} />
 
       {/* Footer */}
-      <motion.p
-        initial={{ opacity: 0 }}
-        animate={{ opacity: 1 }}
-        transition={{ delay: 0.8, duration: 0.8 }}
-        className="absolute bottom-8 text-zinc-700 text-xs font-body"
-      >
-        &copy; 2025 33 Strategies
-      </motion.p>
+      <footer className="relative z-10 py-8 text-center border-t border-zinc-900">
+        <div
+          className="h-px mb-8"
+          style={{
+            background: `linear-gradient(90deg, transparent, ${GOLD}20, transparent)`,
+          }}
+        />
+        <p className="text-zinc-700 text-xs font-body">
+          &copy; 2026 33 Strategies
+        </p>
+      </footer>
     </div>
   );
 }

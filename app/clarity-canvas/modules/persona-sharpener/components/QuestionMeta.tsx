@@ -93,10 +93,10 @@ export function QuestionMeta({
         <div>
           <button
             onClick={() => setShowContext(!showContext)}
-            className="text-sm text-zinc-500 hover:text-zinc-300 transition-colors flex items-center gap-1"
+            className="text-base font-semibold text-zinc-300 hover:text-zinc-100 transition-colors flex items-center gap-1"
           >
             <span>{showContext ? '−' : '+'}</span>
-            <span>Add context (optional)</span>
+            <span>Want to add any context? <span className="text-zinc-400 font-normal">(optional but encouraged!)</span></span>
           </button>
           {showContext && (
             <motion.textarea

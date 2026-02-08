@@ -2,26 +2,66 @@ import { cookies } from 'next/headers';
 import { getIronSession } from 'iron-session';
 import { NextResponse } from 'next/server';
 import { getSessionOptions, SessionData } from '@/lib/session';
-import { getAllClientIds, getClientPassword, getClientEmail } from '@/lib/clients';
+import {
+  getAllClientIds,
+  getClientEmail,
+  verifyClientPassword,
+} from '@/lib/clients';
 import { ensureClientUser } from '@/lib/client-user-sync';
-import { secureCompare } from '@/lib/auth-utils';
+import { getCredentialByClientId } from '@/lib/client-auth-db';
 
 /**
  * Unified client authentication endpoint.
- * Checks email+password against ALL configured clients without exposing client list.
+ * Supports two auth modes:
+ * 1. Email + password: Checks against all configured clients (original flow)
+ * 2. ClientId + password: Direct verification against database (new flow)
  */
 export async function POST(request: Request) {
   try {
     const body = await request.json();
-    const { email, password } = body;
+    const { email, password, clientId: providedClientId } = body;
 
-    // Validate non-empty inputs
-    if (
-      !email ||
-      !password ||
-      email.trim().length === 0 ||
-      password.trim().length === 0
-    ) {
+    // Validate password always required
+    if (!password || password.trim().length === 0) {
+      return NextResponse.json(
+        { error: 'Password is required' },
+        { status: 400 }
+      );
+    }
+
+    // Mode 2: Direct clientId + password (new database-backed flow)
+    if (providedClientId) {
+      const result = await verifyClientPassword(providedClientId, password);
+
+      if (!result.success) {
+        return NextResponse.json(
+          { error: result.error || 'Invalid credentials' },
+          { status: 401 }
+        );
+      }
+
+      // Get email from database credential
+      const credential = await getCredentialByClientId(providedClientId);
+      const userEmail = credential?.email || `${providedClientId}@client.33strategies.ai`;
+
+      // Create or update User record
+      const user = await ensureClientUser(userEmail, providedClientId);
+
+      const session = await getIronSession<SessionData>(
+        await cookies(),
+        getSessionOptions()
+      );
+      session.isLoggedIn = true;
+      session.clientId = providedClientId.toLowerCase();
+      session.userId = user.id;
+      session.userEmail = user.email;
+      await session.save();
+
+      return NextResponse.json({ success: true });
+    }
+
+    // Mode 1: Email + password (original flow for backward compatibility)
+    if (!email || email.trim().length === 0) {
       return NextResponse.json(
         { error: 'Email and password are required' },
         { status: 400 }
@@ -30,28 +70,26 @@ export async function POST(request: Request) {
 
     const normalizedEmail = email.toLowerCase().trim();
 
-    // Check credentials against all clients
+    // Check credentials against all clients by email
     const clientIds = getAllClientIds();
     let matchedClientId: string | null = null;
 
     for (const clientId of clientIds) {
       const expectedEmail = getClientEmail(clientId);
-      const expectedPassword = getClientPassword(clientId);
 
-      // Skip clients with missing/empty config
-      if (
-        !expectedEmail ||
-        !expectedPassword ||
-        expectedEmail.trim().length === 0 ||
-        expectedPassword.trim().length === 0
-      ) {
+      // Skip clients without email configured
+      if (!expectedEmail || expectedEmail.trim().length === 0) {
         continue;
       }
 
-      const emailMatch = normalizedEmail === expectedEmail.toLowerCase().trim();
-      const passwordMatch = secureCompare(password, expectedPassword);
+      // Check if email matches
+      if (normalizedEmail !== expectedEmail.toLowerCase().trim()) {
+        continue;
+      }
 
-      if (emailMatch && passwordMatch) {
+      // Email matches, verify password via database
+      const result = await verifyClientPassword(clientId, password);
+      if (result.success) {
         matchedClientId = clientId;
         break;
       }
