@@ -166,6 +166,8 @@ export const refineSynthesisRequestSchema = z.object({
 
 /**
  * Global refinement response — only changed sections/scores returned
+ * Note: All fields required (no .optional()) for OpenAI structured output compatibility.
+ * Return empty objects {} when no updates.
  */
 export const refineSynthesisResponseSchema = z.object({
   updatedSections: z.record(
@@ -184,7 +186,7 @@ export const refineSynthesisResponseSchema = z.object({
       confidence: z.number().min(0).max(1),
       changeSummary: z.string(),
     })
-  ).optional(),
+  ),
 });
 
 // ============ API REQUEST SCHEMAS ============

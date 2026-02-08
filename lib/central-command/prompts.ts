@@ -165,7 +165,13 @@ Apply the user's refinement request to the relevant sections AND/OR scores. You 
 
 ## Response Format
 
-Return ONLY sections and scores that changed. Do not include unchanged items.
+Always return BOTH updatedSections and updatedScores objects. Include only changed items within each object — use empty {} for categories with no changes.
+
+Example with only a section change:
+{ "updatedSections": { "strategicAssessment": { "refinedContent": "...", "changeSummary": "..." } }, "updatedScores": {} }
+
+Example with only a score change:
+{ "updatedSections": {}, "updatedScores": { "strategic": { "score": 8, "rationale": "...", "evidence": ["..."], "confidence": 0.9, "changeSummary": "..." } } }
 
 For sections: { refinedContent: string, changeSummary: string }
 For scores: { score: number, rationale: string, evidence: string[], confidence: number, changeSummary: string }`;
