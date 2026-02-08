@@ -166,14 +166,16 @@ export const refineSynthesisRequestSchema = z.object({
 
 /**
  * Individual section refinement result
+ * Note: .strict() adds additionalProperties: false which OpenAI requires
  */
 const sectionRefinementSchema = z.object({
   refinedContent: z.string(),
   changeSummary: z.string(),
-}).nullable();
+}).strict().nullable();
 
 /**
  * Individual score refinement result
+ * Note: .strict() adds additionalProperties: false which OpenAI requires
  */
 const scoreRefinementSchema = z.object({
   score: z.number().min(1).max(10),
@@ -181,12 +183,13 @@ const scoreRefinementSchema = z.object({
   evidence: z.array(z.string()),
   confidence: z.number().min(0).max(1),
   changeSummary: z.string(),
-}).nullable();
+}).strict().nullable();
 
 /**
  * Global refinement response — only changed sections/scores have values.
  * Note: OpenAI structured outputs don't support z.record() (dynamic keys).
  * All known keys are explicitly defined, with null for unchanged items.
+ * All objects use .strict() for additionalProperties: false (required by OpenAI).
  */
 export const refineSynthesisResponseSchema = z.object({
   updatedSections: z.object({
@@ -196,15 +199,15 @@ export const refineSynthesisResponseSchema = z.object({
     decisionDynamics: sectionRefinementSchema,
     strategicAssessment: sectionRefinementSchema,
     recommendedApproach: sectionRefinementSchema,
-  }),
+  }).strict(),
   updatedScores: z.object({
     strategic: scoreRefinementSchema,
     value: scoreRefinementSchema,
     readiness: scoreRefinementSchema,
     timeline: scoreRefinementSchema,
     bandwidth: scoreRefinementSchema,
-  }),
-});
+  }).strict(),
+}).strict();
 
 // ============ API REQUEST SCHEMAS ============
 
