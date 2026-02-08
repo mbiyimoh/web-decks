@@ -21,11 +21,18 @@ export function getRedis(): Redis {
       throw new Error('REDIS_URL not configured. Add Redis for token storage.');
     }
 
+    // Parse URL to check if it's Railway internal networking
+    const isRailwayInternal = redisUrl.includes('.railway.internal');
+
     redis = new Redis(redisUrl, {
       maxRetriesPerRequest: 3,
       lazyConnect: true,
       // TLS for Railway Redis (uses rediss:// URL)
       tls: redisUrl.startsWith('rediss://') ? {} : undefined,
+      // Railway internal networking needs explicit connection settings
+      connectTimeout: 10000, // 10 seconds
+      // Railway private networking uses IPv6, ensure we try that
+      family: isRailwayInternal ? 0 : 4, // 0 = auto-detect (IPv4/IPv6), 4 = IPv4 only
     });
 
     redis.on('error', (err) => {
@@ -33,7 +40,7 @@ export function getRedis(): Redis {
     });
 
     redis.on('connect', () => {
-      console.log('[Redis] Connected');
+      console.log('[Redis] Connected to:', redisUrl.replace(/:[^:@]+@/, ':***@'));
     });
 
     redis.on('ready', () => {
