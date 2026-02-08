@@ -56,7 +56,7 @@ export const stakeholderSchema = z.object({
     email: z.string().nullable(),
     phone: z.string().nullable(),
     linkedin: z.string().nullable(),
-  }).optional().describe('Contact details if mentioned'),
+  }).describe('Contact details if mentioned (use null for unknown fields)'),
   confidence: z.number().min(0).max(1).describe('How confident in role assignment'),
 });
 
