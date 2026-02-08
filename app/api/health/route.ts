@@ -39,7 +39,8 @@ export async function GET() {
       const redis = getRedis();
       await redis.ping();
       checks.redis = 'ok';
-    } catch {
+    } catch (error) {
+      console.error('[health] Redis check failed:', error);
       checks.redis = 'error';
     }
   }
