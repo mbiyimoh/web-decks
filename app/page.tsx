@@ -1,10 +1,10 @@
-import LandingPage from '@/components/landing/LandingPage';
+import ComingSoon from '@/components/landing/ComingSoon';
 
 export default function Home() {
-  return <LandingPage />;
+  return <ComingSoon />;
 }
 
 export const metadata = {
   title: '33 Strategies',
-  description: 'Premium strategy presentations and consulting proposals',
+  description: 'AI systems that learn how you think',
 };

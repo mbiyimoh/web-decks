@@ -54,7 +54,7 @@ export function ProductsPreviewSection({ reducedMotion }: ProductsPreviewSection
     <section ref={ref} className="py-16 md:py-24 lg:py-32 px-6 md:px-12 lg:px-16">
       <div className="max-w-5xl mx-auto">
         <SectionLabel
-          number="05"
+          number="04"
           title="The Products"
           reducedMotion={reducedMotion}
         />

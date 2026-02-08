@@ -46,7 +46,7 @@ export function ThreeLayerSection({ reducedMotion }: ThreeLayerSectionProps) {
   return (
     <section ref={ref} className="py-16 md:py-24 lg:py-32 px-6 md:px-12 lg:px-16">
       <div className="max-w-3xl mx-auto">
-        <SectionLabel number="06" title="The 33 Stack" reducedMotion={reducedMotion} />
+        <SectionLabel number="05" title="The 33 Stack" reducedMotion={reducedMotion} />
 
         <motion.h2
           {...fadeUp(0.1)}

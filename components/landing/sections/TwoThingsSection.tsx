@@ -23,7 +23,7 @@ export function TwoThingsSection({ reducedMotion }: TwoThingsSectionProps) {
     <section ref={ref} className="py-20 md:py-28 lg:py-36 px-6 md:px-12 lg:px-16">
       <div className="max-w-4xl mx-auto">
         <SectionLabel
-          number="04"
+          number="03"
           title="The Playbook"
           reducedMotion={reducedMotion}
         />

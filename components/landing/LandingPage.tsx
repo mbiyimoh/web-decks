@@ -108,13 +108,13 @@ export default function LandingPage() {
       <main className="relative z-10" aria-label="33 Strategies landing page content">
         <HeroSection reducedMotion={prefersReducedMotion} />
         <PillarsSection reducedMotion={prefersReducedMotion} />
+        <TwoThingsSection reducedMotion={prefersReducedMotion} />
+        <ProductsPreviewSection reducedMotion={prefersReducedMotion} />
+        <ThreeLayerSection reducedMotion={prefersReducedMotion} />
         <DrudgerySection
           reducedMotion={prefersReducedMotion}
           isDesktop={isDesktop}
         />
-        <TwoThingsSection reducedMotion={prefersReducedMotion} />
-        <ProductsPreviewSection reducedMotion={prefersReducedMotion} />
-        <ThreeLayerSection reducedMotion={prefersReducedMotion} />
         <LongViewSection reducedMotion={prefersReducedMotion} />
         <CTASection reducedMotion={prefersReducedMotion} />
       </main>

@@ -38,7 +38,7 @@ export function DrudgerySection({ reducedMotion, isDesktop }: DrudgerySectionPro
   const visibleCount = 3;
 
   const items = isDesktop ? drudgeryItemsDesktop : drudgeryItemsMobile;
-  const cycleSpeed = isDesktop ? 3000 : 4000; // Slower on mobile
+  const cycleSpeed = isDesktop ? 4500 : 6000; // Slower on mobile (50% slower than before)
 
   // Reset activeIndex if it's out of bounds (e.g., when switching between mobile/desktop)
   useEffect(() => {
@@ -77,7 +77,7 @@ export function DrudgerySection({ reducedMotion, isDesktop }: DrudgerySectionPro
         <div className="lg:grid lg:grid-cols-2 lg:gap-12">
           {/* Left side: Text content */}
           <div className="mb-8 lg:mb-0">
-            <SectionLabel number="03" title="The Struggle" reducedMotion={reducedMotion} />
+            <SectionLabel number="06" title="The Daily Drag" reducedMotion={reducedMotion} />
 
             <motion.h2
               {...fadeUp(0.1)}

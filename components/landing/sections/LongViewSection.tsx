@@ -32,7 +32,7 @@ export function LongViewSection({ reducedMotion }: LongViewSectionProps) {
       <div className="max-w-3xl mx-auto">
         <SectionLabel
           number="07"
-          title="The Compounding Effect"
+          title="The Daily Compounding Value"
           reducedMotion={reducedMotion}
         />
 
@@ -43,7 +43,7 @@ export function LongViewSection({ reducedMotion }: LongViewSectionProps) {
           The longer you work with our tools, the more they feel like an extension of your own thinking.
         </motion.h2>
 
-        {/* Image placeholder */}
+        {/* Clarity Canvas visualization */}
         <motion.div
           {...fadeUp(0.15)}
           className="mb-8 md:mb-10 rounded-xl overflow-hidden"
@@ -52,11 +52,11 @@ export function LongViewSection({ reducedMotion }: LongViewSectionProps) {
             border: `1px solid ${BORDER_CARD}`,
           }}
         >
-          <div className="aspect-[16/9] flex items-center justify-center">
-            <p className="text-zinc-600 text-sm font-mono">
-              [compounding context visualization]
-            </p>
-          </div>
+          <img
+            src="https://res.cloudinary.com/dx7p2jdrk/image/upload/v1770576078/clarity-canvas-example_xwhwlt.png"
+            alt="Clarity Canvas visualization showing interconnected context"
+            className="w-full h-auto"
+          />
         </motion.div>
 
         <motion.p
