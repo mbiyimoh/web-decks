@@ -183,8 +183,20 @@ export default function SynthesisGlobalRefine({
 
       const data = await res.json();
 
-      const hasUpdatedSections = data.updatedSections && Object.keys(data.updatedSections).length > 0;
-      const hasUpdatedScores = data.updatedScores && Object.keys(data.updatedScores).length > 0;
+      // Filter out null values from response (OpenAI schema returns null for unchanged items)
+      const filteredSections = data.updatedSections
+        ? Object.fromEntries(
+            Object.entries(data.updatedSections).filter(([, v]) => v !== null)
+          )
+        : {};
+      const filteredScores = data.updatedScores
+        ? Object.fromEntries(
+            Object.entries(data.updatedScores).filter(([, v]) => v !== null)
+          )
+        : {};
+
+      const hasUpdatedSections = Object.keys(filteredSections).length > 0;
+      const hasUpdatedScores = Object.keys(filteredScores).length > 0;
 
       if (!hasUpdatedSections && !hasUpdatedScores) {
         setState('idle');
@@ -193,9 +205,9 @@ export default function SynthesisGlobalRefine({
       }
 
       onRefinementComplete({
-        updatedSections: hasUpdatedSections ? data.updatedSections : undefined,
-        updatedScores: hasUpdatedScores ? data.updatedScores : undefined,
-      });
+        updatedSections: hasUpdatedSections ? filteredSections : undefined,
+        updatedScores: hasUpdatedScores ? filteredScores : undefined,
+      } as PendingRefinements);
       setPrompt('');
       setState('idle');
     } catch (err) {

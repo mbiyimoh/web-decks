@@ -165,28 +165,45 @@ export const refineSynthesisRequestSchema = z.object({
 });
 
 /**
- * Global refinement response — only changed sections/scores returned
- * Note: All fields required (no .optional()) for OpenAI structured output compatibility.
- * Return empty objects {} when no updates.
+ * Individual section refinement result
+ */
+const sectionRefinementSchema = z.object({
+  refinedContent: z.string(),
+  changeSummary: z.string(),
+}).nullable();
+
+/**
+ * Individual score refinement result
+ */
+const scoreRefinementSchema = z.object({
+  score: z.number().min(1).max(10),
+  rationale: z.string(),
+  evidence: z.array(z.string()),
+  confidence: z.number().min(0).max(1),
+  changeSummary: z.string(),
+}).nullable();
+
+/**
+ * Global refinement response — only changed sections/scores have values.
+ * Note: OpenAI structured outputs don't support z.record() (dynamic keys).
+ * All known keys are explicitly defined, with null for unchanged items.
  */
 export const refineSynthesisResponseSchema = z.object({
-  updatedSections: z.record(
-    z.string(),
-    z.object({
-      refinedContent: z.string(),
-      changeSummary: z.string(),
-    })
-  ),
-  updatedScores: z.record(
-    z.string(),
-    z.object({
-      score: z.number().min(1).max(10),
-      rationale: z.string(),
-      evidence: z.array(z.string()),
-      confidence: z.number().min(0).max(1),
-      changeSummary: z.string(),
-    })
-  ),
+  updatedSections: z.object({
+    companyOverview: sectionRefinementSchema,
+    goalsAndVision: sectionRefinementSchema,
+    painAndBlockers: sectionRefinementSchema,
+    decisionDynamics: sectionRefinementSchema,
+    strategicAssessment: sectionRefinementSchema,
+    recommendedApproach: sectionRefinementSchema,
+  }),
+  updatedScores: z.object({
+    strategic: scoreRefinementSchema,
+    value: scoreRefinementSchema,
+    readiness: scoreRefinementSchema,
+    timeline: scoreRefinementSchema,
+    bandwidth: scoreRefinementSchema,
+  }),
 });
 
 // ============ API REQUEST SCHEMAS ============

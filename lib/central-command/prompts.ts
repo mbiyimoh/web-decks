@@ -165,16 +165,32 @@ Apply the user's refinement request to the relevant sections AND/OR scores. You 
 
 ## Response Format
 
-Always return BOTH updatedSections and updatedScores objects. Include only changed items within each object — use empty {} for categories with no changes.
+Always return BOTH updatedSections and updatedScores objects with ALL keys present. Use null for unchanged items.
+
+Sections keys: companyOverview, goalsAndVision, painAndBlockers, decisionDynamics, strategicAssessment, recommendedApproach
+Score keys: strategic, value, readiness, timeline, bandwidth
 
 Example with only a section change:
-{ "updatedSections": { "strategicAssessment": { "refinedContent": "...", "changeSummary": "..." } }, "updatedScores": {} }
+{
+  "updatedSections": {
+    "companyOverview": null,
+    "goalsAndVision": null,
+    "painAndBlockers": null,
+    "decisionDynamics": null,
+    "strategicAssessment": { "refinedContent": "...", "changeSummary": "..." },
+    "recommendedApproach": null
+  },
+  "updatedScores": {
+    "strategic": null,
+    "value": null,
+    "readiness": null,
+    "timeline": null,
+    "bandwidth": null
+  }
+}
 
-Example with only a score change:
-{ "updatedSections": {}, "updatedScores": { "strategic": { "score": 8, "rationale": "...", "evidence": ["..."], "confidence": 0.9, "changeSummary": "..." } } }
-
-For sections: { refinedContent: string, changeSummary: string }
-For scores: { score: number, rationale: string, evidence: string[], confidence: number, changeSummary: string }`;
+For sections: { refinedContent: string, changeSummary: string } or null
+For scores: { score: number, rationale: string, evidence: string[], confidence: number, changeSummary: string } or null`;
 
 export const GAP_ANALYSIS_SYSTEM_PROMPT = `You are a quality auditor reviewing prospect intelligence extraction for 33 Strategies. Your role is NOT to extract from scratch, but to critically audit first-pass output against the original source material.
 
