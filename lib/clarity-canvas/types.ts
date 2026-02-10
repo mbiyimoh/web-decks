@@ -161,6 +161,11 @@ export interface ExtractOnlyResponse {
   overallThemes: string[];
   suggestedFollowUps: string[];
   extractionMetadata?: ExtractionMetadata;
+  // Raw input data for archive
+  originalInput?: string;
+  sourceType?: 'VOICE' | 'TEXT' | 'FILE';
+  durationSeconds?: number;
+  originalFileName?: string;
 }
 
 // Commit API request

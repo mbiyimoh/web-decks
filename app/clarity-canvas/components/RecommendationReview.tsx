@@ -21,6 +21,9 @@ interface RecommendationReviewProps {
   suggestedFollowUps: string[];
   sourceType: 'VOICE' | 'TEXT';
   extractionMetadata?: ExtractionMetadata;
+  originalInput?: string;
+  durationSeconds?: number;
+  originalFileName?: string;
   onCommit: (profile: ProfileWithSections, scores: ProfileScores, response?: CommitRecommendationsResponse) => void;
   onBack: () => void;
 }
@@ -31,6 +34,9 @@ export function RecommendationReview({
   suggestedFollowUps,
   sourceType,
   extractionMetadata,
+  originalInput,
+  durationSeconds,
+  originalFileName,
   onCommit,
   onBack,
 }: RecommendationReviewProps) {
@@ -174,6 +180,11 @@ export function RecommendationReview({
           confidence: r.chunk.confidence,
           sourceType: sourceType,
         })),
+        // Include original input for Raw Input Archive
+        originalInput,
+        inputType: sourceType,
+        durationSeconds,
+        originalFileName,
       };
 
       const response = await fetch('/api/clarity-canvas/commit', {

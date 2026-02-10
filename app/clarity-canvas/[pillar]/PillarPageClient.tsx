@@ -4,7 +4,8 @@ import { useState, useRef, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { motion, AnimatePresence } from 'framer-motion';
-import { ArrowLeft, Plus } from 'lucide-react';
+import { ArrowLeft, Plus, FileText, ChevronDown } from 'lucide-react';
+import { FieldCitation } from '@/components/clarity-canvas/FieldCitation';
 import { PROFILE_STRUCTURE, FIELD_DISPLAY_NAMES, type SectionKey } from '@/lib/clarity-canvas/profile-structure';
 import { getScoreColor } from '@/lib/clarity-canvas/types';
 import { calculateFieldScore } from '@/lib/clarity-canvas/scoring';
@@ -23,12 +24,14 @@ interface PillarPageClientProps {
   pillarKey: SectionKey;
   initialProfile: ProfileWithSections;
   initialScores: ProfileScores;
+  inputSessionCount: number;
 }
 
 export default function PillarPageClient({
   pillarKey,
   initialProfile,
   initialScores,
+  inputSessionCount,
 }: PillarPageClientProps) {
   const router = useRouter();
   const globalInputRef = useRef<HTMLDivElement>(null);
@@ -46,6 +49,7 @@ export default function PillarPageClient({
   const [sourceType, setSourceType] = useState<'VOICE' | 'TEXT'>('TEXT');
   const [celebrationData, setCelebrationData] =
     useState<CelebrationData | null>(null);
+  const [expandedFieldKey, setExpandedFieldKey] = useState<string | null>(null);
 
   // Pillar metadata
   const pillar = PROFILE_STRUCTURE[pillarKey];
@@ -168,11 +172,29 @@ export default function PillarPageClient({
               </h1>
             </div>
           </div>
-          <div
-            className="text-lg font-mono"
-            style={{ color: getScoreColor(pillarScore) }}
-          >
-            {Math.round(pillarScore)}%
+          <div className="flex items-center gap-4">
+            {inputSessionCount > 0 && (
+              <Link
+                href={`/clarity-canvas/archive?pillar=${pillarKey}`}
+                className="flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs hover:opacity-80 transition-opacity"
+                style={{
+                  background: 'rgba(212, 165, 74, 0.1)',
+                  color: '#d4a54a',
+                  border: '1px solid #d4a54a',
+                }}
+              >
+                <FileText size={12} />
+                <span>
+                  {inputSessionCount} raw input{inputSessionCount !== 1 ? 's' : ''}
+                </span>
+              </Link>
+            )}
+            <div
+              className="text-lg font-mono"
+              style={{ color: getScoreColor(pillarScore) }}
+            >
+              {Math.round(pillarScore)}%
+            </div>
           </div>
         </div>
       </motion.header>
@@ -211,6 +233,9 @@ export default function PillarPageClient({
                 suggestedFollowUps={extractionResult.suggestedFollowUps}
                 sourceType={sourceType}
                 extractionMetadata={extractionResult.extractionMetadata}
+                originalInput={extractionResult.originalInput}
+                durationSeconds={extractionResult.durationSeconds}
+                originalFileName={extractionResult.originalFileName}
                 onCommit={handleCommit}
                 onBack={handleCancelReview}
               />
@@ -301,28 +326,69 @@ export default function PillarPageClient({
                           field.fullContext && field.fullContext.trim().length > 0;
                         const displayName =
                           FIELD_DISPLAY_NAMES[field.key] || field.key;
+                        const isExpanded = expandedFieldKey === field.key;
+                        const canExpand = hasData;
 
                         return (
-                          <div key={field.key} className="flex items-start gap-3">
-                            <span
-                              className={`w-2 h-2 mt-1.5 rounded-full flex-shrink-0 ${
-                                hasData ? 'bg-green-500' : 'bg-zinc-600'
-                              }`}
-                            />
-                            <div className="flex-1 min-w-0">
-                              <p className="text-sm text-[#f5f5f5]">{displayName}</p>
-                              <p className="text-xs text-[#888888] truncate">
-                                {hasData
-                                  ? field.summary || field.fullContext
-                                  : 'No data yet'}
-                              </p>
+                          <div key={field.key}>
+                            <div
+                              className={`flex items-start gap-3 ${canExpand ? 'cursor-pointer' : ''}`}
+                              onClick={() => {
+                                if (canExpand) {
+                                  setExpandedFieldKey(isExpanded ? null : field.key);
+                                }
+                              }}
+                            >
+                              <span
+                                className={`w-2 h-2 mt-1.5 rounded-full flex-shrink-0 ${
+                                  hasData ? 'bg-green-500' : 'bg-zinc-600'
+                                }`}
+                              />
+                              <div className="flex-1 min-w-0">
+                                <div className="flex items-center gap-1">
+                                  <p className="text-sm text-[#f5f5f5]">{displayName}</p>
+                                  {canExpand && (
+                                    <ChevronDown
+                                      size={14}
+                                      className={`text-zinc-500 transition-transform ${isExpanded ? 'rotate-180' : ''}`}
+                                    />
+                                  )}
+                                </div>
+                                <p className="text-xs text-[#888888] truncate">
+                                  {hasData
+                                    ? field.summary || field.fullContext
+                                    : 'No data yet'}
+                                </p>
+                              </div>
+                              {hasData && field.sources.length > 0 && (
+                                <div className="flex-shrink-0" onClick={(e) => e.stopPropagation()}>
+                                  <FieldCitation
+                                    fieldId={field.id}
+                                    sourceCount={field.sources.length}
+                                  />
+                                </div>
+                              )}
                             </div>
-                            {hasData && field.sources.length > 0 && (
-                              <span className="text-xs text-zinc-500 flex-shrink-0">
-                                {field.sources.length} source
-                                {field.sources.length !== 1 ? 's' : ''}
-                              </span>
-                            )}
+                            {/* Expanded content */}
+                            <AnimatePresence>
+                              {isExpanded && field.fullContext && (
+                                <motion.div
+                                  initial={{ height: 0, opacity: 0 }}
+                                  animate={{ height: 'auto', opacity: 1 }}
+                                  exit={{ height: 0, opacity: 0 }}
+                                  transition={{ duration: 0.2 }}
+                                  className="overflow-hidden"
+                                >
+                                  <div className="ml-5 mt-2 pl-3 border-l-2 border-zinc-700">
+                                    <p className="text-sm text-[#aaaaaa] whitespace-pre-wrap">
+                                      {field.fullContext.length > 400
+                                        ? field.fullContext.slice(0, 400) + '...'
+                                        : field.fullContext}
+                                    </p>
+                                  </div>
+                                </motion.div>
+                              )}
+                            </AnimatePresence>
                           </div>
                         );
                       })}

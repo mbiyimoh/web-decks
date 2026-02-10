@@ -1,10 +1,8 @@
-import { cookies } from 'next/headers';
 import { notFound } from 'next/navigation';
-import { getIronSession } from 'iron-session';
-import { getSessionOptions, SessionData } from '@/lib/session';
 import { PROFILE_STRUCTURE, type SectionKey } from '@/lib/clarity-canvas/profile-structure';
 import { prisma } from '@/lib/prisma';
 import { calculateAllScores } from '@/lib/clarity-canvas/scoring';
+import { ensureUserFromUnifiedSession } from '@/lib/user-sync';
 import type { ProfileWithSections } from '@/lib/clarity-canvas/types';
 import PillarPageClient from './PillarPageClient';
 
@@ -26,16 +24,16 @@ export default async function PillarPage({
     notFound();
   }
 
-  // Get session
-  const session = await getIronSession<SessionData>(await cookies(), getSessionOptions());
-  if (!session?.isLoggedIn || !session?.userEmail) {
+  // Get user from unified session (also triggers lazy migration for legacy profiles)
+  const user = await ensureUserFromUnifiedSession();
+  if (!user) {
     notFound();
   }
 
   // Fetch profile with full nested relations
   const profile = await prisma.clarityProfile.findFirst({
     where: {
-      user: { email: session.userEmail }
+      userRecordId: user.id
     },
     include: {
       sections: {
@@ -58,6 +56,14 @@ export default async function PillarPage({
     notFound();
   }
 
+  // Count input sessions for this pillar
+  const inputSessionCount = await prisma.inputSession.count({
+    where: {
+      clarityProfileId: profile.id,
+      sourceContext: { contains: pillar },
+    },
+  });
+
   // Calculate scores server-side
   const typedProfile = profile as ProfileWithSections;
   const scores = calculateAllScores(typedProfile.sections);
@@ -67,6 +73,7 @@ export default async function PillarPage({
       pillarKey={pillar as SectionKey}
       initialProfile={typedProfile}
       initialScores={scores}
+      inputSessionCount={inputSessionCount}
     />
   );
 }

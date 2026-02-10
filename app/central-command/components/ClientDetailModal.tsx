@@ -26,6 +26,7 @@ import DecisionPanel from './DecisionPanel';
 import StakeholdersSection from './StakeholdersSection';
 import OperationalDetails from './OperationalDetails';
 import ScoreAssessmentPanel from './ScoreAssessmentPanel';
+import { RawInputTab } from './RawInputTab';
 import type { DecisionBucket } from '@/lib/central-command/decision-templates';
 import type { Stakeholder } from '@/lib/central-command/types';
 import { getScoreFieldName } from '@/lib/central-command/score-display';
@@ -534,6 +535,15 @@ export default function ClientDetailModal({
                 onSave={(newValue, source) =>
                   handleUpdate({ notes: newValue, notesSource: source })
                 }
+              />
+            </Section>
+
+            {/* Raw Input Archive Section */}
+            <Section title="RAW INPUT">
+              <RawInputTab
+                prospectId={prospect.id}
+                prospectName={prospect.name}
+                legacyRawInputText={prospect.rawInputText}
               />
             </Section>
 

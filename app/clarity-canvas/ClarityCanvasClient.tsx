@@ -204,6 +204,9 @@ export function ClarityCanvasClient({ user }: ClarityCanvasClientProps) {
             suggestedFollowUps={extractionResult.suggestedFollowUps}
             sourceType={brainDumpSourceType}
             extractionMetadata={extractionResult.extractionMetadata}
+            originalInput={extractionResult.originalInput}
+            durationSeconds={extractionResult.durationSeconds}
+            originalFileName={extractionResult.originalFileName}
             onCommit={(updatedProfile, newScores) => {
               setPreviousScores(scores);
               setProfile(updatedProfile);

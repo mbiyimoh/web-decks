@@ -38,8 +38,7 @@ async function main() {
       clientName: 'Better Contacts',
       redirectUris: [
         'http://localhost:3000/api/auth/callback/clarity-canvas',
-        // Add production URL when ready:
-        // 'https://bettercontacts.app/api/auth/callback/clarity-canvas',
+        'https://bettercontacts.ai/api/auth/callback/clarity-canvas',
       ],
       grantTypes: ['authorization_code', 'refresh_token'],
       scope: 'read:profile read:synthesis search:profile',

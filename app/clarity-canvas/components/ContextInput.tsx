@@ -84,7 +84,12 @@ export function ContextInput({
       }
 
       const result = await response.json();
-      onExtracted(result);
+      // Include original input for Raw Input Archive
+      onExtracted({
+        ...result,
+        originalInput: textInput,
+        sourceType: 'TEXT',
+      });
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Failed to process text input');
       setStep('text');
@@ -132,7 +137,13 @@ export function ContextInput({
       }
 
       const result = await extractResponse.json();
-      onExtracted(result);
+      // Include original transcript and duration for Raw Input Archive
+      onExtracted({
+        ...result,
+        originalInput: transcript,
+        sourceType: 'VOICE',
+        durationSeconds: Math.round(duration),
+      });
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Failed to process recording');
       setStep('choose');
@@ -211,7 +222,13 @@ export function ContextInput({
         console.warn('File was truncated to 50,000 characters');
       }
 
-      onExtracted(result);
+      // Include extracted text and filename for Raw Input Archive
+      onExtracted({
+        ...result,
+        originalInput: text,
+        sourceType: 'FILE',
+        originalFileName: selectedFile.name,
+      });
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Failed to process file');
       setStep('uploading');

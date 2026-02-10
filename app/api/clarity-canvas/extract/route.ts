@@ -246,6 +246,9 @@ Now return the complete, final set of chunks.`,
       overallThemes: extraction.overallThemes,
       suggestedFollowUps: extraction.suggestedFollowUps,
       extractionMetadata,
+      // Echo back original input for archive creation
+      originalInput: transcript,
+      sourceType,
     });
   } catch (error) {
     console.error('Extraction error:', error);

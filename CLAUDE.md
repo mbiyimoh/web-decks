@@ -155,8 +155,60 @@ AI-powered platform for building customer clarity through structured modules.
 **Database Models:**
 - `ClarityProfile` — User's profile with nested sections
 - `ProfileSection`, `ProfileSubsection`, `ProfileField` — Hierarchical profile structure
+- `InputSession` — Raw user inputs (brain dumps) with metadata
+- `FieldSource` — Links extracted chunks to their source InputSession
 - `Persona`, `PersonaBrainDump`, `SharpenerSession` — Persona Sharpener data
 - `ValidationLink`, `ValidationSession`, `Response` — Validation system
+
+#### Raw Input Archive (`/clarity-canvas/archive`)
+
+Preserves all raw user inputs (brain dumps, voice transcripts, file uploads) with source attribution.
+
+**Key Files:**
+- `app/clarity-canvas/archive/` — Archive page and components
+- `lib/input-session/` — Types and utilities for InputSession management
+- `components/clarity-canvas/FieldCitation.tsx` — Source citation popover with deep-linking
+
+**Data Flow:**
+1. User submits brain dump → stored as `InputSession.rawContent`
+2. AI extracts chunks → each saved as `FieldSource.rawContent` linked to InputSession
+3. Field displays show source count → clicking opens popover with "View in archive" links
+4. Deep-link navigates to archive with session auto-expanded and highlighted
+
+**Key Pattern - Atomic Commits:**
+The commit route (`/api/clarity-canvas/commit`) creates InputSession AFTER all field updates succeed to prevent orphaned sessions on partial failures.
+
+```typescript
+// Create FieldSources first (without inputSessionId)
+const createdFieldSourceIds: string[] = [];
+for (const rec of recommendations) {
+  const fieldSource = await prisma.fieldSource.create({...});
+  createdFieldSourceIds.push(fieldSource.id);
+}
+
+// Create InputSession only after all succeed
+const inputSession = await prisma.inputSession.create({...});
+
+// Link FieldSources to InputSession
+await prisma.fieldSource.updateMany({
+  where: { id: { in: createdFieldSourceIds } },
+  data: { inputSessionId: inputSession.id },
+});
+```
+
+**Gotcha - FieldSource.rawContent vs InputSession.rawContent:**
+- `InputSession.rawContent` = verbatim user input
+- `FieldSource.rawContent` = AI-summarized/extracted text (NOT verbatim)
+- Deep-linking highlights the card, not specific text (text matching won't work)
+
+#### Expandable Field Details
+
+Pillar pages show expandable field items. Clicking a field with data expands to show up to 400 characters of `fullContext`.
+
+**Implementation:** `app/clarity-canvas/[pillar]/PillarPageClient.tsx`
+- State: `expandedFieldKey` tracks which field is expanded
+- Any field with `hasData` shows chevron and is clickable
+- Uses framer-motion AnimatePresence for smooth expand/collapse
 
 ### 3. Learning Platform (`/learning`)
 
@@ -632,8 +684,11 @@ stm grep "pattern"        # Search tasks
 
 ### Clarity Canvas
 - `GET/POST /api/clarity-canvas/profile` — Profile CRUD
-- `POST /api/clarity-canvas/extract` — Brain dump extraction
+- `POST /api/clarity-canvas/extract` — Brain dump extraction (two-pass with gap analysis)
+- `POST /api/clarity-canvas/commit` — Commit approved recommendations to profile
 - `POST /api/clarity-canvas/transcribe` — Voice transcription
+- `GET /api/clarity-canvas/sessions` — List InputSessions for archive
+- `GET /api/clarity-canvas/fields/[id]/sources` — Get FieldSources for a field (deep-linking)
 
 ### Persona Sharpener
 - `GET/POST /api/clarity-canvas/modules/persona-sharpener/personas` — Personas

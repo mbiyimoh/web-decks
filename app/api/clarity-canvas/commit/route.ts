@@ -5,6 +5,7 @@ import { buildKeyLookups, fuzzyMatchKey, CONTEXT_DELIMITER } from '@/lib/clarity
 import { calculateAllScores } from '@/lib/clarity-canvas/scoring';
 import { invalidateSynthesis } from '@/lib/companion/cache';
 import { SourceType } from '@prisma/client';
+import { generateSessionTitle, mapSourceTypeToInputType } from '@/lib/input-session/utils';
 import type {
   ProfileWithSections,
   CommitRecommendationsRequest,
@@ -32,7 +33,12 @@ export async function POST(
 
   try {
     // 2. Parse request body
-    const body = (await request.json()) as CommitRecommendationsRequest;
+    const body = (await request.json()) as CommitRecommendationsRequest & {
+      originalInput?: string;
+      inputType?: 'VOICE' | 'TEXT' | 'FILE';
+      durationSeconds?: number;
+      originalFileName?: string;
+    };
 
     if (!body.recommendations || body.recommendations.length === 0) {
       return NextResponse.json(
@@ -77,11 +83,16 @@ export async function POST(
     const typedProfileBefore = profile as ProfileWithSections;
     const previousScores = calculateAllScores(typedProfileBefore.sections);
 
+    // 5.5. Prepare InputSession data (will create AFTER successful field updates)
+    const trimmedInput = typeof body.originalInput === 'string' ? body.originalInput.trim() : '';
+    const shouldCreateInputSession = trimmedInput.length >= 10;
+
     // 6. Build key lookups for fuzzy matching
     const { sectionKeys, subsectionKeys, fieldKeys } = buildKeyLookups();
 
     let savedCount = 0;
     let droppedCount = 0;
+    const createdFieldSourceIds: string[] = [];
     const droppedChunks: {
       reason: string;
       chunk: {
@@ -92,8 +103,9 @@ export async function POST(
       }
     }[] = [];
 
-    // 7. Process recommendations in parallel
-    const commitPromises = body.recommendations.map(async (rec) => {
+    // 7. Process recommendations sequentially (connection pool limit = 1)
+    // Create FieldSources WITHOUT inputSessionId first - we'll link them after all succeed
+    for (const rec of body.recommendations) {
       // Fuzzy-match section key
       const matchedSectionKey = fuzzyMatchKey(rec.targetSection, sectionKeys);
       if (!matchedSectionKey) {
@@ -107,7 +119,7 @@ export async function POST(
             summary: rec.summary
           }
         });
-        return null;
+        continue;
       }
 
       const section = profile.sections.find((s) => s.key === matchedSectionKey);
@@ -122,7 +134,7 @@ export async function POST(
             summary: rec.summary
           }
         });
-        return null;
+        continue;
       }
 
       // Fuzzy-match subsection key
@@ -141,7 +153,7 @@ export async function POST(
             summary: rec.summary
           }
         });
-        return null;
+        continue;
       }
 
       const subsection = section.subsections.find((ss) => ss.key === matchedSubsectionKey);
@@ -156,7 +168,7 @@ export async function POST(
             summary: rec.summary
           }
         });
-        return null;
+        continue;
       }
 
       // Fuzzy-match field key
@@ -176,7 +188,7 @@ export async function POST(
             summary: rec.summary
           }
         });
-        return null;
+        continue;
       }
 
       const field = subsection.fields.find((f) => f.key === matchedFieldKey);
@@ -191,7 +203,7 @@ export async function POST(
             summary: rec.summary
           }
         });
-        return null;
+        continue;
       }
 
       // Update field with new content
@@ -200,35 +212,62 @@ export async function POST(
         ? `${existingContext}${CONTEXT_DELIMITER}${rec.content}`
         : rec.content;
 
-      // Create source record and update field in parallel
-      await Promise.all([
-        prisma.fieldSource.create({
-          data: {
-            fieldId: field.id,
-            type: rec.sourceType === 'VOICE' ? SourceType.VOICE : SourceType.TEXT,
-            rawContent: rec.content,
-            userConfidence: rec.confidence,
-          },
-        }),
-        prisma.profileField.update({
-          where: { id: field.id },
-          data: {
-            summary: rec.summary,
-            fullContext: newContext,
-            confidence: rec.confidence,
-          },
-        }),
-      ]);
+      // Create source record (without inputSessionId - will link after)
+      const fieldSource = await prisma.fieldSource.create({
+        data: {
+          fieldId: field.id,
+          type: rec.sourceType === 'VOICE' ? SourceType.VOICE : SourceType.TEXT,
+          rawContent: rec.content,
+          userConfidence: rec.confidence,
+        },
+      });
+      createdFieldSourceIds.push(fieldSource.id);
+
+      await prisma.profileField.update({
+        where: { id: field.id },
+        data: {
+          summary: rec.summary,
+          fullContext: newContext,
+          confidence: rec.confidence,
+        },
+      });
 
       savedCount++;
-      return rec;
-    });
-
-    await Promise.all(commitPromises);
+    }
 
     console.log(`[commit] Saved ${savedCount} recommendations, dropped ${droppedCount}`);
     if (droppedChunks.length > 0) {
       console.log('[commit] Dropped chunks:', JSON.stringify(droppedChunks, null, 2));
+    }
+
+    // 7.5. Create InputSession AFTER all field updates succeed, then link FieldSources
+    if (shouldCreateInputSession && savedCount > 0) {
+      const firstSection = body.recommendations[0]?.targetSection || 'global';
+      const inputSession = await prisma.inputSession.create({
+        data: {
+          clarityProfileId: profile.id,
+          inputType: mapSourceTypeToInputType(body.inputType || 'TEXT'),
+          title: generateSessionTitle(body.recommendations),
+          rawContent: trimmedInput,
+          sourceModule: 'clarity-canvas',
+          sourceContext: firstSection,
+          durationSeconds: body.durationSeconds,
+          originalFileName: body.originalFileName,
+          capturedAt: new Date(),
+          processedAt: new Date(),
+          fieldsPopulated: savedCount,
+        },
+      });
+      console.log(`[commit] Created InputSession ${inputSession.id}`);
+
+      // Link all created FieldSources to this InputSession
+      if (createdFieldSourceIds.length > 0) {
+        await prisma.fieldSource.updateMany({
+          where: { id: { in: createdFieldSourceIds } },
+          data: { inputSessionId: inputSession.id },
+        });
+        console.log(`[commit] Linked ${createdFieldSourceIds.length} FieldSources to InputSession`);
+      }
     }
 
     // 8. Re-fetch profile with same includes after all writes
@@ -279,8 +318,11 @@ export async function POST(
     });
   } catch (error) {
     console.error('[commit] Error:', error);
+    const errorMessage = error instanceof Error ? error.message : 'Unknown error';
+    const errorStack = error instanceof Error ? error.stack : '';
+    console.error('[commit] Stack:', errorStack);
     return NextResponse.json(
-      { error: 'Failed to commit recommendations' },
+      { error: `Failed to commit recommendations: ${errorMessage}` },
       { status: 500 }
     );
   }

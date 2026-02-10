@@ -110,6 +110,22 @@ export async function POST(request: NextRequest) {
         },
       });
 
+      // Create InputSession to track the raw input (if provided)
+      if (data.rawInputText) {
+        await tx.inputSession.create({
+          data: {
+            pipelineClientId: client.id,
+            inputType: 'TEXT_INPUT',
+            title: `Initial intake - ${data.name}`,
+            rawContent: data.rawInputText,
+            sourceModule: 'central-command',
+            sourceContext: 'prospect-intake',
+            capturedAt: new Date(),
+            processedAt: new Date(),
+          },
+        });
+      }
+
       return { client, record };
     });
 

@@ -72,9 +72,10 @@ model ClarityProfile {
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
-  sections   ProfileSection[]
-  personas   Persona[]
-  brainDumps PersonaBrainDump[]
+  sections      ProfileSection[]
+  personas      Persona[]
+  brainDumps    PersonaBrainDump[]
+  inputSessions InputSession[]
 
   @@index([userId])
   @@index([userRecordId])
@@ -147,15 +148,73 @@ model FieldSource {
   questionId     String? // If from interview question
   userConfidence Float      @default(1.0) // 0-1 user-stated at capture time
 
+  // Link to parent input session (for archive traceability)
+  inputSessionId String?
+  inputSession   InputSession? @relation(fields: [inputSessionId], references: [id], onDelete: SetNull)
+
   field ProfileField @relation(fields: [fieldId], references: [id], onDelete: Cascade)
 
   @@index([fieldId])
+  @@index([inputSessionId])
 }
 
 enum SourceType {
   VOICE
   TEXT
   QUESTION
+}
+
+// ============================================================================
+// INPUT SESSION — Tracks complete raw inputs as submitted by user
+// ============================================================================
+
+model InputSession {
+  id String @id @default(cuid())
+
+  // Ownership (polymorphic - either Clarity Canvas or Central Command)
+  clarityProfileId String?
+  clarityProfile   ClarityProfile? @relation(fields: [clarityProfileId], references: [id], onDelete: Cascade)
+
+  pipelineClientId String?
+  pipelineClient   PipelineClient? @relation(fields: [pipelineClientId], references: [id], onDelete: Cascade)
+
+  // Input details
+  inputType   InputType
+  title       String
+  rawContent  String    @db.Text
+
+  // Source metadata
+  sourceModule  String  // "clarity-canvas", "central-command"
+  sourceContext String? // e.g., "individual-pillar", "prospect-intake"
+
+  // Voice-specific
+  durationSeconds Int?
+
+  // File-specific
+  originalFileName String?
+
+  // Processing results
+  fieldsPopulated Int @default(0)
+
+  // Timestamps
+  capturedAt  DateTime  @default(now())
+  processedAt DateTime?
+
+  // Metadata (flexible for future needs)
+  metadata Json @default("{}")
+
+  // Relations
+  fieldSources FieldSource[]
+
+  @@index([clarityProfileId, capturedAt])
+  @@index([pipelineClientId, capturedAt])
+  @@index([sourceModule, capturedAt])
+}
+
+enum InputType {
+  VOICE_TRANSCRIPT
+  TEXT_INPUT
+  FILE_UPLOAD
 }
 
 // ============================================================================
@@ -462,6 +521,7 @@ model PipelineClient {
   updatedAt DateTime @updatedAt
   pipelineRecord PipelineRecord?
   rubricFeedback RubricFeedback[]
+  inputSessions  InputSession[]
 }
 
 model PipelineRecord {
