@@ -23,6 +23,9 @@ import { getAuth } from '@/lib/auth/unified-auth';
 export async function GET(request: NextRequest) {
   const { searchParams } = new URL(request.url);
 
+  // Use configured base URL for redirects (not request.url which may be internal server address)
+  const BASE_URL = process.env.NEXTAUTH_URL || 'https://33strategies.ai';
+
   // Extract OAuth parameters
   const clientId = searchParams.get('client_id');
   const redirectUri = searchParams.get('redirect_uri');
@@ -112,8 +115,11 @@ export async function GET(request: NextRequest) {
 
   if (!auth.authenticated || !auth.userId) {
     // Redirect to login with return URL
-    const loginUrl = new URL('/auth/signin', request.url);
-    loginUrl.searchParams.set('callbackUrl', request.url);
+    // Build the full authorization URL using the public base URL
+    const currentPath = `/api/oauth/authorize?${searchParams.toString()}`;
+    const callbackUrl = `${BASE_URL}${currentPath}`;
+    const loginUrl = new URL('/auth/signin', BASE_URL);
+    loginUrl.searchParams.set('callbackUrl', callbackUrl);
     return NextResponse.redirect(loginUrl);
   }
 
@@ -154,7 +160,7 @@ export async function GET(request: NextRequest) {
   }
 
   // Redirect to consent screen
-  const consentUrl = new URL('/oauth/consent', request.url);
+  const consentUrl = new URL('/oauth/consent', BASE_URL);
   consentUrl.searchParams.set('client_id', clientId);
   consentUrl.searchParams.set('scope', scope);
   consentUrl.searchParams.set('redirect_uri', redirectUri);
