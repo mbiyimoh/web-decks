@@ -4,7 +4,7 @@ import { validateReturnTo } from '@/lib/auth-utils';
 import { UnifiedAuthGate } from './UnifiedAuthGate';
 
 interface SignInPageProps {
-  searchParams: Promise<{ returnTo?: string }>;
+  searchParams: Promise<{ returnTo?: string; callbackUrl?: string }>;
 }
 
 /**
@@ -22,10 +22,11 @@ interface SignInPageProps {
  * After successful auth, user is redirected to their original destination.
  */
 export default async function SignInPage({ searchParams }: SignInPageProps) {
-  const { returnTo } = await searchParams;
+  const { returnTo, callbackUrl } = await searchParams;
 
-  // Validate and sanitize returnTo to prevent open redirects
-  const destination = validateReturnTo(returnTo);
+  // Support both param names: returnTo (internal) and callbackUrl (OAuth/NextAuth)
+  // Validate and sanitize to prevent open redirects
+  const destination = validateReturnTo(returnTo || callbackUrl);
 
   // Single unified check - handles both NextAuth and client portal sessions
   const session = await getUnifiedSession();

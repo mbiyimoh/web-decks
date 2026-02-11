@@ -53,7 +53,15 @@ export function validateReturnTo(returnTo: string | undefined): string {
   }
 
   // Allowlist of valid route prefixes
-  const allowedPrefixes = ['/learning', '/clarity-canvas', '/auth'];
+  const allowedPrefixes = [
+    '/learning',
+    '/clarity-canvas',
+    '/auth',
+    '/api/oauth',        // OAuth authorization flow callbacks
+    '/client-portals',   // Client portal auth
+    '/strategist-portals', // Strategist portal auth
+    '/central-command',  // Central command auth
+  ];
   const isAllowed = allowedPrefixes.some((prefix) => returnTo.startsWith(prefix));
 
   if (!isAllowed) {
