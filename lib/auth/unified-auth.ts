@@ -13,8 +13,9 @@ import { NextRequest } from 'next/server';
 import { cookies } from 'next/headers';
 import { getIronSession } from 'iron-session';
 import { SessionData, getSessionOptions } from '@/lib/session';
-import { getTokenAuth, AccessTokenPayload } from '@/lib/oauth';
+import { getTokenAuth } from '@/lib/oauth';
 import { getCredentialByClientId } from '@/lib/client-auth-db';
+import { auth as getNextAuthSession } from '@/lib/auth';
 
 // ============================================================================
 // Types
@@ -62,7 +63,22 @@ export async function getAuth(request?: NextRequest): Promise<AuthResult> {
     }
   }
 
-  // Fall back to iron-session
+  // Try NextAuth session (team members via Google OAuth)
+  try {
+    const nextAuthSession = await getNextAuthSession();
+    if (nextAuthSession?.user?.id && nextAuthSession?.user?.email) {
+      return {
+        authenticated: true,
+        method: 'session',
+        userId: nextAuthSession.user.id,
+        email: nextAuthSession.user.email,
+      };
+    }
+  } catch {
+    // NextAuth session not available
+  }
+
+  // Fall back to iron-session (client/strategist portals)
   try {
     const session = await getIronSession<SessionData>(
       await cookies(),
