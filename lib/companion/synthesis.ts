@@ -7,6 +7,7 @@
 
 import { prisma } from '@/lib/prisma';
 import { nanoid } from 'nanoid';
+import { Prisma } from '@prisma/client';
 import type {
   BaseSynthesis,
   PersonaSummary,
@@ -23,6 +24,53 @@ import type {
  * Approximate token count using word-based heuristic.
  * Average English word is ~1.33 tokens (including punctuation/spacing).
  */
+// ============================================================================
+// User ID Resolution
+// ============================================================================
+
+/**
+ * Build a Prisma where clause that handles all user ID formats:
+ * - email address (from credentials OAuth)
+ * - User.id (cuid)
+ * - authId (Supabase ID or email)
+ *
+ * Always returns a valid WHERE clause (never null).
+ */
+export async function resolveProfileWhereClause(
+  userId: string
+): Promise<Prisma.ClarityProfileWhereInput> {
+  // Try direct match first (handles User.id and authId)
+  const directWhere: Prisma.ClarityProfileWhereInput = {
+    OR: [{ userId }, { userRecordId: userId }],
+  };
+
+  // If userId looks like an email, also try to resolve via User table
+  if (userId.includes('@')) {
+    const user = await prisma.user.findUnique({
+      where: { email: userId },
+      select: { id: true, authId: true },
+    });
+
+    if (user) {
+      // Extend where clause to include User.authId and User.id
+      return {
+        OR: [
+          { userId },
+          { userRecordId: userId },
+          { userId: user.authId },
+          { userRecordId: user.id },
+        ],
+      };
+    }
+  }
+
+  return directWhere;
+}
+
+// ============================================================================
+// Token Counting (word-based approximation)
+// ============================================================================
+
 export function estimateTokens(text: string): number {
   if (!text) return 0;
   const wordCount = text.split(/\s+/).filter(Boolean).length;
@@ -51,11 +99,11 @@ export function generateVersion(): string {
 export async function calculateProfileHash(userId: string): Promise<string> {
   const crypto = await import('crypto');
 
-  // Get timestamps that would affect synthesis
+  // Resolve WHERE clause (handles email, User.id, authId)
+  const whereClause = await resolveProfileWhereClause(userId);
+
   const profile = await prisma.clarityProfile.findFirst({
-    where: {
-      OR: [{ userId }, { userRecordId: userId }],
-    },
+    where: whereClause,
     include: {
       sections: true,
       personas: true,
@@ -96,11 +144,14 @@ export async function calculateProfileHash(userId: string): Promise<string> {
 export async function generateBaseSynthesis(
   userId: string
 ): Promise<BaseSynthesis | null> {
+  console.log('[DEBUG generateBaseSynthesis] Looking up profile for userId:', userId);
+
+  // Resolve WHERE clause (handles email, User.id, authId)
+  const whereClause = await resolveProfileWhereClause(userId);
+
   // Fetch profile with all nested data
   const profile = await prisma.clarityProfile.findFirst({
-    where: {
-      OR: [{ userId }, { userRecordId: userId }],
-    },
+    where: whereClause,
     include: {
       sections: {
         include: {
@@ -114,6 +165,8 @@ export async function generateBaseSynthesis(
       personas: true,
     },
   });
+
+  console.log('[DEBUG generateBaseSynthesis] Profile found:', !!profile);
 
   if (!profile) {
     return null;

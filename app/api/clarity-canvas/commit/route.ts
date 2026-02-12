@@ -3,6 +3,7 @@ import { prisma } from '@/lib/prisma';
 import { ensureUserFromUnifiedSession } from '@/lib/user-sync';
 import { buildKeyLookups, fuzzyMatchKey, CONTEXT_DELIMITER } from '@/lib/clarity-canvas/key-matching';
 import { calculateAllScores } from '@/lib/clarity-canvas/scoring';
+import { synthesizeField } from '@/lib/clarity-canvas/synthesis';
 import { invalidateSynthesis } from '@/lib/companion/cache';
 import { SourceType } from '@prisma/client';
 import { generateSessionTitle, mapSourceTypeToInputType } from '@/lib/input-session/utils';
@@ -93,6 +94,7 @@ export async function POST(
     let savedCount = 0;
     let droppedCount = 0;
     const createdFieldSourceIds: string[] = [];
+    const fieldsToSynthesize: Set<string> = new Set(); // Track fields that may need synthesis
     const droppedChunks: {
       reason: string;
       chunk: {
@@ -223,6 +225,9 @@ export async function POST(
       });
       createdFieldSourceIds.push(fieldSource.id);
 
+      // Track this field for potential synthesis (if it now has multiple sources)
+      fieldsToSynthesize.add(field.id);
+
       await prisma.profileField.update({
         where: { id: field.id },
         data: {
@@ -268,6 +273,30 @@ export async function POST(
         });
         console.log(`[commit] Linked ${createdFieldSourceIds.length} FieldSources to InputSession`);
       }
+    }
+
+    // 7.6. Synthesize fields that now have multiple sources
+    let synthesizedCount = 0;
+    for (const fieldId of Array.from(fieldsToSynthesize)) {
+      // Check if field has multiple sources
+      const fieldWithSources = await prisma.profileField.findUnique({
+        where: { id: fieldId },
+        include: { sources: true },
+      });
+
+      if (fieldWithSources && fieldWithSources.sources.length > 1) {
+        try {
+          await synthesizeField(fieldId);
+          synthesizedCount++;
+          console.log(`[commit] Synthesized field ${fieldId} with ${fieldWithSources.sources.length} sources`);
+        } catch (synthErr) {
+          // Log error but don't fail the commit - field keeps latest source's summary
+          console.error(`[commit] Synthesis failed for field ${fieldId}:`, synthErr);
+        }
+      }
+    }
+    if (synthesizedCount > 0) {
+      console.log(`[commit] Synthesized ${synthesizedCount} fields`);
     }
 
     // 8. Re-fetch profile with same includes after all writes

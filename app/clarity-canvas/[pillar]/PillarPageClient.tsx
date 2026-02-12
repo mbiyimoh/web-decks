@@ -4,14 +4,18 @@ import { useState, useRef, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { motion, AnimatePresence } from 'framer-motion';
-import { ArrowLeft, Plus, FileText, ChevronDown } from 'lucide-react';
+import { ArrowLeft, Plus, FileText, ChevronDown, Sparkles } from 'lucide-react';
 import { FieldCitation } from '@/components/clarity-canvas/FieldCitation';
 import { PROFILE_STRUCTURE, FIELD_DISPLAY_NAMES, type SectionKey } from '@/lib/clarity-canvas/profile-structure';
 import { getScoreColor } from '@/lib/clarity-canvas/types';
 import { calculateFieldScore } from '@/lib/clarity-canvas/scoring';
+import { wasSynthesizedRecently, formatRelativeTime } from '@/lib/clarity-canvas/synthesis';
 import { ContextInput } from '../components/ContextInput';
 import { RecommendationReview } from '../components/RecommendationReview';
 import PillarCelebration from '../components/PillarCelebration';
+import { SourceRemovalDialog } from '@/components/clarity-canvas/SourceRemovalDialog';
+import { FieldRefinementInput } from '@/components/clarity-canvas/FieldRefinementInput';
+import { SubsectionRefinementInput } from '@/components/clarity-canvas/SubsectionRefinementInput';
 import type {
   ProfileWithSections,
   ProfileScores,
@@ -50,6 +54,13 @@ export default function PillarPageClient({
   const [celebrationData, setCelebrationData] =
     useState<CelebrationData | null>(null);
   const [expandedFieldKey, setExpandedFieldKey] = useState<string | null>(null);
+  const [sourceRemoval, setSourceRemoval] = useState<{
+    fieldId: string;
+    sourceId: string;
+    sourceCount: number;
+  } | null>(null);
+  const [isRemovingSource, setIsRemovingSource] = useState(false);
+  const [sourceRemovalError, setSourceRemovalError] = useState<string | null>(null);
 
   // Pillar metadata
   const pillar = PROFILE_STRUCTURE[pillarKey];
@@ -130,6 +141,43 @@ export default function PillarPageClient({
   const handleDismissCelebration = () => {
     setCelebrationData(null);
     router.refresh(); // Sync server components
+  };
+
+  // Handle source removal request
+  const handleRemoveSourceRequest = (fieldId: string, sourceId: string, sourceCount: number) => {
+    setSourceRemoval({ fieldId, sourceId, sourceCount });
+  };
+
+  // Handle source removal confirm
+  const handleConfirmSourceRemoval = async () => {
+    if (!sourceRemoval) return;
+    setIsRemovingSource(true);
+    setSourceRemovalError(null);
+
+    try {
+      const res = await fetch(
+        `/api/clarity-canvas/fields/${sourceRemoval.fieldId}/sources/${sourceRemoval.sourceId}`,
+        { method: 'DELETE' }
+      );
+
+      if (!res.ok) {
+        const data = await res.json().catch(() => ({}));
+        throw new Error(data.error || 'Failed to remove source');
+      }
+
+      // Refresh the page to get updated data
+      router.refresh();
+      setSourceRemoval(null);
+      setSourceRemovalError(null);
+    } catch (error) {
+      console.error('Failed to remove source:', error);
+      setSourceRemovalError(
+        error instanceof Error ? error.message : 'Failed to remove source. Please try again.'
+      );
+      // Keep dialog open on error so user can retry
+    } finally {
+      setIsRemovingSource(false);
+    }
   };
 
   // Build scope object for ContextInput
@@ -310,13 +358,22 @@ export default function PillarPageClient({
                     className="mb-6 bg-[#111114] border border-zinc-800 rounded-2xl p-6"
                   >
                     {/* Subsection header */}
-                    <div className="flex items-center justify-between mb-4">
+                    <div className="flex items-center justify-between mb-2">
                       <p className="text-[#d4a54a] text-xs font-mono tracking-[0.2em] uppercase">
                         {subsection.name}
                       </p>
                       <span className="text-xs text-zinc-500">
                         {completed}/{total} complete
                       </span>
+                    </div>
+
+                    {/* Subsection refinement input */}
+                    <div className="mb-4">
+                      <SubsectionRefinementInput
+                        subsectionId={subsection.id}
+                        subsectionName={subsection.name}
+                        onRefined={() => router.refresh()}
+                      />
                     </div>
 
                     {/* Fields */}
@@ -360,11 +417,29 @@ export default function PillarPageClient({
                                     : 'No data yet'}
                                 </p>
                               </div>
+                              {/* Synthesized badge - shows briefly after synthesis */}
+                              {field.synthesisVersion > 0 &&
+                                wasSynthesizedRecently(field.lastSynthesizedAt) && (
+                                  <motion.span
+                                    initial={{ opacity: 1 }}
+                                    animate={{ opacity: 0 }}
+                                    transition={{ delay: 10, duration: 0.5 }}
+                                    className="flex items-center gap-1 text-xs flex-shrink-0"
+                                    style={{ color: '#d4a54a' }}
+                                    title={`Summary updated from ${field.sources.length} sources`}
+                                  >
+                                    <Sparkles size={12} />
+                                    Synthesized
+                                  </motion.span>
+                                )}
                               {hasData && field.sources.length > 0 && (
                                 <div className="flex-shrink-0" onClick={(e) => e.stopPropagation()}>
                                   <FieldCitation
                                     fieldId={field.id}
                                     sourceCount={field.sources.length}
+                                    onRemoveSource={(sourceId) =>
+                                      handleRemoveSourceRequest(field.id, sourceId, field.sources.length)
+                                    }
                                   />
                                 </div>
                               )}
@@ -385,6 +460,34 @@ export default function PillarPageClient({
                                         ? field.fullContext.slice(0, 400) + '...'
                                         : field.fullContext}
                                     </p>
+
+                                    {/* Synthesis metadata */}
+                                    {field.synthesisVersion > 0 && (
+                                      <div
+                                        className="mt-3 p-3 rounded-lg"
+                                        style={{ background: 'rgba(255,255,255,0.02)' }}
+                                      >
+                                        <p
+                                          className="text-xs font-mono uppercase mb-2"
+                                          style={{ color: '#d4a54a' }}
+                                        >
+                                          Synthesis Info
+                                        </p>
+                                        <p className="text-xs text-[#888888]">
+                                          Last synthesized:{' '}
+                                          {formatRelativeTime(field.lastSynthesizedAt)}
+                                        </p>
+                                        <p className="text-xs text-[#888888]">
+                                          Sources combined: {field.sources.length}
+                                        </p>
+                                      </div>
+                                    )}
+
+                                    {/* Field refinement input */}
+                                    <FieldRefinementInput
+                                      fieldId={field.id}
+                                      onRefined={() => router.refresh()}
+                                    />
                                   </div>
                                 </motion.div>
                               )}
@@ -443,6 +546,19 @@ export default function PillarPageClient({
           />
         )}
       </AnimatePresence>
+
+      {/* Source removal confirmation dialog */}
+      <SourceRemovalDialog
+        isOpen={sourceRemoval !== null}
+        onClose={() => {
+          setSourceRemoval(null);
+          setSourceRemovalError(null);
+        }}
+        onConfirm={handleConfirmSourceRemoval}
+        sourceCount={sourceRemoval?.sourceCount ?? 0}
+        isLoading={isRemovingSource}
+        error={sourceRemovalError}
+      />
     </div>
   );
 }

@@ -129,6 +129,10 @@ model ProfileField {
   confidence           Float   @default(1.0) // 0-1 user-stated confidence
   flaggedForValidation Boolean @default(false) // User marked "not sure"
 
+  // Synthesis tracking
+  lastSynthesizedAt DateTime? // When synthesis last occurred
+  synthesisVersion  Int       @default(0) // Increment on each synthesis
+
   // Temporal
   lastUpdated DateTime @default(now()) @updatedAt
 

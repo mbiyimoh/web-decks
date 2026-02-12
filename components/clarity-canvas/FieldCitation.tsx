@@ -2,11 +2,12 @@
 
 import { useState, useRef, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
-import { Info, ExternalLink } from 'lucide-react';
+import { Info, ExternalLink, Trash2 } from 'lucide-react';
 import {
   GOLD,
   TEXT_MUTED,
   BG_ELEVATED,
+  RED,
 } from '@/components/portal/design-tokens';
 import { truncate, formatDate } from '@/lib/input-session/utils';
 
@@ -26,9 +27,10 @@ interface FieldSource {
 interface FieldCitationProps {
   fieldId: string;
   sourceCount: number;
+  onRemoveSource?: (sourceId: string) => void;
 }
 
-export function FieldCitation({ fieldId, sourceCount }: FieldCitationProps) {
+export function FieldCitation({ fieldId, sourceCount, onRemoveSource }: FieldCitationProps) {
   const router = useRouter();
   const [showPopover, setShowPopover] = useState(false);
   const [sources, setSources] = useState<FieldSource[] | null>(null);
@@ -151,17 +153,30 @@ export function FieldCitation({ fieldId, sourceCount }: FieldCitationProps) {
                         {formatDate(source.extractedAt)}
                       </span>
                     </div>
-                    {source.inputSession && (
-                      <button
-                        onClick={() => handleViewInArchive(source)}
-                        className="flex items-center gap-1 text-xs hover:opacity-80 transition-opacity"
-                        style={{ color: GOLD }}
-                        title="View in archive"
-                      >
-                        <ExternalLink size={10} />
-                        <span>View</span>
-                      </button>
-                    )}
+                    <div className="flex items-center gap-2">
+                      {source.inputSession && (
+                        <button
+                          onClick={() => handleViewInArchive(source)}
+                          className="flex items-center gap-1 text-xs hover:opacity-80 transition-opacity"
+                          style={{ color: GOLD }}
+                          title="View in archive"
+                        >
+                          <ExternalLink size={10} />
+                          <span>View</span>
+                        </button>
+                      )}
+                      {onRemoveSource && (
+                        <button
+                          onClick={() => onRemoveSource(source.id)}
+                          className="flex items-center gap-1 text-xs hover:opacity-80 transition-opacity"
+                          style={{ color: RED }}
+                          title="Remove source"
+                        >
+                          <Trash2 size={10} />
+                          <span>Remove</span>
+                        </button>
+                      )}
+                    </div>
                   </div>
                   <p className="text-sm" style={{ color: TEXT_MUTED }}>
                     {truncate(source.rawContent, 150)}

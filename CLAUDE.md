@@ -362,11 +362,42 @@ User adjusts score → PATCH /api/central-command/prospects/[id]
 
 **See:** `docs/developer-guides/central-command-scoring-guide.md` for full tutorial
 
+### 7. Companion API (`/api/companion`)
+
+OAuth-protected API for external AI products to access Clarity Canvas user context.
+
+**Purpose:** Enables third-party AI applications (e.g., Better Contacts) to personalize their experiences using synthesized user data from Clarity Canvas profiles.
+
+**Architecture:**
+- Progressive disclosure model (base synthesis → on-demand sections → search)
+- OAuth 2.0 with PKCE for secure authorization
+- Token-based access with configurable scopes
+- ETag caching for efficient data transfer
+
+**Key Endpoints:**
+- `GET /api/companion/synthesis/base` — Base synthesis (~800 tokens)
+- `GET /api/companion/profile/index` — Section metadata
+- `GET /api/companion/profile/section/:sectionId` — Full section detail
+- `POST /api/companion/profile/search` — Natural language search
+- `POST /api/companion/cache/validate` — Cache validation
+
+**Key Files:**
+- `app/api/companion/` — All Companion API routes
+- `lib/companion/` — Synthesis generation, tool definitions, prompts
+- `lib/oauth.ts` — Token validation and scope checking
+
+**Required Scopes:**
+- `read:synthesis` — Base synthesis endpoint
+- `read:profile` — Profile section endpoints
+- `search:profile` — Search endpoint
+
+**See:** `docs/developer-guides/companion-api-integration.md` for full integration guide
+
 ---
 
 ## Authentication
 
-This project uses **two authentication systems**:
+This project uses **three authentication systems** with a unified auth helper:
 
 ### 1. iron-session (Client/Strategist Portals)
 Simple password-based authentication for portal access.
@@ -380,7 +411,7 @@ getSessionOptions()  // Returns iron-session config
 - `/api/client-auth` — Unified client authentication
 - `/api/strategist-auth/[strategist]` — Per-strategist authentication
 
-### 2. NextAuth.js v5 (Learning Platform)
+### 2. NextAuth.js v5 (Team Members)
 OAuth + credentials authentication for team members.
 
 ```typescript
@@ -390,9 +421,78 @@ NextAuth configuration with Google OAuth + credentials
 
 **Restricted to:** `@33strategies.ai` emails
 
-### Critical Gotcha: Route Conflicts
+### 3. OAuth 2.0 (External Integrations)
+Authorization code flow with PKCE for third-party apps (e.g., Better Contacts).
 
-**Never add dynamic routes under `/api/auth/`** — they will conflict with NextAuth's `[...nextauth]` catch-all. Client portal auth was moved to `/api/client-auth/` for this reason.
+**Key Files:**
+- `lib/oauth.ts` — Token validation, scope checking
+- `lib/auth/unified-auth.ts` — Unified auth helper (checks all three systems)
+- `app/api/oauth/authorize/route.ts` — Authorization endpoint
+- `app/api/oauth/token/route.ts` — Token exchange endpoint
+
+**Database Models:**
+- `OAuthClient` — Registered OAuth clients
+- `OAuthAuthorizationCode` — Temporary authorization codes
+- `OAuthAccessToken`, `OAuthRefreshToken` — Issued tokens
+- `OAuthUserConsent` — User consent records
+
+**Registering a client:**
+```bash
+npx tsx prisma/seed-better-contacts.ts  # Example seed script
+```
+
+### Unified Auth Helper
+
+Use `getAuth()` for API routes that need to support multiple auth methods:
+
+```typescript
+import { getAuth } from '@/lib/auth/unified-auth';
+
+export async function GET(request: NextRequest) {
+  const auth = await getAuth(request);
+  if (!auth.authenticated) {
+    return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+  }
+  // auth.method tells you: 'token' | 'session' | 'none'
+  // auth.userId, auth.clientId, auth.email, auth.scopes available
+}
+```
+
+**Auth check order:**
+1. Bearer token (OAuth access token)
+2. NextAuth session (Google OAuth for team members)
+3. iron-session (client/strategist portals)
+
+### Signin Page & Redirect Validation
+
+The unified signin page (`/auth/signin`) handles all auth types:
+
+```typescript
+// Supports both internal and OAuth callback params
+const { returnTo, callbackUrl } = await searchParams;
+const destination = validateReturnTo(returnTo || callbackUrl);
+```
+
+**`validateReturnTo()` security features** (`lib/auth-utils.ts`):
+- Handles both relative paths (`/learning`) and full URLs (`https://33strategies.ai/api/oauth/...`)
+- Validates host against allowlist: `33strategies.ai`, `localhost:3033`, `localhost:3000`
+- Blocks protocol-relative URLs (`//evil.com`)
+- Blocks dangerous protocols (`javascript:`, `data:`)
+- Allowlisted prefixes: `/learning`, `/clarity-canvas`, `/auth`, `/api/oauth`, `/client-portals`, `/strategist-portals`, `/central-command`
+
+### Critical Gotchas
+
+**Route Conflicts:** Never add dynamic routes under `/api/auth/` — they conflict with NextAuth's `[...nextauth]` catch-all. Client portal auth was moved to `/api/client-auth/`.
+
+**getAuth() vs getUnifiedSession():** Both must check the same auth sources. If adding a new auth method, update BOTH:
+- `lib/auth/unified-auth.ts` → `getAuth()` — Used by API routes
+- `lib/client-session-bridge.ts` → `getUnifiedSession()` — Used by Server Components
+
+**OAuth URL Construction:** In Railway, `request.url` contains the internal server address (e.g., `0.0.0.0:8080`). Always use `NEXTAUTH_URL` for user-facing redirects:
+```typescript
+const BASE_URL = process.env.NEXTAUTH_URL || 'https://33strategies.ai';
+const loginUrl = new URL('/auth/signin', BASE_URL);
+```
 
 ---
 
@@ -448,6 +548,12 @@ npx tsx scripts/seed-rubrics.ts  # Seed Central Command scoring rubrics (v1)
 
 **Shareable Artifacts:**
 - `ArtifactShareLink` — Password-protected artifact share links (slug, hashedPassword, lockout tracking)
+
+**OAuth 2.0:**
+- `OAuthClient` — Registered OAuth clients (clientId, redirectUris, scopes)
+- `OAuthAuthorizationCode` — Temporary auth codes (5-minute expiry)
+- `OAuthAccessToken`, `OAuthRefreshToken` — Issued tokens
+- `OAuthUserConsent` — User consent records for third-party apps
 
 ---
 
@@ -682,6 +788,18 @@ stm grep "pattern"        # Search tasks
 - `POST /api/client-auth` — Unified client login
 - `POST /api/logout` — Logout
 
+### OAuth 2.0
+- `GET /api/oauth/authorize` — Authorization endpoint (redirects to signin if needed)
+- `POST /api/oauth/token` — Token exchange (auth code → access/refresh tokens)
+- `POST /api/oauth/revoke` — Token revocation
+
+### Companion API (OAuth-protected)
+- `GET /api/companion/synthesis/base` — Base synthesis (~800 tokens)
+- `GET /api/companion/profile/index` — Section metadata for routing
+- `GET /api/companion/profile/section/:id` — Full section detail
+- `POST /api/companion/profile/search` — Natural language search
+- `POST /api/companion/cache/validate` — Check cached data validity
+
 ### Clarity Canvas
 - `GET/POST /api/clarity-canvas/profile` — Profile CRUD
 - `POST /api/clarity-canvas/extract` — Brain dump extraction (two-pass with gap analysis)
@@ -731,6 +849,7 @@ stm grep "pattern"        # Search tasks
 ## Getting Help
 
 - Check `docs/developer-guides/` for implementation guides:
+  - `companion-api-integration.md` — OAuth + Companion API integration for external apps
   - `central-command-scoring-guide.md` — Scoring learning loop and rubric system
   - `synthesis-refinement-guide.md` — Central Command synthesis refinement (global + targeted modes)
   - `shareable-artifact-links-guide.md` — Password-protected share links tutorial

@@ -11,6 +11,7 @@ import { prisma } from '@/lib/prisma';
 import {
   generateBaseSynthesis,
   calculateProfileHash,
+  resolveProfileWhereClause,
 } from './synthesis';
 import type { BaseSynthesis } from './types';
 
@@ -140,10 +141,10 @@ export async function getSectionVersion(
   userId: string,
   sectionKey: string
 ): Promise<string | null> {
+  const whereClause = await resolveProfileWhereClause(userId);
+
   const profile = await prisma.clarityProfile.findFirst({
-    where: {
-      OR: [{ userId }, { userRecordId: userId }],
-    },
+    where: whereClause,
     include: {
       sections: {
         where: { key: sectionKey },
