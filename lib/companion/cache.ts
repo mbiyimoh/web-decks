@@ -12,6 +12,7 @@ import {
   generateBaseSynthesis,
   calculateProfileHash,
   resolveProfileWhereClause,
+  resolveToUserId,
 } from './synthesis';
 import type { BaseSynthesis } from './types';
 
@@ -27,16 +28,30 @@ export interface CachedSynthesis {
 /**
  * Get synthesis for a user, using cache if valid.
  * Regenerates if cache is stale or profile has changed.
+ *
+ * @param userId - OAuth user ID (can be Google UUID, email, or User.id cuid)
  */
 export async function getCachedSynthesis(
   userId: string
 ): Promise<CachedSynthesis | null> {
-  // Check for existing cached synthesis
+  console.log('[DEBUG getCachedSynthesis] Input userId:', userId);
+
+  // Resolve OAuth userId to actual User.id (cuid) for FK-compatible operations
+  // CompanionSynthesis.userId has FK to User.id, so we need the cuid
+  const resolvedUserId = await resolveToUserId(userId);
+  console.log('[DEBUG getCachedSynthesis] Resolved userId:', resolvedUserId);
+
+  if (!resolvedUserId) {
+    console.log('[DEBUG getCachedSynthesis] Could not resolve userId to User.id');
+    return null;
+  }
+
+  // Check for existing cached synthesis using resolved User.id
   const cached = await prisma.companionSynthesis.findUnique({
-    where: { userId },
+    where: { userId: resolvedUserId },
   });
 
-  // Calculate current profile hash
+  // Calculate current profile hash (uses original userId for flexible lookup)
   const currentHash = await calculateProfileHash(userId);
 
   // Determine if cache is valid
@@ -46,6 +61,7 @@ export async function getCachedSynthesis(
   const needsRegeneration = !cached || isExpired || hashMismatch;
 
   if (!needsRegeneration && cached) {
+    console.log('[DEBUG getCachedSynthesis] Returning cached synthesis');
     // Return cached synthesis
     return {
       synthesis: cached.baseSynthesis as unknown as BaseSynthesis,
@@ -55,24 +71,26 @@ export async function getCachedSynthesis(
     };
   }
 
-  // Generate new synthesis
+  // Generate new synthesis (uses original userId for flexible ClarityProfile lookup)
   const synthesis = await generateBaseSynthesis(userId);
   if (!synthesis) {
+    console.log('[DEBUG getCachedSynthesis] generateBaseSynthesis returned null');
     return null;
   }
 
   // Calculate expiration
   const expiresAt = new Date(now.getTime() + SYNTHESIS_TTL_MS);
 
-  // Upsert cache
+  // Upsert cache using resolved User.id (FK-compatible)
   // Note: JSON.parse(JSON.stringify()) is required to coerce BaseSynthesis interface
   // to Prisma's InputJsonValue type (Prisma JSON fields require index signatures)
   const version = synthesis._meta.version;
   const synthesisJson = JSON.parse(JSON.stringify(synthesis));
+  console.log('[DEBUG getCachedSynthesis] Upserting cache for userId:', resolvedUserId);
   await prisma.companionSynthesis.upsert({
-    where: { userId },
+    where: { userId: resolvedUserId },
     create: {
-      userId,
+      userId: resolvedUserId,
       baseSynthesis: synthesisJson,
       profileHash: currentHash,
       tokenCount: synthesis._meta.tokenCount,
@@ -89,6 +107,7 @@ export async function getCachedSynthesis(
     },
   });
 
+  console.log('[DEBUG getCachedSynthesis] Synthesis cached successfully');
   return {
     synthesis,
     version,
@@ -104,8 +123,14 @@ export async function isSynthesisStale(
   userId: string,
   cachedVersion: string
 ): Promise<{ stale: boolean; currentVersion: string }> {
+  // Resolve to User.id for FK-compatible lookup
+  const resolvedUserId = await resolveToUserId(userId);
+  if (!resolvedUserId) {
+    return { stale: true, currentVersion: '' };
+  }
+
   const cached = await prisma.companionSynthesis.findUnique({
-    where: { userId },
+    where: { userId: resolvedUserId },
     select: { version: true, expiresAt: true, profileHash: true },
   });
 
@@ -128,8 +153,14 @@ export async function isSynthesisStale(
  * Call this when profile is updated.
  */
 export async function invalidateSynthesis(userId: string): Promise<void> {
+  // Resolve to User.id for FK-compatible deletion
+  const resolvedUserId = await resolveToUserId(userId);
+  if (!resolvedUserId) {
+    return; // No user found, nothing to invalidate
+  }
+
   await prisma.companionSynthesis.deleteMany({
-    where: { userId },
+    where: { userId: resolvedUserId },
   });
 }
 

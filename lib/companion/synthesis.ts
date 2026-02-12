@@ -37,6 +37,45 @@ import type {
  *
  * Always returns a valid WHERE clause (never null).
  */
+/**
+ * Resolve OAuth userId (email or Google UUID) to actual User.id (cuid).
+ * Returns the User.id for use with tables that have FK to User.
+ * Returns null if no matching user found.
+ */
+export async function resolveToUserId(userId: string): Promise<string | null> {
+  console.log('[DEBUG resolveToUserId] Input userId:', userId);
+
+  // First check if this is already a User.id (cuid format)
+  const directUser = await prisma.user.findUnique({
+    where: { id: userId },
+    select: { id: true },
+  });
+
+  if (directUser) {
+    console.log('[DEBUG resolveToUserId] Direct match on User.id:', directUser.id);
+    return directUser.id;
+  }
+
+  // Try to find User by authId (Google OAuth UUID) or email
+  const user = await prisma.user.findFirst({
+    where: {
+      OR: [
+        { authId: userId }, // Google OAuth: authId is the Google UUID
+        { email: userId },  // Credentials: userId is the email
+      ],
+    },
+    select: { id: true },
+  });
+
+  if (user) {
+    console.log('[DEBUG resolveToUserId] Found user by authId/email:', user.id);
+    return user.id;
+  }
+
+  console.log('[DEBUG resolveToUserId] No user found for:', userId);
+  return null;
+}
+
 export async function resolveProfileWhereClause(
   userId: string
 ): Promise<Prisma.ClarityProfileWhereInput> {
