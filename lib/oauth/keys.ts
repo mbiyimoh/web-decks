@@ -24,10 +24,19 @@ function decodeBase64Key(base64Key: string): string {
 export function getPrivateKey(): KeyObject {
   if (!privateKey) {
     const keyData = process.env.OAUTH_PRIVATE_KEY;
+    console.log('[DEBUG getPrivateKey] OAUTH_PRIVATE_KEY length:', keyData?.length ?? 0);
     if (!keyData) {
       throw new Error('OAUTH_PRIVATE_KEY environment variable is required');
     }
-    privateKey = createPrivateKey(decodeBase64Key(keyData));
+    try {
+      const decodedKey = decodeBase64Key(keyData);
+      console.log('[DEBUG getPrivateKey] Decoded key starts with:', decodedKey.substring(0, 40));
+      privateKey = createPrivateKey(decodedKey);
+      console.log('[DEBUG getPrivateKey] Private key created successfully');
+    } catch (error) {
+      console.error('[DEBUG getPrivateKey] Failed to create private key:', error);
+      throw error;
+    }
   }
   return privateKey;
 }

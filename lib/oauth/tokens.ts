@@ -44,10 +44,27 @@ export async function generateAccessToken(
   clientId: string,
   scope: string
 ): Promise<string> {
+  console.log('[DEBUG generateAccessToken] Checking keys configuration...');
+  console.log('[DEBUG generateAccessToken] OAUTH_PRIVATE_KEY set:', !!process.env.OAUTH_PRIVATE_KEY);
+  console.log('[DEBUG generateAccessToken] OAUTH_PUBLIC_KEY set:', !!process.env.OAUTH_PUBLIC_KEY);
+  console.log('[DEBUG generateAccessToken] areKeysConfigured():', areKeysConfigured());
+
   if (!areKeysConfigured()) {
+    console.error('[DEBUG generateAccessToken] Keys NOT configured!');
     throw new Error('OAuth keys not configured. Set OAUTH_PRIVATE_KEY and OAUTH_PUBLIC_KEY.');
   }
 
+  console.log('[DEBUG generateAccessToken] Getting private key...');
+  let privateKey;
+  try {
+    privateKey = getPrivateKey();
+    console.log('[DEBUG generateAccessToken] Private key loaded successfully');
+  } catch (error) {
+    console.error('[DEBUG generateAccessToken] Failed to load private key:', error);
+    throw error;
+  }
+
+  console.log('[DEBUG generateAccessToken] Signing JWT...');
   const jwt = await new SignJWT({
     sub: userId,
     client_id: clientId,
@@ -59,8 +76,9 @@ export async function generateAccessToken(
     .setIssuer(ISSUER)
     .setExpirationTime(ACCESS_TOKEN_EXPIRY)
     .setJti(nanoid())
-    .sign(getPrivateKey());
+    .sign(privateKey);
 
+  console.log('[DEBUG generateAccessToken] JWT signed successfully');
   return jwt;
 }
 

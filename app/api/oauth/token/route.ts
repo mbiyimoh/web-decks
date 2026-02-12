@@ -227,15 +227,20 @@ async function handleAuthorizationCode(body: Record<string, string>) {
 
   // Use transaction to prevent code reuse race condition
   // Delete code BEFORE creating tokens (single-use enforcement)
+  console.log('[DEBUG oauth/token] Starting token creation transaction for user:', authCode.userId);
   try {
     const tokens = await prisma.$transaction(async (tx) => {
+      console.log('[DEBUG oauth/token] Deleting authorization code...');
       // Delete authorization code first (prevents reuse if token creation fails)
       await tx.oAuthAuthorizationCode.delete({ where: { code } });
+      console.log('[DEBUG oauth/token] Authorization code deleted');
 
+      console.log('[DEBUG oauth/token] Creating token pair...');
       // Create token pair
       return createTokenPair(authCode.userId, client_id, authCode.scope);
     });
 
+    console.log('[DEBUG oauth/token] Transaction completed successfully');
     return NextResponse.json({
       access_token: tokens.accessToken,
       refresh_token: tokens.refreshToken,
@@ -246,6 +251,9 @@ async function handleAuthorizationCode(body: Record<string, string>) {
   } catch (error) {
     // If transaction fails, code is already deleted - can't be reused
     console.error('[oauth/token] Token creation failed:', error);
+    console.error('[oauth/token] Error type:', error instanceof Error ? error.constructor.name : typeof error);
+    console.error('[oauth/token] Error message:', error instanceof Error ? error.message : String(error));
+    console.error('[oauth/token] Error stack:', error instanceof Error ? error.stack : 'N/A');
     return NextResponse.json(
       { error: 'server_error', error_description: 'Token creation failed' },
       { status: 500 }

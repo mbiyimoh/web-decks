@@ -44,21 +44,48 @@ export async function createTokenPair(
   clientId: string,
   scope: string
 ): Promise<TokenPair> {
-  const accessToken = await generateAccessToken(userId, clientId, scope);
-  const refreshData = await generateRefreshToken();
+  console.log('[DEBUG createTokenPair] Starting token creation:', { userId, clientId, scope });
 
-  // Store refresh token in database
-  await prisma.oAuthRefreshToken.create({
-    data: {
-      tokenHash: refreshData.hash,
-      clientId,
-      userId,
-      scope,
-      expiresAt: refreshData.expiresAt,
-      tokenFamilyId: refreshData.familyId,
-    },
-  });
+  let accessToken: string;
+  try {
+    console.log('[DEBUG createTokenPair] Generating access token...');
+    accessToken = await generateAccessToken(userId, clientId, scope);
+    console.log('[DEBUG createTokenPair] Access token generated successfully');
+  } catch (error) {
+    console.error('[DEBUG createTokenPair] Access token generation FAILED:', error);
+    throw error;
+  }
 
+  let refreshData;
+  try {
+    console.log('[DEBUG createTokenPair] Generating refresh token...');
+    refreshData = await generateRefreshToken();
+    console.log('[DEBUG createTokenPair] Refresh token generated successfully');
+  } catch (error) {
+    console.error('[DEBUG createTokenPair] Refresh token generation FAILED:', error);
+    throw error;
+  }
+
+  try {
+    console.log('[DEBUG createTokenPair] Storing refresh token in database...');
+    // Store refresh token in database
+    await prisma.oAuthRefreshToken.create({
+      data: {
+        tokenHash: refreshData.hash,
+        clientId,
+        userId,
+        scope,
+        expiresAt: refreshData.expiresAt,
+        tokenFamilyId: refreshData.familyId,
+      },
+    });
+    console.log('[DEBUG createTokenPair] Refresh token stored successfully');
+  } catch (error) {
+    console.error('[DEBUG createTokenPair] Database insert FAILED:', error);
+    throw error;
+  }
+
+  console.log('[DEBUG createTokenPair] Token pair created successfully');
   return {
     accessToken,
     refreshToken: refreshData.token,
