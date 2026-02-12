@@ -229,16 +229,22 @@ async function handleAuthorizationCode(body: Record<string, string>) {
   // Delete code BEFORE creating tokens (single-use enforcement)
   console.log('[DEBUG oauth/token] Starting token creation transaction for user:', authCode.userId);
   try {
-    const tokens = await prisma.$transaction(async (tx) => {
-      console.log('[DEBUG oauth/token] Deleting authorization code...');
-      // Delete authorization code first (prevents reuse if token creation fails)
-      await tx.oAuthAuthorizationCode.delete({ where: { code } });
-      console.log('[DEBUG oauth/token] Authorization code deleted');
+    const tokens = await prisma.$transaction(
+      async (tx) => {
+        console.log('[DEBUG oauth/token] Deleting authorization code...');
+        // Delete authorization code first (prevents reuse if token creation fails)
+        await tx.oAuthAuthorizationCode.delete({ where: { code } });
+        console.log('[DEBUG oauth/token] Authorization code deleted');
 
-      console.log('[DEBUG oauth/token] Creating token pair...');
-      // Create token pair
-      return createTokenPair(authCode.userId, client_id, authCode.scope);
-    });
+        console.log('[DEBUG oauth/token] Creating token pair...');
+        // Create token pair (pass tx for transactional insert)
+        return createTokenPair(authCode.userId, client_id, authCode.scope, tx);
+      },
+      {
+        // Increase timeout to 15 seconds to account for JWT signing + DB latency
+        timeout: 15000,
+      }
+    );
 
     console.log('[DEBUG oauth/token] Transaction completed successfully');
     return NextResponse.json({

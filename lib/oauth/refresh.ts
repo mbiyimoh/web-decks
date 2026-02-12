@@ -8,7 +8,7 @@
  * - This detects token theft and limits damage
  */
 
-import { prisma } from '@/lib/prisma';
+import { prisma, type PrismaTransactionClient } from '@/lib/prisma';
 import {
   generateRefreshToken,
   verifyRefreshToken,
@@ -38,13 +38,16 @@ export interface RotationResult {
 
 /**
  * Create initial token pair for new login.
+ * Optionally accepts a transaction client for transactional inserts.
  */
 export async function createTokenPair(
   userId: string,
   clientId: string,
-  scope: string
+  scope: string,
+  tx?: PrismaTransactionClient
 ): Promise<TokenPair> {
   console.log('[DEBUG createTokenPair] Starting token creation:', { userId, clientId, scope });
+  const db = tx ?? prisma;
 
   let accessToken: string;
   try {
@@ -68,8 +71,8 @@ export async function createTokenPair(
 
   try {
     console.log('[DEBUG createTokenPair] Storing refresh token in database...');
-    // Store refresh token in database
-    await prisma.oAuthRefreshToken.create({
+    // Store refresh token in database (use transaction client if provided)
+    await db.oAuthRefreshToken.create({
       data: {
         tokenHash: refreshData.hash,
         clientId,
