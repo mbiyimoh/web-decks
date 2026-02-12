@@ -32,39 +32,48 @@ import type {
  * Build a Prisma where clause that handles all user ID formats:
  * - email address (from credentials OAuth)
  * - User.id (cuid)
- * - authId (Supabase ID or email)
+ * - User.authId (Google OAuth UUID or email for credentials)
+ * - Legacy ClarityProfile.userId (Supabase ID)
  *
  * Always returns a valid WHERE clause (never null).
  */
 export async function resolveProfileWhereClause(
   userId: string
 ): Promise<Prisma.ClarityProfileWhereInput> {
-  // Try direct match first (handles User.id and authId)
-  const directWhere: Prisma.ClarityProfileWhereInput = {
-    OR: [{ userId }, { userRecordId: userId }],
-  };
+  console.log('[DEBUG resolveProfileWhereClause] Input userId:', userId);
 
-  // If userId looks like an email, also try to resolve via User table
-  if (userId.includes('@')) {
-    const user = await prisma.user.findUnique({
-      where: { email: userId },
-      select: { id: true, authId: true },
-    });
+  // Start with direct match (handles legacy ClarityProfile.userId and userRecordId)
+  const orConditions: Prisma.ClarityProfileWhereInput[] = [
+    { userId },
+    { userRecordId: userId },
+  ];
 
-    if (user) {
-      // Extend where clause to include User.authId and User.id
-      return {
-        OR: [
-          { userId },
-          { userRecordId: userId },
-          { userId: user.authId },
-          { userRecordId: user.id },
-        ],
-      };
-    }
+  // Try to find User by authId (Google OAuth UUID) or email
+  // This handles the case where userId is a NextAuth ID (UUID for Google, email for credentials)
+  const user = await prisma.user.findFirst({
+    where: {
+      OR: [
+        { authId: userId }, // Google OAuth: authId is the Google UUID
+        { email: userId },  // Credentials: userId is the email
+      ],
+    },
+    select: { id: true, authId: true },
+  });
+
+  if (user) {
+    console.log('[DEBUG resolveProfileWhereClause] Found user:', { id: user.id, authId: user.authId });
+    // Add User.id and authId to the search
+    orConditions.push(
+      { userRecordId: user.id },
+      { userId: user.authId }
+    );
+  } else {
+    console.log('[DEBUG resolveProfileWhereClause] No user found for:', userId);
   }
 
-  return directWhere;
+  console.log('[DEBUG resolveProfileWhereClause] OR conditions count:', orConditions.length);
+
+  return { OR: orConditions };
 }
 
 // ============================================================================
