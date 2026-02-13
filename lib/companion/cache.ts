@@ -34,15 +34,11 @@ export interface CachedSynthesis {
 export async function getCachedSynthesis(
   userId: string
 ): Promise<CachedSynthesis | null> {
-  console.log('[DEBUG getCachedSynthesis] Input userId:', userId);
-
   // Resolve OAuth userId to actual User.id (cuid) for FK-compatible operations
   // CompanionSynthesis.userId has FK to User.id, so we need the cuid
   const resolvedUserId = await resolveToUserId(userId);
-  console.log('[DEBUG getCachedSynthesis] Resolved userId:', resolvedUserId);
 
   if (!resolvedUserId) {
-    console.log('[DEBUG getCachedSynthesis] Could not resolve userId to User.id');
     return null;
   }
 
@@ -61,7 +57,6 @@ export async function getCachedSynthesis(
   const needsRegeneration = !cached || isExpired || hashMismatch;
 
   if (!needsRegeneration && cached) {
-    console.log('[DEBUG getCachedSynthesis] Returning cached synthesis');
     // Return cached synthesis
     return {
       synthesis: cached.baseSynthesis as unknown as BaseSynthesis,
@@ -74,7 +69,6 @@ export async function getCachedSynthesis(
   // Generate new synthesis (uses original userId for flexible ClarityProfile lookup)
   const synthesis = await generateBaseSynthesis(userId);
   if (!synthesis) {
-    console.log('[DEBUG getCachedSynthesis] generateBaseSynthesis returned null');
     return null;
   }
 
@@ -86,7 +80,6 @@ export async function getCachedSynthesis(
   // to Prisma's InputJsonValue type (Prisma JSON fields require index signatures)
   const version = synthesis._meta.version;
   const synthesisJson = JSON.parse(JSON.stringify(synthesis));
-  console.log('[DEBUG getCachedSynthesis] Upserting cache for userId:', resolvedUserId);
   await prisma.companionSynthesis.upsert({
     where: { userId: resolvedUserId },
     create: {
@@ -107,7 +100,6 @@ export async function getCachedSynthesis(
     },
   });
 
-  console.log('[DEBUG getCachedSynthesis] Synthesis cached successfully');
   return {
     synthesis,
     version,

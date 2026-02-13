@@ -43,8 +43,6 @@ import type {
  * Returns null if no matching user found.
  */
 export async function resolveToUserId(userId: string): Promise<string | null> {
-  console.log('[DEBUG resolveToUserId] Input userId:', userId);
-
   // First check if this is already a User.id (cuid format)
   const directUser = await prisma.user.findUnique({
     where: { id: userId },
@@ -52,7 +50,6 @@ export async function resolveToUserId(userId: string): Promise<string | null> {
   });
 
   if (directUser) {
-    console.log('[DEBUG resolveToUserId] Direct match on User.id:', directUser.id);
     return directUser.id;
   }
 
@@ -68,19 +65,15 @@ export async function resolveToUserId(userId: string): Promise<string | null> {
   });
 
   if (user) {
-    console.log('[DEBUG resolveToUserId] Found user by authId/email:', user.id);
     return user.id;
   }
 
-  console.log('[DEBUG resolveToUserId] No user found for:', userId);
   return null;
 }
 
 export async function resolveProfileWhereClause(
   userId: string
 ): Promise<Prisma.ClarityProfileWhereInput> {
-  console.log('[DEBUG resolveProfileWhereClause] Input userId:', userId);
-
   // Start with direct match (handles legacy ClarityProfile.userId and userRecordId)
   const orConditions: Prisma.ClarityProfileWhereInput[] = [
     { userId },
@@ -100,17 +93,12 @@ export async function resolveProfileWhereClause(
   });
 
   if (user) {
-    console.log('[DEBUG resolveProfileWhereClause] Found user:', { id: user.id, authId: user.authId });
     // Add User.id and authId to the search
     orConditions.push(
       { userRecordId: user.id },
       { userId: user.authId }
     );
-  } else {
-    console.log('[DEBUG resolveProfileWhereClause] No user found for:', userId);
   }
-
-  console.log('[DEBUG resolveProfileWhereClause] OR conditions count:', orConditions.length);
 
   return { OR: orConditions };
 }
@@ -192,8 +180,6 @@ export async function calculateProfileHash(userId: string): Promise<string> {
 export async function generateBaseSynthesis(
   userId: string
 ): Promise<BaseSynthesis | null> {
-  console.log('[DEBUG generateBaseSynthesis] Looking up profile for userId:', userId);
-
   // Resolve WHERE clause (handles email, User.id, authId)
   const whereClause = await resolveProfileWhereClause(userId);
 
@@ -213,8 +199,6 @@ export async function generateBaseSynthesis(
       personas: true,
     },
   });
-
-  console.log('[DEBUG generateBaseSynthesis] Profile found:', !!profile);
 
   if (!profile) {
     return null;
