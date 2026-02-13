@@ -1,8 +1,10 @@
 /**
  * Synthesis Generation for Clarity Companion API
  *
- * Generates a structured ~800 token summary of user context
- * by combining ProfileSection data and Persona records.
+ * Generates a structured ~1500-2000 token summary of user context
+ * by combining ALL ProfileSection data and Persona records.
+ * Covers all 6 Clarity Canvas sections: Individual, Role, Organization,
+ * Goals, Network, and Projects.
  */
 
 import { prisma } from '@/lib/prisma';

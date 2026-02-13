@@ -1,7 +1,7 @@
 /**
  * GET /api/companion/synthesis/base
  *
- * Returns the cached base synthesis (~800 tokens) for the authenticated user.
+ * Returns the cached base synthesis (~1500-2000 tokens) for the authenticated user.
  * Supports ETag-based caching via If-None-Match header.
  */
 
