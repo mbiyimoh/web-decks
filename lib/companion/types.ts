@@ -3,14 +3,26 @@
  *
  * Type definitions for the context delivery layer that provides
  * synthesized user context to external products.
+ *
+ * Covers ALL 6 sections of Clarity Canvas:
+ * - Individual (background, thinking, working, values)
+ * - Role (responsibilities, scope, constraints)
+ * - Organization (fundamentals, product, market, financials)
+ * - Goals (immediate, medium, metrics, strategy)
+ * - Network (stakeholders, team, support)
+ * - Projects (active, upcoming, completed)
  */
 
 // ============================================================================
-// Base Synthesis Structure (~800 tokens)
+// Base Synthesis Structure (~1500-2000 tokens)
 // ============================================================================
 
 export interface BaseSynthesis {
-  // User identity (from ProfileSection 'individual' and 'organization')
+  // -------------------------------------------------------------------------
+  // INDIVIDUAL SECTION - Who is this person?
+  // -------------------------------------------------------------------------
+
+  // Core identity (from 'individual.background' + 'role.responsibilities')
   identity: {
     name: string;
     role: string;
@@ -19,29 +31,146 @@ export interface BaseSynthesis {
     companyStage: 'startup' | 'growth' | 'enterprise' | 'unknown';
   };
 
-  // Customer understanding (from Persona model - NOT ProfileField)
-  personas: PersonaSummary[];
+  // Background & expertise (from 'individual.background')
+  background: {
+    careerPath: string | null;
+    expertise: string[];
+    yearsExperience: number | null;
+    education: string | null;
+  };
 
-  // Strategic context (from ProfileSection 'goals')
-  goals: GoalSummary[];
+  // Thinking style (from 'individual.thinking')
+  thinkingStyle: {
+    decisionMaking: string | null;
+    problemSolving: string | null;
+    riskTolerance: 'conservative' | 'moderate' | 'aggressive' | null;
+    learningStyle: string | null;
+  };
 
-  // Challenges (derived from ProfileSection 'role.constraints' and context)
+  // Working style (from 'individual.working')
+  workingStyle: {
+    collaborationPreference: string | null;
+    communicationStyle: string | null;
+    workPace: string | null;
+    autonomyLevel: string | null;
+  };
+
+  // Values & motivations (from 'individual.values')
+  values: {
+    coreValues: string[];
+    motivations: string[];
+    personalMission: string | null;
+    passions: string[];
+  };
+
+  // -------------------------------------------------------------------------
+  // ROLE SECTION - What do they do?
+  // -------------------------------------------------------------------------
+
+  // Role scope & authority (from 'role.scope')
+  roleScope: {
+    decisionAuthority: string | null;
+    budgetControl: string | null;
+    strategicInput: string | null;
+    teamSize: number | null;
+  };
+
+  // Role constraints & challenges (from 'role.constraints')
   painPoints: PainPointSummary[];
 
-  // Decision making (from ProfileSection 'individual.thinking')
+  // -------------------------------------------------------------------------
+  // ORGANIZATION SECTION - Where do they work?
+  // -------------------------------------------------------------------------
+
+  // Product & strategy (from 'organization.product')
+  product: {
+    coreProduct: string | null;
+    valueProposition: string | null;
+    businessModel: string | null;
+    competitiveAdvantage: string | null;
+  };
+
+  // Market position (from 'organization.market')
+  market: {
+    targetMarket: string | null;
+    customerSegments: string[];
+    marketSize: string | null;
+    competitiveLandscape: string | null;
+  };
+
+  // Financial context (from 'organization.financials')
+  financials: {
+    fundingStatus: string | null;
+    runway: string | null;
+    revenueStage: string | null;
+  };
+
+  // -------------------------------------------------------------------------
+  // GOALS SECTION - What are they trying to achieve?
+  // -------------------------------------------------------------------------
+
+  // Goals summary (from 'goals.immediate' + 'goals.medium')
+  goals: GoalSummary[];
+
+  // Success metrics (from 'goals.metrics')
+  successMetrics: {
+    northStar: string | null;
+    kpis: string[];
+    successDefinition: string | null;
+  };
+
+  // Strategic direction (from 'goals.strategy')
+  strategicPriorities: string[];
+
+  // Decision dynamics (from 'individual.thinking' + derived)
   decisionDynamics: {
     decisionMakers: string[];
     buyingProcess: string;
     keyInfluencers: string[];
   };
 
-  // Strategic priorities (from ProfileSection 'goals.strategy')
-  strategicPriorities: string[];
+  // -------------------------------------------------------------------------
+  // NETWORK SECTION - Who do they work with?
+  // -------------------------------------------------------------------------
 
-  // Current work context (from ProfileSection 'projects')
+  // Team & collaborators (from 'network.team')
+  team: {
+    directReports: string[];
+    keyCollaborators: string[];
+    crossFunctional: string[];
+  };
+
+  // Support network (from 'network.support')
+  supportNetwork: {
+    advisors: string[];
+    mentors: string[];
+    peerNetwork: string | null;
+    helpNeeded: string[];
+  };
+
+  // Key stakeholders (from 'network.stakeholders') - used in decisionDynamics
+
+  // -------------------------------------------------------------------------
+  // PROJECTS SECTION - What are they working on?
+  // -------------------------------------------------------------------------
+
+  // Active & planned projects (from 'projects.active' + 'projects.upcoming')
   activeProjects: ProjectSummary[];
 
-  // Metadata
+  // Recent completions & learnings (from 'projects.completed')
+  recentAccomplishments: {
+    recentWins: string[];
+    lessonsLearned: string[];
+  };
+
+  // -------------------------------------------------------------------------
+  // PERSONAS - Customer understanding (from Persona model - NOT ProfileField)
+  // -------------------------------------------------------------------------
+  personas: PersonaSummary[];
+
+  // -------------------------------------------------------------------------
+  // METADATA
+  // -------------------------------------------------------------------------
   _meta: SynthesisMetadata;
 }
 
@@ -211,9 +340,9 @@ export interface TokenUsage {
 export const DEFAULT_TOKEN_BUDGET: TokenBudget = {
   maxContextWindow: 200000,
   systemPromptBase: 500,
-  baseSynthesis: 1000,
+  baseSynthesis: 2000, // Increased from 1000 to accommodate enriched synthesis
   toolDefinitions: 2000,
   conversationHistory: 50000,
   outputBuffer: 8000,
-  dynamicContext: 138500,
+  dynamicContext: 137500, // Adjusted to account for larger baseSynthesis
 };

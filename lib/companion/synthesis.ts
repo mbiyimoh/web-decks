@@ -175,7 +175,8 @@ export async function calculateProfileHash(userId: string): Promise<string> {
 
 /**
  * Generate base synthesis for a user.
- * Combines ProfileSection fields and Persona records.
+ * Combines ALL ProfileSection fields and Persona records.
+ * Covers all 6 sections: Individual, Role, Organization, Goals, Network, Projects
  */
 export async function generateBaseSynthesis(
   userId: string
@@ -204,7 +205,7 @@ export async function generateBaseSynthesis(
     return null;
   }
 
-  // Helper to get field value from profile
+  // Helper to get field value from profile (returns summary or fullContext)
   const getField = (
     sectionKey: string,
     subsectionKey: string,
@@ -220,7 +221,35 @@ export async function generateBaseSynthesis(
     return field?.summary || field?.fullContext || null;
   };
 
-  // Build identity from individual and organization sections
+  // Helper to get multiple fields as array (non-null values only)
+  const getFieldsAsArray = (
+    sectionKey: string,
+    subsectionKey: string,
+    fieldKeys: string[]
+  ): string[] => {
+    return fieldKeys
+      .map((key) => getField(sectionKey, subsectionKey, key))
+      .filter((v): v is string => v !== null);
+  };
+
+  // Helper to parse list from field (comma-separated or JSON array)
+  const parseListField = (value: string | null): string[] => {
+    if (!value) return [];
+    // Try JSON array first
+    try {
+      const parsed = JSON.parse(value);
+      if (Array.isArray(parsed)) return parsed.filter(Boolean);
+    } catch {
+      // Not JSON, treat as comma-separated
+    }
+    return value.split(',').map((s) => s.trim()).filter(Boolean);
+  };
+
+  // -------------------------------------------------------------------------
+  // INDIVIDUAL SECTION
+  // -------------------------------------------------------------------------
+
+  // Identity (individual + organization + role)
   const identity = {
     name: profile.name || 'Unknown',
     role: getField('role', 'responsibilities', 'title') || 'Unknown',
@@ -233,56 +262,55 @@ export async function generateBaseSynthesis(
     ),
   };
 
-  // Build personas from Persona model (NOT ProfileField!)
-  const personas: PersonaSummary[] = profile.personas
-    .filter((p) => p.name) // Only include named personas
-    .slice(0, 3) // Max 3 personas
-    .map((p) => {
-      const goals = p.goals as { priorities?: string[] } | null;
-      const frustrations = p.frustrations as { pastFailures?: string[] } | null;
+  // Background & expertise (individual.background)
+  const background = {
+    careerPath: getField('individual', 'background', 'career'),
+    expertise: parseListField(getField('individual', 'background', 'expertise')),
+    yearsExperience: parseYearsExperience(
+      getField('individual', 'background', 'experience_years')
+    ),
+    education: getField('individual', 'background', 'education'),
+  };
 
-      return {
-        name: p.name || 'Unnamed Persona',
-        role: extractPersonaRole(p.demographics),
-        primaryGoal: goals?.priorities?.[0] || 'Not specified',
-        topFrustration: frustrations?.pastFailures?.[0] || 'Not specified',
-      };
-    });
+  // Thinking style (individual.thinking)
+  const thinkingStyle = {
+    decisionMaking: getField('individual', 'thinking', 'decision_making'),
+    problemSolving: getField('individual', 'thinking', 'problem_solving'),
+    riskTolerance: parseRiskTolerance(
+      getField('individual', 'thinking', 'risk_tolerance')
+    ),
+    learningStyle: getField('individual', 'thinking', 'learning_style'),
+  };
 
-  // Build goals from goals section
-  const goals: GoalSummary[] = [];
-  const goalsSection = profile.sections.find((s) => s.key === 'goals');
-  if (goalsSection) {
-    const immediateFields =
-      goalsSection.subsections.find((sub) => sub.key === 'immediate')?.fields ||
-      [];
+  // Working style (individual.working)
+  const workingStyle = {
+    collaborationPreference: getField('individual', 'working', 'collaboration_preference'),
+    communicationStyle: getField('individual', 'working', 'communication_style'),
+    workPace: getField('individual', 'working', 'work_pace'),
+    autonomyLevel: getField('individual', 'working', 'autonomy_level'),
+  };
 
-    for (const field of immediateFields.slice(0, 3)) {
-      if (field.summary || field.fullContext) {
-        goals.push({
-          goal: field.summary || field.fullContext!.slice(0, 100),
-          priority: 'high',
-          timeframe: 'immediate',
-        });
-      }
-    }
+  // Values & motivations (individual.values)
+  const values = {
+    coreValues: parseListField(getField('individual', 'values', 'core_values')),
+    motivations: parseListField(getField('individual', 'values', 'motivations')),
+    personalMission: getField('individual', 'values', 'mission'),
+    passions: parseListField(getField('individual', 'values', 'passions')),
+  };
 
-    const mediumFields =
-      goalsSection.subsections.find((sub) => sub.key === 'medium')?.fields ||
-      [];
+  // -------------------------------------------------------------------------
+  // ROLE SECTION
+  // -------------------------------------------------------------------------
 
-    for (const field of mediumFields.slice(0, 2)) {
-      if (field.summary || field.fullContext) {
-        goals.push({
-          goal: field.summary || field.fullContext!.slice(0, 100),
-          priority: 'medium',
-          timeframe: 'quarterly',
-        });
-      }
-    }
-  }
+  // Role scope & authority (role.scope)
+  const roleScope = {
+    decisionAuthority: getField('role', 'scope', 'decision_authority'),
+    budgetControl: getField('role', 'scope', 'budget_control'),
+    strategicInput: getField('role', 'scope', 'strategic_input'),
+    teamSize: parseTeamSize(getField('role', 'responsibilities', 'team_size')),
+  };
 
-  // Build pain points from role constraints
+  // Pain points from role constraints
   const painPoints: PainPointSummary[] = [];
   const roleSection = profile.sections.find((s) => s.key === 'role');
   if (roleSection) {
@@ -290,10 +318,10 @@ export async function generateBaseSynthesis(
       roleSection.subsections.find((sub) => sub.key === 'constraints')
         ?.fields || [];
 
-    for (const field of constraintFields.slice(0, 3)) {
+    for (const field of constraintFields) {
       if (field.summary || field.fullContext) {
         painPoints.push({
-          pain: field.summary || field.fullContext!.slice(0, 100),
+          pain: field.summary || field.fullContext!.slice(0, 150),
           severity: 'significant',
           category: field.key.replace(/_/g, ' '),
         });
@@ -301,7 +329,96 @@ export async function generateBaseSynthesis(
     }
   }
 
-  // Build decision dynamics from individual thinking
+  // -------------------------------------------------------------------------
+  // ORGANIZATION SECTION
+  // -------------------------------------------------------------------------
+
+  // Product & strategy (organization.product)
+  const product = {
+    coreProduct: getField('organization', 'product', 'core_product'),
+    valueProposition: getField('organization', 'product', 'value_proposition'),
+    businessModel: getField('organization', 'product', 'business_model'),
+    competitiveAdvantage: getField('organization', 'product', 'competitive_advantage'),
+  };
+
+  // Market position (organization.market)
+  const market = {
+    targetMarket: getField('organization', 'market', 'target_market'),
+    customerSegments: parseListField(
+      getField('organization', 'market', 'customer_segments')
+    ),
+    marketSize: getField('organization', 'market', 'market_size'),
+    competitiveLandscape: getField('organization', 'market', 'competitive_landscape'),
+  };
+
+  // Financial context (organization.financials)
+  const financials = {
+    fundingStatus: getField('organization', 'financials', 'funding_status'),
+    runway: getField('organization', 'financials', 'runway'),
+    revenueStage: getField('organization', 'financials', 'revenue_stage'),
+  };
+
+  // -------------------------------------------------------------------------
+  // GOALS SECTION
+  // -------------------------------------------------------------------------
+
+  // Goals from immediate + medium term
+  const goals: GoalSummary[] = [];
+  const goalsSection = profile.sections.find((s) => s.key === 'goals');
+  if (goalsSection) {
+    // Immediate goals (high priority)
+    const immediateFields =
+      goalsSection.subsections.find((sub) => sub.key === 'immediate')?.fields ||
+      [];
+
+    for (const field of immediateFields) {
+      if (field.summary || field.fullContext) {
+        goals.push({
+          goal: field.summary || field.fullContext!.slice(0, 150),
+          priority: 'high',
+          timeframe: mapFieldToTimeframe(field.key),
+        });
+      }
+    }
+
+    // Medium-term goals
+    const mediumFields =
+      goalsSection.subsections.find((sub) => sub.key === 'medium')?.fields ||
+      [];
+
+    for (const field of mediumFields) {
+      if (field.summary || field.fullContext) {
+        goals.push({
+          goal: field.summary || field.fullContext!.slice(0, 150),
+          priority: 'medium',
+          timeframe: mapFieldToTimeframe(field.key),
+        });
+      }
+    }
+  }
+
+  // Success metrics (goals.metrics)
+  const successMetrics = {
+    northStar: getField('goals', 'metrics', 'north_star'),
+    kpis: parseListField(getField('goals', 'metrics', 'kpis')),
+    successDefinition: getField('goals', 'metrics', 'success_definition'),
+  };
+
+  // Strategic priorities from goals.strategy
+  const strategicPriorities: string[] = [];
+  const strategyFields =
+    goalsSection?.subsections.find((sub) => sub.key === 'strategy')?.fields ||
+    [];
+
+  for (const field of strategyFields) {
+    if (field.summary) {
+      strategicPriorities.push(field.summary);
+    } else if (field.fullContext) {
+      strategicPriorities.push(field.fullContext.slice(0, 100));
+    }
+  }
+
+  // Decision dynamics
   const decisionDynamics = {
     decisionMakers: [identity.name],
     buyingProcess:
@@ -309,23 +426,34 @@ export async function generateBaseSynthesis(
     keyInfluencers: extractInfluencers(profile),
   };
 
-  // Build strategic priorities from goals strategy
-  const strategicPriorities: string[] = [];
-  const strategyFields =
-    goalsSection?.subsections.find((sub) => sub.key === 'strategy')?.fields ||
-    [];
+  // -------------------------------------------------------------------------
+  // NETWORK SECTION
+  // -------------------------------------------------------------------------
 
-  for (const field of strategyFields.slice(0, 5)) {
-    if (field.summary) {
-      strategicPriorities.push(field.summary);
-    }
-  }
+  // Team & collaborators (network.team)
+  const team = {
+    directReports: parseListField(getField('network', 'team', 'direct_reports')),
+    keyCollaborators: parseListField(getField('network', 'team', 'key_collaborators')),
+    crossFunctional: parseListField(getField('network', 'team', 'cross_functional')),
+  };
 
-  // Build active projects from projects section
+  // Support network (network.support)
+  const supportNetwork = {
+    advisors: parseListField(getField('network', 'support', 'advisors')),
+    mentors: parseListField(getField('network', 'support', 'mentors')),
+    peerNetwork: getField('network', 'support', 'peer_network'),
+    helpNeeded: parseListField(getField('network', 'support', 'help_needed')),
+  };
+
+  // -------------------------------------------------------------------------
+  // PROJECTS SECTION
+  // -------------------------------------------------------------------------
+
+  // Active & planned projects
   const activeProjects: ProjectSummary[] = [];
   const projectsSection = profile.sections.find((s) => s.key === 'projects');
   if (projectsSection) {
-    // Active initiatives (highest priority)
+    // Active initiatives
     const activeFields =
       projectsSection.subsections.find((sub) => sub.key === 'active')?.fields ||
       [];
@@ -336,44 +464,89 @@ export async function generateBaseSynthesis(
           name: field.name || field.key.replace(/_/g, ' '),
           status: 'active',
           priority: 'high',
-          description: field.summary || field.fullContext!.slice(0, 150),
+          description: field.summary || field.fullContext!.slice(0, 200),
         });
       }
     }
 
-    // Upcoming priorities (if we have room for more context)
-    if (activeProjects.length < 4) {
-      const upcomingFields =
-        projectsSection.subsections.find((sub) => sub.key === 'upcoming')
-          ?.fields || [];
+    // Upcoming priorities
+    const upcomingFields =
+      projectsSection.subsections.find((sub) => sub.key === 'upcoming')
+        ?.fields || [];
 
-      for (const field of upcomingFields.slice(0, 4 - activeProjects.length)) {
-        if (field.summary || field.fullContext) {
-          activeProjects.push({
-            name: field.name || field.key.replace(/_/g, ' '),
-            status: 'planned',
-            priority: 'medium',
-            description: field.summary || field.fullContext!.slice(0, 150),
-          });
-        }
+    for (const field of upcomingFields) {
+      if (field.summary || field.fullContext) {
+        activeProjects.push({
+          name: field.name || field.key.replace(/_/g, ' '),
+          status: 'planned',
+          priority: 'medium',
+          description: field.summary || field.fullContext!.slice(0, 200),
+        });
       }
     }
   }
 
-  // Calculate completeness
+  // Recent accomplishments (projects.completed)
+  const recentAccomplishments = {
+    recentWins: parseListField(getField('projects', 'completed', 'recent_wins')),
+    lessonsLearned: parseListField(getField('projects', 'completed', 'lessons_learned')),
+  };
+
+  // -------------------------------------------------------------------------
+  // PERSONAS (from Persona model, NOT ProfileField)
+  // -------------------------------------------------------------------------
+
+  const personas: PersonaSummary[] = profile.personas
+    .filter((p) => p.name)
+    .slice(0, 5) // Allow up to 5 personas
+    .map((p) => {
+      const goalsData = p.goals as { priorities?: string[] } | null;
+      const frustrations = p.frustrations as { pastFailures?: string[] } | null;
+
+      return {
+        name: p.name || 'Unnamed Persona',
+        role: extractPersonaRole(p.demographics),
+        primaryGoal: goalsData?.priorities?.[0] || 'Not specified',
+        topFrustration: frustrations?.pastFailures?.[0] || 'Not specified',
+      };
+    });
+
+  // -------------------------------------------------------------------------
+  // BUILD FINAL SYNTHESIS
+  // -------------------------------------------------------------------------
+
   const profileCompleteness = calculateCompleteness(profile);
 
-  // Build synthesis
   const synthesis: BaseSynthesis = {
+    // Individual section
     identity,
-    personas,
-    goals,
+    background,
+    thinkingStyle,
+    workingStyle,
+    values,
+    // Role section
+    roleScope,
     painPoints,
-    decisionDynamics,
+    // Organization section
+    product,
+    market,
+    financials,
+    // Goals section
+    goals,
+    successMetrics,
     strategicPriorities,
+    decisionDynamics,
+    // Network section
+    team,
+    supportNetwork,
+    // Projects section
     activeProjects,
+    recentAccomplishments,
+    // Personas
+    personas,
+    // Metadata
     _meta: {
-      tokenCount: 0, // Will be calculated
+      tokenCount: 0,
       version: generateVersion(),
       generatedAt: new Date().toISOString(),
       profileCompleteness,
@@ -413,6 +586,50 @@ function parseCompanyStage(
     return 'enterprise';
   }
   return 'unknown';
+}
+
+function parseYearsExperience(value: string | null): number | null {
+  if (!value) return null;
+  // Extract first number from string
+  const match = value.match(/\d+/);
+  return match ? parseInt(match[0], 10) : null;
+}
+
+function parseRiskTolerance(
+  value: string | null
+): 'conservative' | 'moderate' | 'aggressive' | null {
+  if (!value) return null;
+  const lower = value.toLowerCase();
+  if (lower.includes('conservative') || lower.includes('low') || lower.includes('risk-averse')) {
+    return 'conservative';
+  }
+  if (lower.includes('aggressive') || lower.includes('high') || lower.includes('bold')) {
+    return 'aggressive';
+  }
+  if (lower.includes('moderate') || lower.includes('balanced') || lower.includes('medium')) {
+    return 'moderate';
+  }
+  return 'moderate'; // Default to moderate if unclear
+}
+
+function parseTeamSize(value: string | null): number | null {
+  if (!value) return null;
+  // Extract first number from string
+  const match = value.match(/\d+/);
+  return match ? parseInt(match[0], 10) : null;
+}
+
+function mapFieldToTimeframe(fieldKey: string): string {
+  const mapping: Record<string, string> = {
+    current_focus: 'now',
+    this_week: 'this week',
+    this_month: 'this month',
+    blockers: 'immediate',
+    quarterly_goals: 'quarterly',
+    annual_goals: 'annual',
+    milestones: 'milestone-based',
+  };
+  return mapping[fieldKey] || 'ongoing';
 }
 
 function extractPersonaRole(demographics: unknown): string {
